@@ -33,9 +33,9 @@ body {
 .ProseMirror {
   min-height: 100%;
   padding: 20px 24px;
-  font-family: var(--vscode-editor-font-family, 'SF Mono', Monaco, Menlo, Consolas, 'Ubuntu Mono', monospace);
-  font-size: var(--vscode-editor-font-size, 14px);
-  line-height: var(--vscode-editor-line-height, 1.6);
+  font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif);
+  font-size: 14px;
+  line-height: 1.6;
   color: var(--editor-fg);
   caret-color: var(--editor-cursor);
 }
@@ -544,9 +544,9 @@ body {
   resize: none;
   background: var(--editor-bg);
   color: var(--editor-fg);
-  font-family: var(--vscode-editor-font-family, 'SF Mono', Monaco, Menlo, Consolas, 'Ubuntu Mono', monospace);
-  font-size: var(--vscode-editor-font-size, 14px);
-  line-height: var(--vscode-editor-line-height, 1.6);
+  font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif);
+  font-size: 14px;
+  line-height: 1.6;
   caret-color: var(--editor-cursor);
   tab-size: 2;
   white-space: pre-wrap;
@@ -571,15 +571,15 @@ body {
   flex: 1;
 }
 
-/* Claude Code button */
-.claude-button {
+/* AI Agent button */
+.ai-button {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 6px 14px;
   border: none;
   border-radius: 8px;
-  background: linear-gradient(135deg, #c2410c 0%, #9a3412 100%);
+  background: linear-gradient(135deg, var(--agent-color, #c2410c) 0%, color-mix(in srgb, var(--agent-color, #c2410c) 80%, black) 100%);
   color: white;
   font-size: 12px;
   font-weight: 600;
@@ -594,7 +594,7 @@ body {
   overflow: hidden;
 }
 
-.claude-button::before {
+.ai-button::before {
   content: '';
   position: absolute;
   top: 0;
@@ -605,42 +605,42 @@ body {
   pointer-events: none;
 }
 
-.claude-button:hover {
-  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+.ai-button:hover {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--agent-color, #c2410c) 100%, white 15%) 0%, var(--agent-color, #c2410c) 100%);
   transform: translateY(-1px);
   box-shadow:
-    0 4px 12px rgba(194, 65, 12, 0.4),
+    0 4px 12px color-mix(in srgb, var(--agent-color, #c2410c) 40%, transparent),
     0 0 0 1px rgba(255, 255, 255, 0.08) inset,
     0 1px 0 rgba(255, 255, 255, 0.15) inset;
 }
 
-.claude-button:active {
+.ai-button:active {
   transform: translateY(0);
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 }
 
-.claude-button svg:first-child {
+.ai-button svg:first-child {
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2));
 }
 
-.claude-button svg:last-child {
+.ai-button svg:last-child {
   opacity: 0.7;
   margin-left: -2px;
 }
 
-/* Claude dropdown */
-.claude-dropdown-container {
+/* AI dropdown */
+.ai-dropdown-container {
   position: relative;
 }
 
-.claude-dropdown-menu {
+.ai-dropdown-menu {
   position: absolute;
   top: 100%;
   right: 0;
   margin-top: 6px;
-  min-width: 260px;
+  min-width: 280px;
   background: var(--toolbar-bg);
   border: 1px solid var(--border-color);
   border-radius: 10px;
@@ -663,7 +663,45 @@ body {
   }
 }
 
-.claude-dropdown-item {
+/* Agent selector tabs */
+.ai-agent-selector {
+  display: flex;
+  padding: 8px;
+  gap: 6px;
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.ai-agent-tab {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--editor-line-number);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ai-agent-tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--editor-fg);
+}
+
+.ai-agent-tab.active {
+  background: var(--agent-color);
+  color: white;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--agent-color) 40%, transparent);
+}
+
+/* Permission list */
+.ai-permission-list {
+  padding: 4px 0;
+}
+
+.ai-dropdown-item {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -676,26 +714,26 @@ body {
   transition: all 0.15s ease;
 }
 
-.claude-dropdown-item:hover {
-  background: rgba(194, 65, 12, 0.15);
+.ai-dropdown-item:hover {
+  background: color-mix(in srgb, var(--agent-color, #c2410c) 15%, transparent);
 }
 
-.claude-dropdown-item:hover .claude-dropdown-label {
-  color: #fb923c;
+.ai-dropdown-item:hover .ai-dropdown-label {
+  color: color-mix(in srgb, var(--agent-color, #c2410c) 100%, white 30%);
 }
 
-.claude-dropdown-item:not(:last-child) {
+.ai-dropdown-item:not(:last-child) {
   border-bottom: 1px solid var(--border-color);
 }
 
-.claude-dropdown-label {
+.ai-dropdown-label {
   color: var(--editor-fg);
   font-size: 13px;
   font-weight: 600;
   transition: color 0.15s ease;
 }
 
-.claude-dropdown-desc {
+.ai-dropdown-desc {
   color: var(--editor-line-number);
   font-size: 11px;
   margin-top: 3px;

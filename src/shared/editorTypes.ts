@@ -22,8 +22,11 @@ export type EditorExtensionMessage =
   | { type: 'contentChanged'; content: string }
   | { type: 'themeChanged'; isDark: boolean }
 
-// Claude Code permission modes
-export type ClaudePermissionMode = 'default' | 'plan' | 'acceptEdits' | 'bypassPermissions'
+// AI coding agent types
+export type AICodingAgent = 'claude' | 'codex' | 'opencode'
+
+// Permission modes for AI agents
+export type AIPermissionMode = 'default' | 'plan' | 'acceptEdits' | 'bypassPermissions'
 
 // Messages from editor webview to extension
 export type EditorWebviewMessage =
@@ -31,4 +34,4 @@ export type EditorWebviewMessage =
   | { type: 'contentUpdate'; content: string }
   | { type: 'frontmatterUpdate'; frontmatter: FeatureFrontmatter }
   | { type: 'requestSave' }
-  | { type: 'startWithClaude'; permissionMode: ClaudePermissionMode }
+  | { type: 'startWithAI'; agent: AICodingAgent; permissionMode: AIPermissionMode }

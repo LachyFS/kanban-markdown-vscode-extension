@@ -29,7 +29,7 @@ import {
   Sparkles
 } from 'lucide-react'
 import { useEditorStore } from './store'
-import type { FeatureFrontmatter, ClaudePermissionMode } from '../../shared/editorTypes'
+import type { FeatureFrontmatter, AICodingAgent, AIPermissionMode } from '../../shared/editorTypes'
 import type { Priority, FeatureStatus } from '../../shared/types'
 import { cn } from '../lib/utils'
 
@@ -71,7 +71,6 @@ function ToolbarDivider() {
 
 interface FrontmatterPanelProps {
   frontmatter: FeatureFrontmatter
-  fileName: string
   onUpdate: (updates: Partial<FeatureFrontmatter>) => void
 }
 
@@ -93,8 +92,15 @@ const statusLabels: Record<FeatureStatus, string> = {
 const priorities: Priority[] = ['critical', 'high', 'medium', 'low']
 const statuses: FeatureStatus[] = ['backlog', 'todo', 'in-progress', 'review', 'done']
 
-// Claude permission mode options
-const claudePermissionModes: { value: ClaudePermissionMode; label: string; description: string }[] = [
+// AI coding agents
+const aiAgents: { value: AICodingAgent; label: string; color: string }[] = [
+  { value: 'claude', label: 'Claude', color: '#c2410c' },
+  { value: 'codex', label: 'Codex', color: '#059669' },
+  { value: 'opencode', label: 'OpenCode', color: '#7c3aed' }
+]
+
+// Permission mode options
+const permissionModes: { value: AIPermissionMode; label: string; description: string }[] = [
   { value: 'default', label: 'Default', description: 'Ask for permission on each action' },
   { value: 'plan', label: 'Plan Mode', description: 'Create a plan before making changes' },
   { value: 'acceptEdits', label: 'Auto-accept Edits', description: 'Automatically accept file edits' },
@@ -153,12 +159,13 @@ function Dropdown({ value, options, onChange, className }: DropdownProps) {
   )
 }
 
-interface ClaudeDropdownProps {
-  onSelect: (mode: ClaudePermissionMode) => void
+interface AIAgentDropdownProps {
+  onSelect: (agent: AICodingAgent, mode: AIPermissionMode) => void
 }
 
-function ClaudeDropdown({ onSelect }: ClaudeDropdownProps) {
+function AIAgentDropdown({ onSelect }: AIAgentDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [selectedAgent, setSelectedAgent] = useState<AICodingAgent>('claude')
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -171,39 +178,60 @@ function ClaudeDropdown({ onSelect }: ClaudeDropdownProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  const currentAgent = aiAgents.find(a => a.value === selectedAgent)!
+
   return (
-    <div ref={dropdownRef} className="claude-dropdown-container">
+    <div ref={dropdownRef} className="ai-dropdown-container">
       <button
-        className="claude-button"
+        className="ai-button"
         onClick={() => setIsOpen(!isOpen)}
-        title="Start working on this ticket with Claude Code"
+        title={`Start working on this ticket with ${currentAgent.label}`}
+        style={{ '--agent-color': currentAgent.color } as React.CSSProperties}
       >
         <Sparkles size={14} />
-        <span>Start with Claude</span>
+        <span>Start with AI</span>
         <ChevronDown size={12} />
       </button>
       {isOpen && (
-        <div className="claude-dropdown-menu">
-          {claudePermissionModes.map(mode => (
-            <button
-              key={mode.value}
-              className="claude-dropdown-item"
-              onClick={() => {
-                onSelect(mode.value)
-                setIsOpen(false)
-              }}
-            >
-              <span className="claude-dropdown-label">{mode.label}</span>
-              <span className="claude-dropdown-desc">{mode.description}</span>
-            </button>
-          ))}
+        <div className="ai-dropdown-menu">
+          {/* Agent selector */}
+          <div className="ai-agent-selector">
+            {aiAgents.map(agent => (
+              <button
+                key={agent.value}
+                className={cn('ai-agent-tab', selectedAgent === agent.value && 'active')}
+                onClick={() => setSelectedAgent(agent.value)}
+                style={{ '--agent-color': agent.color } as React.CSSProperties}
+              >
+                {agent.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Permission modes */}
+          <div className="ai-permission-list">
+            {permissionModes.map(mode => (
+              <button
+                key={mode.value}
+                className="ai-dropdown-item"
+                onClick={() => {
+                  onSelect(selectedAgent, mode.value)
+                  setIsOpen(false)
+                }}
+                style={{ '--agent-color': currentAgent.color } as React.CSSProperties}
+              >
+                <span className="ai-dropdown-label">{mode.label}</span>
+                <span className="ai-dropdown-desc">{mode.description}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
   )
 }
 
-function FrontmatterPanel({ frontmatter, fileName, onUpdate }: FrontmatterPanelProps) {
+function FrontmatterPanel({ frontmatter, onUpdate }: FrontmatterPanelProps) {
   const formatDueDate = (dateStr: string | null) => {
     if (!dateStr) return null
     const date = new Date(dateStr)
@@ -226,9 +254,8 @@ function FrontmatterPanel({ frontmatter, fileName, onUpdate }: FrontmatterPanelP
 
   return (
     <div className="frontmatter-panel">
-      {/* Left side - File name and Title */}
+      {/* Left side - Title */}
       <div className="frontmatter-left">
-        <span className="frontmatter-id">{fileName}</span>
         <span className="frontmatter-title">{frontmatter.title}</span>
       </div>
 
@@ -287,7 +314,7 @@ function FrontmatterPanel({ frontmatter, fileName, onUpdate }: FrontmatterPanelP
 type EditorMode = 'preview' | 'raw'
 
 export function MarkdownEditor() {
-  const { content, frontmatter, fileName, setContent, setFrontmatter, setFileName, setIsDarkMode } = useEditorStore()
+  const { content, frontmatter, setContent, setFrontmatter, setFileName, setIsDarkMode } = useEditorStore()
   const isExternalUpdate = useRef(false)
   const [editorMode, setEditorMode] = useState<EditorMode>('preview')
   const rawTextareaRef = useRef<HTMLTextAreaElement>(null)
@@ -479,9 +506,9 @@ export function MarkdownEditor() {
     })
   }, [frontmatter, setFrontmatter])
 
-  // Start Claude Code to work on this ticket
-  const startWithClaude = useCallback((permissionMode: ClaudePermissionMode) => {
-    vscode.postMessage({ type: 'startWithClaude', permissionMode })
+  // Start AI coding agent to work on this ticket
+  const startWithAI = useCallback((agent: AICodingAgent, permissionMode: AIPermissionMode) => {
+    vscode.postMessage({ type: 'startWithAI', agent, permissionMode })
   }, [])
 
   if (!editor) {
@@ -494,7 +521,7 @@ export function MarkdownEditor() {
 
   return (
     <div className="editor-container">
-      {frontmatter && <FrontmatterPanel frontmatter={frontmatter} fileName={fileName} onUpdate={handleFrontmatterUpdate} />}
+      {frontmatter && <FrontmatterPanel frontmatter={frontmatter} onUpdate={handleFrontmatterUpdate} />}
 
       {/* Toolbar */}
       <div className="editor-toolbar">
@@ -574,7 +601,7 @@ export function MarkdownEditor() {
 
         <div className="toolbar-spacer" />
 
-        <ClaudeDropdown onSelect={startWithClaude} />
+        <AIAgentDropdown onSelect={startWithAI} />
       </div>
 
       {/* Editor Content */}

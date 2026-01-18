@@ -100,8 +100,8 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
           await document.save()
           break
 
-        case 'startWithClaude': {
-          // Save the document first to ensure Claude sees latest changes
+        case 'startWithAI': {
+          // Save the document first to ensure AI sees latest changes
           await document.save()
 
           // Build the prompt from the document content
@@ -115,20 +115,53 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
 
           const prompt = `Implement this feature: "${fm.title}" (${fm.priority} priority)${labels}. ${shortDesc} See full details in: ${document.uri.fsPath}`
 
-          // Build permission mode flag
+          // Get agent and permission mode
+          const agent = message.agent || 'claude'
           const permissionMode = message.permissionMode || 'default'
-          const permissionFlag = permissionMode !== 'default' ? ` --permission-mode ${permissionMode}` : ''
 
-          // Create or show terminal and run claude command interactively
+          // Build the command based on selected agent
+          let command: string
+          const escapedPrompt = prompt.replace(/"/g, '\\"')
+
+          switch (agent) {
+            case 'claude': {
+              const permissionFlag = permissionMode !== 'default' ? ` --permission-mode ${permissionMode}` : ''
+              command = `claude${permissionFlag} "${escapedPrompt}"`
+              break
+            }
+            case 'codex': {
+              // Codex CLI flags: --approval-mode (suggest, auto-edit, full-auto)
+              const approvalMap: Record<string, string> = {
+                'default': 'suggest',
+                'plan': 'suggest',
+                'acceptEdits': 'auto-edit',
+                'bypassPermissions': 'full-auto'
+              }
+              const approvalMode = approvalMap[permissionMode] || 'suggest'
+              command = `codex --approval-mode ${approvalMode} "${escapedPrompt}"`
+              break
+            }
+            case 'opencode': {
+              // OpenCode doesn't have permission flags, just run with prompt
+              command = `opencode "${escapedPrompt}"`
+              break
+            }
+            default:
+              command = `claude "${escapedPrompt}"`
+          }
+
+          // Create or show terminal and run command
+          const agentNames: Record<string, string> = {
+            'claude': 'Claude Code',
+            'codex': 'Codex',
+            'opencode': 'OpenCode'
+          }
           const terminal = vscode.window.createTerminal({
-            name: 'Claude Code',
+            name: agentNames[agent] || 'AI Agent',
             cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
           })
           terminal.show()
-
-          // Escape double quotes for shell
-          const escapedPrompt = prompt.replace(/"/g, '\\"')
-          terminal.sendText(`claude${permissionFlag} "${escapedPrompt}"`)
+          terminal.sendText(command)
           break
         }
       }
