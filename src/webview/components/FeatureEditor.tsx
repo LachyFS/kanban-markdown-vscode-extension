@@ -16,13 +16,6 @@ interface FeatureEditorProps {
   onClose: () => void
 }
 
-const priorityColors: Record<Priority, string> = {
-  critical: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  high: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-  medium: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-  low: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-}
-
 const priorityLabels: Record<Priority, string> = {
   critical: 'Critical',
   high: 'High',
@@ -121,7 +114,8 @@ export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose
 
   const handleSave = useCallback(() => {
     if (!editor) return
-    const markdown = editor.storage.markdown.getMarkdown()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const markdown = (editor.storage as any).markdown.getMarkdown()
     onSave(markdown, currentFrontmatter)
     setIsDirty(false)
   }, [editor, currentFrontmatter, onSave])
@@ -146,7 +140,8 @@ export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleSave, onClose])
 
-  const title = editor ? getTitleFromContent(editor.storage.markdown.getMarkdown()) : getTitleFromContent(content)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const title = editor ? getTitleFromContent((editor.storage as any).markdown.getMarkdown()) : getTitleFromContent(content)
 
   return (
     <div className="h-full flex flex-col bg-[var(--vscode-editor-background)] border-l border-zinc-200 dark:border-zinc-700">

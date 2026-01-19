@@ -76,7 +76,13 @@ function Dropdown({ value, options, onChange, className }: DropdownProps) {
   )
 }
 
-export function CreateFeatureDialog({
+// Wrapper that unmounts and remounts content when dialog opens to reset state
+export function CreateFeatureDialog({ isOpen, ...props }: CreateFeatureDialogProps) {
+  if (!isOpen) return null
+  return <CreateFeatureDialogContent isOpen={isOpen} {...props} />
+}
+
+function CreateFeatureDialogContent({
   isOpen,
   onClose,
   onCreate,
@@ -90,17 +96,19 @@ export function CreateFeatureDialog({
   const [dueDate, setDueDate] = useState('')
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
+  // Focus input on mount
   useEffect(() => {
-    if (isOpen) {
-      setTitle('')
-      setDescription('')
-      setStatus(initialStatus)
-      setPriority('medium')
-      setAssignee('')
-      setDueDate('')
-      setTimeout(() => inputRef.current?.focus(), 50)
-    }
-  }, [isOpen, initialStatus])
+    const timer = setTimeout(() => inputRef.current?.focus(), 50)
+    return () => clearTimeout(timer)
+  }, [])
+
+  const handleSubmit = () => {
+    if (!title.trim()) return
+
+    const content = `# ${title.trim()}${description.trim() ? '\n\n' + description.trim() : ''}`
+    onCreate({ status, priority, content })
+    onClose()
+  }
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -116,17 +124,7 @@ export function CreateFeatureDialog({
       document.addEventListener('keydown', handleKeyDown)
       return () => document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [isOpen, onClose, title])
-
-  const handleSubmit = () => {
-    if (!title.trim()) return
-
-    const content = `# ${title.trim()}${description.trim() ? '\n\n' + description.trim() : ''}`
-    onCreate({ status, priority, content })
-    onClose()
-  }
-
-  if (!isOpen) return null
+  })
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">

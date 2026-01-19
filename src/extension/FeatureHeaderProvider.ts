@@ -295,7 +295,7 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
       `dueDate: ${updatedFrontmatter.dueDate ? `"${updatedFrontmatter.dueDate}"` : 'null'}`,
       `created: "${updatedFrontmatter.created}"`,
       `modified: "${updatedFrontmatter.modified}"`,
-      `labels: [${updatedFrontmatter.labels.map(l => `"${l}"`).join(', ')}]`,
+      `labels: [${updatedFrontmatter.labels.map((l: string) => `"${l}"`).join(', ')}]`,
       `order: ${updatedFrontmatter.order}`,
       '---',
       ''
