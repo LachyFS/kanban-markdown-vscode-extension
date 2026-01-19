@@ -2,7 +2,6 @@ import * as vscode from 'vscode'
 import * as fs from 'fs'
 import * as path from 'path'
 import { KanbanPanel } from './KanbanPanel'
-import { MarkdownEditorProvider } from './MarkdownEditorProvider'
 import type { Feature, FeatureStatus, Priority } from '../shared/types'
 
 async function createFeatureFromPrompts(): Promise<void> {
@@ -77,9 +76,11 @@ async function createFeatureFromPrompts(): Promise<void> {
   const id = `FEAT-${String(existingCount + 1).padStart(3, '0')}`
   const now = new Date().toISOString()
 
+  // Build content with title as first # heading
+  const content = `# ${title}${description ? '\n\n' + description : ''}`
+
   const feature: Feature = {
     id,
-    title,
     status,
     priority,
     assignee: null,
@@ -88,7 +89,7 @@ async function createFeatureFromPrompts(): Promise<void> {
     modified: now,
     labels: [],
     order: 0,
-    content: description || '',
+    content,
     filePath: path.join(featuresDir, `${id}.md`)
   }
 
@@ -106,7 +107,6 @@ function serializeFeature(feature: Feature): string {
   const frontmatter = [
     '---',
     `id: "${feature.id}"`,
-    `title: "${feature.title}"`,
     `status: "${feature.status}"`,
     `priority: "${feature.priority}"`,
     `assignee: ${feature.assignee ? `"${feature.assignee}"` : 'null'}`,
@@ -123,9 +123,6 @@ function serializeFeature(feature: Feature): string {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  // Register the custom markdown editor for feature files
-  context.subscriptions.push(MarkdownEditorProvider.register(context))
-
   context.subscriptions.push(
     vscode.commands.registerCommand('kanban-markdown.open', () => {
       KanbanPanel.createOrShow(context.extensionUri, context)

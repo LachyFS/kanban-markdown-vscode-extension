@@ -36,19 +36,7 @@
           "when": "resourcePath =~ /\\.devtool[\\/\\\\]features[\\/\\\\].*\\.md$/"
         }
       ]
-    },
-    "customEditors": [
-      {
-        "viewType": "kanban-markdown.featureEditor",
-        "displayName": "Feature Editor",
-        "selector": [
-          {
-            "filenamePattern": "**/.devtool/features/*.md"
-          }
-        ],
-        "priority": "default"
-      }
-    ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run build",
@@ -63,6 +51,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^20.10.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",

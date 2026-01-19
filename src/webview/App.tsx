@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { useStore } from './store'
 import { KanbanBoard } from './components/KanbanBoard'
 import { CreateFeatureDialog } from './components/CreateFeatureDialog'
+import { FeatureEditor } from './components/FeatureEditor'
 import { Toolbar } from './components/Toolbar'
-import type { Feature, FeatureStatus, Priority, ExtensionMessage } from '../shared/types'
+import type { Feature, FeatureStatus, Priority, ExtensionMessage, FeatureFrontmatter } from '../shared/types'
 
 // Declare vscode API type
 declare const acquireVsCodeApi: () => {
@@ -15,6 +16,7 @@ declare const acquireVsCodeApi: () => {
 const vscode = acquireVsCodeApi()
 
 function App(): React.JSX.Element {
+
   const {
     columns,
     setFeatures,
@@ -25,6 +27,13 @@ function App(): React.JSX.Element {
 
   const [createFeatureOpen, setCreateFeatureOpen] = useState(false)
   const [createFeatureStatus, setCreateFeatureStatus] = useState<FeatureStatus>('backlog')
+
+  // Editor state
+  const [editingFeature, setEditingFeature] = useState<{
+    id: string
+    content: string
+    frontmatter: FeatureFrontmatter
+  } | null>(null)
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -82,6 +91,7 @@ function App(): React.JSX.Element {
   useEffect(() => {
     const handleMessage = (event: MessageEvent<ExtensionMessage>) => {
       const message = event.data
+
       switch (message.type) {
         case 'init':
           setFeatures(message.features)
@@ -93,6 +103,13 @@ function App(): React.JSX.Element {
         case 'triggerCreateDialog':
           setCreateFeatureStatus('backlog')
           setCreateFeatureOpen(true)
+          break
+        case 'featureContent':
+          setEditingFeature({
+            id: message.featureId,
+            content: message.content,
+            frontmatter: message.frontmatter
+          })
           break
       }
     }
@@ -106,11 +123,26 @@ function App(): React.JSX.Element {
   }, [setFeatures, setColumns])
 
   const handleFeatureClick = (feature: Feature): void => {
-    // Open the markdown file directly
+    // Request feature content for inline editing
     vscode.postMessage({
-      type: 'openFeatureFile',
+      type: 'openFeature',
       featureId: feature.id
     })
+  }
+
+  const handleSaveFeature = (content: string, frontmatter: FeatureFrontmatter): void => {
+    if (!editingFeature) return
+    vscode.postMessage({
+      type: 'saveFeatureContent',
+      featureId: editingFeature.id,
+      content,
+      frontmatter
+    })
+  }
+
+  const handleCloseEditor = (): void => {
+    setEditingFeature(null)
+    vscode.postMessage({ type: 'closeFeature' })
   }
 
   const handleAddFeatureInColumn = (status: string): void => {
@@ -119,9 +151,9 @@ function App(): React.JSX.Element {
   }
 
   const handleCreateFeature = (data: {
-    title: string
     status: FeatureStatus
     priority: Priority
+    content: string
   }): void => {
     vscode.postMessage({
       type: 'createFeature',
@@ -158,12 +190,27 @@ function App(): React.JSX.Element {
   return (
     <div className="h-full w-full flex flex-col bg-[var(--vscode-editor-background)]">
       <Toolbar />
-      <KanbanBoard
-        onFeatureClick={handleFeatureClick}
-        onAddFeature={handleAddFeatureInColumn}
-        onMoveFeature={handleMoveFeature}
-        onQuickAdd={handleCreateFeature}
-      />
+      <div className="flex-1 flex overflow-hidden">
+        <div className={editingFeature ? 'w-1/2' : 'w-full'}>
+          <KanbanBoard
+            onFeatureClick={handleFeatureClick}
+            onAddFeature={handleAddFeatureInColumn}
+            onMoveFeature={handleMoveFeature}
+            onQuickAdd={handleCreateFeature}
+          />
+        </div>
+        {editingFeature && (
+          <div className="w-1/2">
+            <FeatureEditor
+              featureId={editingFeature.id}
+              content={editingFeature.content}
+              frontmatter={editingFeature.frontmatter}
+              onSave={handleSaveFeature}
+              onClose={handleCloseEditor}
+            />
+          </div>
+        )}
+      </div>
 
       <CreateFeatureDialog
         isOpen={createFeatureOpen}

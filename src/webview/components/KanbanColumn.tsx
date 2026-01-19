@@ -9,7 +9,7 @@ interface KanbanColumnProps {
   features: Feature[]
   onFeatureClick: (feature: Feature) => void
   onAddFeature: (status: string) => void
-  onQuickAdd: (data: { title: string; status: FeatureStatus; priority: Priority }) => void
+  onQuickAdd: (data: { status: FeatureStatus; priority: Priority; content: string }) => void
   onDragStart: (e: React.DragEvent, feature: Feature) => void
   onDragOver: (e: React.DragEvent) => void
   onDrop: (e: React.DragEvent, status: string) => void

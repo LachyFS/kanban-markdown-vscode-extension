@@ -1,13 +1,12 @@
 import * as vscode from 'vscode'
 import * as fs from 'fs'
 import * as path from 'path'
-import type { Feature, FeatureStatus, Priority, KanbanColumn } from '../shared/types'
+import type { Feature, FeatureStatus, Priority, KanbanColumn, FeatureFrontmatter } from '../shared/types'
 
 interface CreateFeatureData {
-  title: string
   status: FeatureStatus
   priority: Priority
-  content?: string
+  content: string
 }
 
 export class KanbanPanel {
@@ -91,8 +90,14 @@ export class KanbanPanel {
           case 'updateFeature':
             await this._updateFeature(message.featureId, message.updates)
             break
-          case 'openFeatureFile':
-            await this._openFeatureFile(message.featureId)
+          case 'openFeature':
+            await this._sendFeatureContent(message.featureId)
+            break
+          case 'saveFeatureContent':
+            await this._saveFeatureContent(message.featureId, message.content, message.frontmatter)
+            break
+          case 'closeFeature':
+            // Nothing to do on extension side
             break
         }
       },
@@ -162,7 +167,7 @@ export class KanbanPanel {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'nonce-${nonce}';">
   <link href="${styleUri}" rel="stylesheet">
   <title>Kanban Board</title>
 </head>
@@ -249,7 +254,6 @@ export class KanbanPanel {
 
     return {
       id: getValue('id') || path.basename(filePath, '.md'),
-      title: getValue('title'),
       status: (getValue('status') as FeatureStatus) || 'backlog',
       priority: (getValue('priority') as Priority) || 'medium',
       assignee: getValue('assignee') || null,
@@ -267,7 +271,6 @@ export class KanbanPanel {
     const frontmatter = [
       '---',
       `id: "${feature.id}"`,
-      `title: "${feature.title}"`,
       `status: "${feature.status}"`,
       `priority: "${feature.priority}"`,
       `assignee: ${feature.assignee ? `"${feature.assignee}"` : 'null'}`,
@@ -300,7 +303,6 @@ export class KanbanPanel {
 
     const feature: Feature = {
       id,
-      title: data.title,
       status: data.status,
       priority: data.priority,
       assignee: null,
@@ -309,7 +311,7 @@ export class KanbanPanel {
       modified: now,
       labels: [],
       order: featuresInStatus.length,
-      content: data.content || '',
+      content: data.content,
       filePath: path.join(featuresDir, `${id}.md`)
     }
 
@@ -362,12 +364,53 @@ export class KanbanPanel {
     this._sendFeaturesToWebview()
   }
 
-  private async _openFeatureFile(featureId: string): Promise<void> {
+  private async _sendFeatureContent(featureId: string): Promise<void> {
     const feature = this._features.find(f => f.id === featureId)
     if (!feature) return
 
-    const uri = vscode.Uri.file(feature.filePath)
-    await vscode.commands.executeCommand('vscode.openWith', uri, 'kanban-markdown.featureEditor')
+    const frontmatter: FeatureFrontmatter = {
+      id: feature.id,
+      status: feature.status,
+      priority: feature.priority,
+      assignee: feature.assignee,
+      dueDate: feature.dueDate,
+      created: feature.created,
+      modified: feature.modified,
+      labels: feature.labels,
+      order: feature.order
+    }
+
+    this._panel.webview.postMessage({
+      type: 'featureContent',
+      featureId: feature.id,
+      content: feature.content,
+      frontmatter
+    })
+  }
+
+  private async _saveFeatureContent(
+    featureId: string,
+    content: string,
+    frontmatter: FeatureFrontmatter
+  ): Promise<void> {
+    const feature = this._features.find(f => f.id === featureId)
+    if (!feature) return
+
+    // Update feature in memory
+    feature.content = content
+    feature.status = frontmatter.status
+    feature.priority = frontmatter.priority
+    feature.assignee = frontmatter.assignee
+    feature.dueDate = frontmatter.dueDate
+    feature.labels = frontmatter.labels
+    feature.modified = new Date().toISOString()
+
+    // Save to file
+    const fileContent = this._serializeFeature(feature)
+    await fs.promises.writeFile(feature.filePath, fileContent, 'utf-8')
+
+    // Update all features in webview
+    this._sendFeaturesToWebview()
   }
 
   private _sendFeaturesToWebview(): void {

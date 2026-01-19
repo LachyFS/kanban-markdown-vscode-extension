@@ -1,13 +1,79 @@
 import { useState, useEffect, useRef } from 'react'
-import { X } from 'lucide-react'
-import { useStore } from '../store'
+import { X, Plus, ChevronDown, Calendar, User } from 'lucide-react'
 import type { FeatureStatus, Priority } from '../../shared/types'
+import { cn } from '../lib/utils'
 
 interface CreateFeatureDialogProps {
   isOpen: boolean
   onClose: () => void
-  onCreate: (data: { title: string; status: FeatureStatus; priority: Priority; content?: string }) => void
+  onCreate: (data: { status: FeatureStatus; priority: Priority; content: string }) => void
   initialStatus?: FeatureStatus
+}
+
+const priorityLabels: Record<Priority, string> = {
+  critical: 'Critical',
+  high: 'High',
+  medium: 'Medium',
+  low: 'Low'
+}
+
+const statusLabels: Record<FeatureStatus, string> = {
+  backlog: 'Backlog',
+  todo: 'To Do',
+  'in-progress': 'In Progress',
+  review: 'Review',
+  done: 'Done'
+}
+
+const priorities: Priority[] = ['critical', 'high', 'medium', 'low']
+const statuses: FeatureStatus[] = ['backlog', 'todo', 'in-progress', 'review', 'done']
+
+interface DropdownProps {
+  value: string
+  options: { value: string; label: string }[]
+  onChange: (value: string) => void
+  className?: string
+}
+
+function Dropdown({ value, options, onChange, className }: DropdownProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const current = options.find(o => o.value === value)
+
+  return (
+    <div className={cn('relative', className)}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-1 px-2 py-1 text-xs rounded bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
+      >
+        <span>{current?.label}</span>
+        <ChevronDown size={12} />
+      </button>
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+          <div className="absolute top-full left-0 mt-1 z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md shadow-lg py-1 min-w-[120px]">
+            {options.map(option => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onChange(option.value)
+                  setIsOpen(false)
+                }}
+                className={cn(
+                  'w-full text-left px-3 py-1.5 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-700',
+                  option.value === value && 'bg-zinc-100 dark:bg-zinc-700'
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
 }
 
 export function CreateFeatureDialog({
@@ -20,9 +86,9 @@ export function CreateFeatureDialog({
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState<FeatureStatus>(initialStatus)
   const [priority, setPriority] = useState<Priority>('medium')
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  const columns = useStore((s) => s.columns)
+  const [assignee, setAssignee] = useState('')
+  const [dueDate, setDueDate] = useState('')
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     if (isOpen) {
@@ -30,7 +96,9 @@ export function CreateFeatureDialog({
       setDescription('')
       setStatus(initialStatus)
       setPriority('medium')
-      setTimeout(() => inputRef.current?.focus(), 0)
+      setAssignee('')
+      setDueDate('')
+      setTimeout(() => inputRef.current?.focus(), 50)
     }
   }, [isOpen, initialStatus])
 
@@ -39,137 +107,119 @@ export function CreateFeatureDialog({
       if (e.key === 'Escape') {
         onClose()
       }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && title.trim()) {
+        handleSubmit()
+      }
     }
 
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown)
       return () => document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [isOpen, onClose])
+  }, [isOpen, onClose, title])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = () => {
     if (!title.trim()) return
 
-    onCreate({ title: title.trim(), status, priority, content: description.trim() })
+    const content = `# ${title.trim()}${description.trim() ? '\n\n' + description.trim() : ''}`
+    onCreate({ status, priority, content })
     onClose()
   }
 
   if (!isOpen) return null
 
-  const priorities: Priority[] = ['critical', 'high', 'medium', 'low']
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-[var(--vscode-editor-background)] rounded-lg shadow-xl w-full max-w-md mx-4 border border-[var(--vscode-panel-border)]">
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+      <div className="relative h-full w-full max-w-lg bg-[var(--vscode-editor-background)] border-l border-zinc-200 dark:border-zinc-700 shadow-xl flex flex-col animate-in slide-in-from-right duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--vscode-panel-border)]">
-          <h2 className="text-lg font-semibold text-[var(--vscode-foreground)]">New Feature</h2>
-          <button
-            onClick={onClose}
-            className="p-1 rounded hover:bg-[var(--vscode-toolbar-hoverBackground)] text-[var(--vscode-foreground)]"
-          >
-            <X size={18} />
-          </button>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-mono text-zinc-500">NEW</span>
+            <h2 className="font-medium text-zinc-900 dark:text-zinc-100">
+              Create Feature
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleSubmit}
+              disabled={!title.trim()}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus size={14} />
+              Create
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1.5 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
-          {/* Title */}
-          <div>
-            <label className="block text-sm font-medium text-[var(--vscode-foreground)] mb-1">
-              Title
-            </label>
+        {/* Metadata bar */}
+        <div className="flex items-center gap-4 px-4 py-2 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
+          <Dropdown
+            value={status}
+            options={statuses.map(s => ({ value: s, label: statusLabels[s] }))}
+            onChange={(v) => setStatus(v as FeatureStatus)}
+          />
+          <Dropdown
+            value={priority}
+            options={priorities.map(p => ({ value: p, label: priorityLabels[p] }))}
+            onChange={(v) => setPriority(v as Priority)}
+          />
+          <div className="flex items-center gap-1 text-xs text-zinc-500">
+            <User size={12} />
             <input
-              ref={inputRef}
               type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter feature title..."
-              className="w-full px-3 py-2 text-sm bg-[var(--vscode-input-background)] border border-[var(--vscode-input-border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--vscode-focusBorder)] text-[var(--vscode-input-foreground)]"
+              value={assignee}
+              onChange={(e) => setAssignee(e.target.value)}
+              placeholder="Assignee"
+              className="bg-transparent border-none outline-none w-24 placeholder-zinc-400 text-zinc-600 dark:text-zinc-400"
             />
           </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-[var(--vscode-foreground)] mb-1">
-              Description <span className="text-[var(--vscode-descriptionForeground)] font-normal">(optional)</span>
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add a description..."
-              rows={3}
-              className="w-full px-3 py-2 text-sm bg-[var(--vscode-input-background)] border border-[var(--vscode-input-border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--vscode-focusBorder)] text-[var(--vscode-input-foreground)] resize-none"
+          <div className="flex items-center gap-1 text-xs text-zinc-500">
+            <Calendar size={12} />
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="bg-transparent border-none outline-none text-zinc-600 dark:text-zinc-400"
             />
           </div>
+        </div>
 
-          {/* Status */}
-          <div>
-            <label className="block text-sm font-medium text-[var(--vscode-foreground)] mb-1">
-              Status
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {columns.map((col) => (
-                <button
-                  key={col.id}
-                  type="button"
-                  onClick={() => setStatus(col.id as FeatureStatus)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border transition-colors ${
-                    status === col.id
-                      ? 'border-[var(--vscode-focusBorder)] bg-[var(--vscode-button-secondaryBackground)] text-[var(--vscode-button-secondaryForeground)]'
-                      : 'border-[var(--vscode-panel-border)] text-[var(--vscode-foreground)] hover:bg-[var(--vscode-toolbar-hoverBackground)]'
-                  }`}
-                >
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: col.color }} />
-                  {col.name}
-                </button>
-              ))}
-            </div>
-          </div>
+        {/* Content */}
+        <div className="flex-1 overflow-auto p-4">
+          <textarea
+            ref={inputRef}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Feature title..."
+            className="w-full text-lg font-medium bg-transparent border-none outline-none resize-none text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 mb-4"
+            rows={1}
+            onInput={(e) => {
+              const target = e.target as HTMLTextAreaElement
+              target.style.height = 'auto'
+              target.style.height = target.scrollHeight + 'px'
+            }}
+          />
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Add a description..."
+            className="w-full text-sm bg-transparent border-none outline-none resize-none text-zinc-600 dark:text-zinc-400 placeholder-zinc-400 min-h-[200px]"
+          />
+        </div>
 
-          {/* Priority */}
-          <div>
-            <label className="block text-sm font-medium text-[var(--vscode-foreground)] mb-1">
-              Priority
-            </label>
-            <div className="flex gap-2">
-              {priorities.map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPriority(p)}
-                  className={`px-3 py-1.5 text-sm rounded-md border capitalize transition-colors ${
-                    priority === p
-                      ? 'border-[var(--vscode-focusBorder)] bg-[var(--vscode-button-secondaryBackground)] text-[var(--vscode-button-secondaryForeground)]'
-                      : 'border-[var(--vscode-panel-border)] text-[var(--vscode-foreground)] hover:bg-[var(--vscode-toolbar-hoverBackground)]'
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-[var(--vscode-foreground)] hover:bg-[var(--vscode-toolbar-hoverBackground)] rounded-md transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!title.trim()}
-              className="px-4 py-2 text-sm font-medium bg-[var(--vscode-button-background)] text-[var(--vscode-button-foreground)] rounded-md hover:bg-[var(--vscode-button-hoverBackground)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Create Feature
-            </button>
-          </div>
-        </form>
+        {/* Footer hint */}
+        <div className="px-4 py-2 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
+          <p className="text-xs text-zinc-500">
+            Press <kbd className="px-1.5 py-0.5 bg-zinc-200 dark:bg-zinc-700 rounded text-[10px] font-mono">⌘ Enter</kbd> to create
+          </p>
+        </div>
       </div>
     </div>
   )

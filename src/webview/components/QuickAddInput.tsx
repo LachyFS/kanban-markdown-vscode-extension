@@ -4,7 +4,7 @@ import type { FeatureStatus, Priority } from '../../shared/types'
 
 interface QuickAddInputProps {
   status: FeatureStatus
-  onAdd: (data: { title: string; status: FeatureStatus; priority: Priority }) => void
+  onAdd: (data: { status: FeatureStatus; priority: Priority; content: string }) => void
 }
 
 export function QuickAddInput({ status, onAdd }: QuickAddInputProps) {
@@ -21,10 +21,12 @@ export function QuickAddInput({ status, onAdd }: QuickAddInputProps) {
   const handleSubmit = () => {
     const title = value.trim()
     if (title) {
+      // Build content with title as first # heading
+      const content = `# ${title}`
       onAdd({
-        title,
         status,
-        priority: 'medium'
+        priority: 'medium',
+        content
       })
       setValue('')
     }

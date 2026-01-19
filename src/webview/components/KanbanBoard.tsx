@@ -7,7 +7,7 @@ interface KanbanBoardProps {
   onFeatureClick: (feature: Feature) => void
   onAddFeature: (status: string) => void
   onMoveFeature: (featureId: string, newStatus: string, newOrder: number) => void
-  onQuickAdd: (data: { title: string; status: FeatureStatus; priority: Priority }) => void
+  onQuickAdd: (data: { status: FeatureStatus; priority: Priority; content: string }) => void
 }
 
 export function KanbanBoard({ onFeatureClick, onAddFeature, onMoveFeature, onQuickAdd }: KanbanBoardProps) {

@@ -91,11 +91,15 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
           const fullText = this._currentDocument.getText()
           const { frontmatter: fm, content: docContent } = this._parseDocument(fullText)
 
+          // Parse title from the first # heading in content
+          const titleMatch = docContent.match(/^#\s+(.+)$/m)
+          const title = titleMatch ? titleMatch[1].trim() : 'Untitled'
+
           const labels = fm.labels.length > 0 ? ` [${fm.labels.join(', ')}]` : ''
           const description = docContent.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()
           const shortDesc = description.length > 200 ? description.substring(0, 200) + '...' : description
 
-          const prompt = `Implement this feature: "${fm.title}" (${fm.priority} priority)${labels}. ${shortDesc} See full details in: ${this._currentDocument.uri.fsPath}`
+          const prompt = `Implement this feature: "${title}" (${fm.priority} priority)${labels}. ${shortDesc} See full details in: ${this._currentDocument.uri.fsPath}`
 
           const agent = message.agent || 'claude'
           const permissionMode = message.permissionMode || 'default'
@@ -248,7 +252,6 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
 
     const frontmatter: FeatureFrontmatter = {
       id: getValue('id') || 'unknown',
-      title: getValue('title') || 'Untitled',
       status: (getValue('status') as FeatureStatus) || 'backlog',
       priority: (getValue('priority') as Priority) || 'medium',
       assignee: getValue('assignee') || null,
@@ -266,7 +269,6 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
     const now = new Date().toISOString()
     return {
       id: 'unknown',
-      title: 'Untitled',
       status: 'backlog',
       priority: 'medium',
       assignee: null,
@@ -287,7 +289,6 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
     const frontmatterLines = [
       '---',
       `id: "${updatedFrontmatter.id}"`,
-      `title: "${updatedFrontmatter.title}"`,
       `status: "${updatedFrontmatter.status}"`,
       `priority: "${updatedFrontmatter.priority}"`,
       `assignee: ${updatedFrontmatter.assignee ? `"${updatedFrontmatter.assignee}"` : 'null'}`,

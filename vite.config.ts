@@ -10,8 +10,7 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        index: resolve(__dirname, 'src/webview/main.tsx'),
-        editor: resolve(__dirname, 'src/webview/editor/main.tsx')
+        index: resolve(__dirname, 'src/webview/main.tsx')
       },
       output: {
         entryFileNames: '[name].js',

@@ -1,4 +1,5 @@
 import { Calendar, User } from 'lucide-react'
+import { getTitleFromContent } from '../../shared/types'
 import type { Feature, Priority } from '../../shared/types'
 
 interface FeatureCardProps {
@@ -22,6 +23,8 @@ const priorityLabels: Record<Priority, string> = {
 }
 
 export function FeatureCard({ feature, onClick, isDragging }: FeatureCardProps) {
+  const title = getTitleFromContent(feature.content)
+
   const formatDueDate = (dateStr: string | null) => {
     if (!dateStr) return null
     const date = new Date(dateStr)
@@ -61,7 +64,7 @@ export function FeatureCard({ feature, onClick, isDragging }: FeatureCardProps) 
 
       {/* Title */}
       <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-2 line-clamp-2">
-        {feature.title}
+        {title}
       </h3>
 
       {/* Labels */}

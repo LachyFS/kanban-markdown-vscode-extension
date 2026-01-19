@@ -5,7 +5,6 @@ export type FeatureStatus = 'backlog' | 'todo' | 'in-progress' | 'review' | 'don
 
 export interface Feature {
   id: string
-  title: string
   status: FeatureStatus
   priority: Priority
   assignee: string | null
@@ -16,6 +15,12 @@ export interface Feature {
   order: number
   content: string
   filePath: string
+}
+
+// Parse title from the first # heading in markdown content
+export function getTitleFromContent(content: string): string {
+  const match = content.match(/^#\s+(.+)$/m)
+  return match ? match[1].trim() : 'Untitled'
 }
 
 export interface KanbanColumn {
@@ -37,11 +42,27 @@ export type ExtensionMessage =
   | { type: 'init'; features: Feature[]; columns: KanbanColumn[] }
   | { type: 'featuresUpdated'; features: Feature[] }
   | { type: 'triggerCreateDialog' }
+  | { type: 'featureContent'; featureId: string; content: string; frontmatter: FeatureFrontmatter }
+
+// Frontmatter for editing
+export interface FeatureFrontmatter {
+  id: string
+  status: FeatureStatus
+  priority: Priority
+  assignee: string | null
+  dueDate: string | null
+  created: string
+  modified: string
+  labels: string[]
+  order: number
+}
 
 export type WebviewMessage =
   | { type: 'ready' }
-  | { type: 'createFeature'; data: { title: string; status: FeatureStatus; priority: Priority; content?: string } }
+  | { type: 'createFeature'; data: { status: FeatureStatus; priority: Priority; content: string } }
   | { type: 'moveFeature'; featureId: string; newStatus: string; newOrder: number }
   | { type: 'deleteFeature'; featureId: string }
   | { type: 'updateFeature'; featureId: string; updates: Partial<Feature> }
-  | { type: 'openFeatureFile'; featureId: string }
+  | { type: 'openFeature'; featureId: string }
+  | { type: 'saveFeatureContent'; featureId: string; content: string; frontmatter: FeatureFrontmatter }
+  | { type: 'closeFeature' }

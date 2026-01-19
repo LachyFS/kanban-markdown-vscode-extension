@@ -173,7 +173,6 @@ export const useStore = create<KanbanState>((set, get) => ({
         if (searchQuery) {
           const query = searchQuery.toLowerCase()
           return (
-            f.title.toLowerCase().includes(query) ||
             f.content.toLowerCase().includes(query) ||
             f.id.toLowerCase().includes(query) ||
             (f.assignee && f.assignee.toLowerCase().includes(query)) ||
