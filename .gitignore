@@ -7,3 +7,4 @@ out
 test-project
 .devtools
 releases/
+.claude/
