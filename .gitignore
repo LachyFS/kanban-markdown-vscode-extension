@@ -5,6 +5,6 @@ out
 .eslintcache
 *.log*
 test-project
-.devtools
+.devtools/
 releases/
 .claude/
