@@ -7,12 +7,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kanban-markdown/kanban-markdown-vscode"
+    "url": "https://github.com/LachyFS/kaban-markdown-vscode-extension"
   },
   "bugs": {
-    "url": "https://github.com/kanban-markdown/kanban-markdown-vscode/issues"
+    "url": "https://github.com/LachyFS/kaban-markdown-vscode-extension/issues"
   },
-  "homepage": "https://github.com/kanban-markdown/kanban-markdown-vscode#readme",
+  "homepage": "https://github.com/LachyFS/kaban-markdown-vscode-extension#readme",
   "icon": "resources/icon.png",
   "galleryBanner": {
     "color": "#1e1e1e",

@@ -2,7 +2,8 @@
 
 A VSCode/Cursor extension that brings a full-featured kanban board directly into your editor. Features are stored as human-readable markdown files, making them version-controllable and easy to edit outside the board.
 
-![VSCode](https://img.shields.io/badge/VSCode-1.85+-blue?logo=visualstudiocode)
+[![VS Marketplace](https://img.shields.io/visual-studio-marketplace/v/LachyFS.kanban-markdown?label=VS%20Marketplace&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=LachyFS.kanban-markdown)
+[![Open VSX](https://img.shields.io/open-vsx/v/LachyFS/kanban-markdown?label=Open%20VSX&logo=vscodium)](https://open-vsx.org/extension/LachyFS/kanban-markdown)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Features
@@ -33,13 +34,16 @@ A VSCode/Cursor extension that brings a full-featured kanban board directly into
 
 ## Installation
 
-### From VSIX (Local)
-1. Build the extension (see Development below)
-2. In VSCode: Extensions > `...` > Install from VSIX
-3. Select the generated `.vsix` file
+### VS Code Marketplace
+Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=LachyFS.kanban-markdown) or search for "Kanban Markdown" in the Extensions view.
 
-### From Marketplace
-*Coming soon*
+### Open VSX (VSCodium, Cursor, etc.)
+Install from [Open VSX](https://open-vsx.org/extension/LachyFS/kanban-markdown) or search for "Kanban Markdown" in the Extensions view.
+
+### From VSIX (Manual)
+1. Download the `.vsix` file from the releases
+2. In VSCode: Extensions > `...` > Install from VSIX
+3. Select the downloaded file
 
 ## Usage
 
