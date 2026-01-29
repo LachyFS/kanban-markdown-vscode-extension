@@ -197,7 +197,9 @@ export class KanbanPanel {
     if (!workspaceFolders || workspaceFolders.length === 0) {
       return null
     }
-    return path.join(workspaceFolders[0].uri.fsPath, '.devtool', 'features')
+    const config = vscode.workspace.getConfiguration('kanban-markdown')
+    const featuresDirectory = config.get<string>('featuresDirectory') || '.devtool/features'
+    return path.join(workspaceFolders[0].uri.fsPath, featuresDirectory)
   }
 
   private async _ensureFeaturesDir(): Promise<string | null> {
