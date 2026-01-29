@@ -4,7 +4,6 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Markdown } from 'tiptap-markdown'
 import { X, Save, Calendar, User, ChevronDown, Wand2 } from 'lucide-react'
-import { getTitleFromContent } from '../../shared/types'
 import type { FeatureFrontmatter, Priority, FeatureStatus } from '../../shared/types'
 import { cn } from '../lib/utils'
 
@@ -265,18 +264,12 @@ export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleSave, onClose, onStartWithAI])
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const title = editor ? getTitleFromContent((editor.storage as any).markdown.getMarkdown()) : getTitleFromContent(content)
-
   return (
     <div className="h-full flex flex-col bg-[var(--vscode-editor-background)] border-l border-zinc-200 dark:border-zinc-700">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
         <div className="flex items-center gap-3">
           <span className="text-xs font-mono text-zinc-500">{featureId}</span>
-          <h2 className="font-medium text-zinc-900 dark:text-zinc-100 truncate max-w-[300px]">
-            {title || 'Untitled'}
-          </h2>
           {isDirty && (
             <span className="text-xs text-orange-500">Unsaved</span>
           )}

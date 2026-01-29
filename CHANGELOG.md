@@ -5,9 +5,7 @@ All notable changes to the Kanban Markdown extension will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-## [0.1.3] - 2026-01-29
+## [0.1.4] - 2026-01-29
 
 ### Added
 - Pressing `enter` in the title input field moves cursor to the description textarea, `shift-enter` creates a new line
@@ -16,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Prevent opening new feature panel when editing an existing feature with `n` hotkey
 - Use `resourceLangId` instead of hardcoded path for kanban-markdown command
 - Remove hardcoded devtool resource path for `editor/title/run` menu item
+- Removed redundant tile heading in edit view UI, (title is already visible in markdown editor)
 
 ## [0.1.1] - 2026-01-28
 
