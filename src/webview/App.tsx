@@ -61,6 +61,9 @@ function App(): React.JSX.Element {
 
       switch (e.key) {
         case 'n':
+          if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) {
+            return
+          }
           // Don't open new feature panel if editing an existing feature
           if (editingFeature) {
             return
