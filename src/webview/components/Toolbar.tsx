@@ -38,7 +38,8 @@ export function Toolbar() {
     getUniqueLabels,
     hasActiveFilters,
     layout,
-    toggleLayout
+    toggleLayout,
+    cardSettings
   } = useStore()
 
   const assignees = getUniqueAssignees()
@@ -63,32 +64,36 @@ export function Toolbar() {
       </div>
 
       {/* Priority Filter */}
-      <select
-        value={priorityFilter}
-        onChange={(e) => setPriorityFilter(e.target.value as Priority | 'all')}
-        className={selectClassName}
-      >
-        {priorities.map((p) => (
-          <option key={p.value} value={p.value}>
-            {p.label}
-          </option>
-        ))}
-      </select>
+      {cardSettings.showPriorityBadges && (
+        <select
+          value={priorityFilter}
+          onChange={(e) => setPriorityFilter(e.target.value as Priority | 'all')}
+          className={selectClassName}
+        >
+          {priorities.map((p) => (
+            <option key={p.value} value={p.value}>
+              {p.label}
+            </option>
+          ))}
+        </select>
+      )}
 
       {/* Assignee Filter */}
-      <select
-        value={assigneeFilter}
-        onChange={(e) => setAssigneeFilter(e.target.value)}
-        className={selectClassName}
-      >
-        <option value="all">All Assignees</option>
-        <option value="unassigned">Unassigned</option>
-        {assignees.map((a) => (
-          <option key={a} value={a}>
-            {a}
-          </option>
-        ))}
-      </select>
+      {cardSettings.showAssignee && (
+        <select
+          value={assigneeFilter}
+          onChange={(e) => setAssigneeFilter(e.target.value)}
+          className={selectClassName}
+        >
+          <option value="all">All Assignees</option>
+          <option value="unassigned">Unassigned</option>
+          {assignees.map((a) => (
+            <option key={a} value={a}>
+              {a}
+            </option>
+          ))}
+        </select>
+      )}
 
       {/* Label Filter */}
       <select
@@ -105,17 +110,19 @@ export function Toolbar() {
       </select>
 
       {/* Due Date Filter */}
-      <select
-        value={dueDateFilter}
-        onChange={(e) => setDueDateFilter(e.target.value as DueDateFilter)}
-        className={selectClassName}
-      >
-        {dueDateOptions.map((d) => (
-          <option key={d.value} value={d.value}>
-            {d.label}
-          </option>
-        ))}
-      </select>
+      {cardSettings.showDueDate && (
+        <select
+          value={dueDateFilter}
+          onChange={(e) => setDueDateFilter(e.target.value as DueDateFilter)}
+          className={selectClassName}
+        >
+          {dueDateOptions.map((d) => (
+            <option key={d.value} value={d.value}>
+              {d.label}
+            </option>
+          ))}
+        </select>
+      )}
 
       {/* Clear Filters Button */}
       {filtersActive && (

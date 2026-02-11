@@ -1,11 +1,12 @@
-import { useEffect, useCallback, useState } from 'react'
+import { useEffect, useCallback, useState, useRef } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Markdown } from 'tiptap-markdown'
-import { X, Save, Calendar, User, ChevronDown, Wand2 } from 'lucide-react'
+import { X, Calendar, User, ChevronDown, Wand2, Tag, Plus } from 'lucide-react'
 import type { FeatureFrontmatter, Priority, FeatureStatus } from '../../shared/types'
 import { cn } from '../lib/utils'
+import { useStore } from '../store'
 
 type AIAgent = 'claude' | 'codex' | 'opencode'
 type PermissionMode = 'default' | 'plan' | 'acceptEdits' | 'bypassPermissions'
@@ -45,21 +46,21 @@ const aiAgentTabs: { agent: AIAgent; label: string; color: string; activeColor: 
 
 const agentButtonColors: Record<AIAgent, { bg: string; hover: string; shadow: string; border: string }> = {
   claude: {
-    bg: 'bg-gradient-to-b from-amber-600 to-amber-800',
-    hover: 'hover:from-amber-700 hover:to-amber-900',
-    shadow: 'shadow-[0_2px_8px_-2px_rgba(180,83,9,0.5),inset_0_1px_0_rgba(255,255,255,0.15)]',
-    border: 'border border-amber-900/50'
+    bg: 'bg-amber-700',
+    hover: 'hover:bg-amber-800',
+    shadow: 'shadow-sm',
+    border: 'border border-amber-800/50'
   },
   codex: {
-    bg: 'bg-gradient-to-b from-emerald-400 to-emerald-600',
-    hover: 'hover:from-emerald-500 hover:to-emerald-700',
-    shadow: 'shadow-[0_2px_8px_-2px_rgba(16,185,129,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]',
+    bg: 'bg-emerald-600',
+    hover: 'hover:bg-emerald-700',
+    shadow: 'shadow-sm',
     border: 'border border-emerald-700/50'
   },
   opencode: {
-    bg: 'bg-gradient-to-b from-slate-400 to-slate-600',
-    hover: 'hover:from-slate-500 hover:to-slate-700',
-    shadow: 'shadow-[0_2px_8px_-2px_rgba(100,116,139,0.5),inset_0_1px_0_rgba(255,255,255,0.15)]',
+    bg: 'bg-slate-600',
+    hover: 'hover:bg-slate-700',
+    shadow: 'shadow-sm',
     border: 'border border-slate-700/50'
   },
 }
@@ -143,18 +144,17 @@ function AIDropdown({ onSelect }: AIDropdownProps) {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white rounded-md transition-all',
+          'flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-white rounded-md transition-colors',
           buttonColors.bg,
           buttonColors.hover,
           buttonColors.shadow,
-          buttonColors.border,
-          'active:scale-[0.98] active:shadow-none'
+          buttonColors.border
         )}
       >
-        <Wand2 size={14} />
-        Build with AI
-        <span className="ml-1 text-[10px] opacity-70">⌘B</span>
-        <ChevronDown size={12} className={cn('transition-transform', isOpen && 'rotate-180')} />
+        <Wand2 size={13} />
+        <span>Build with AI</span>
+        <kbd className="ml-0.5 text-[9px] opacity-60 font-mono">⌘B</kbd>
+        <ChevronDown size={11} className={cn('ml-0.5 opacity-60 transition-transform', isOpen && 'rotate-180')} />
       </button>
       {isOpen && (
         <>
@@ -200,9 +200,78 @@ function AIDropdown({ onSelect }: AIDropdownProps) {
   )
 }
 
+function LabelEditor({ labels, onChange }: { labels: string[]; onChange: (labels: string[]) => void }) {
+  const [isAdding, setIsAdding] = useState(false)
+  const [newLabel, setNewLabel] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (isAdding && inputRef.current) inputRef.current.focus()
+  }, [isAdding])
+
+  const addLabel = () => {
+    const label = newLabel.trim()
+    if (label && !labels.includes(label)) {
+      onChange([...labels, label])
+    }
+    setNewLabel('')
+    setIsAdding(false)
+  }
+
+  const removeLabel = (label: string) => {
+    onChange(labels.filter(l => l !== label))
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      <Tag size={12} className="text-zinc-400 shrink-0" />
+      {labels.map(label => (
+        <span
+          key={label}
+          className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium bg-zinc-200 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-300 rounded"
+        >
+          {label}
+          <button
+            onClick={() => removeLabel(label)}
+            className="hover:text-red-500 transition-colors"
+          >
+            <X size={10} />
+          </button>
+        </span>
+      ))}
+      {isAdding ? (
+        <input
+          ref={inputRef}
+          type="text"
+          value={newLabel}
+          onChange={(e) => setNewLabel(e.target.value)}
+          onBlur={addLabel}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') addLabel()
+            if (e.key === 'Escape') { setNewLabel(''); setIsAdding(false) }
+          }}
+          placeholder="Label..."
+          className="w-16 px-1 py-0.5 text-[10px] bg-transparent border border-zinc-300 dark:border-zinc-600 rounded outline-none focus:border-blue-500 text-zinc-700 dark:text-zinc-300 placeholder-zinc-400"
+        />
+      ) : (
+        <button
+          onClick={() => setIsAdding(true)}
+          className="inline-flex items-center gap-0.5 px-1 py-0.5 text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded transition-colors"
+        >
+          <Plus size={10} />
+        </button>
+      )}
+    </div>
+  )
+}
+
 export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose, onStartWithAI }: FeatureEditorProps) {
+  const { cardSettings } = useStore()
   const [currentFrontmatter, setCurrentFrontmatter] = useState(frontmatter)
-  const [isDirty, setIsDirty] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isInitialLoad = useRef(true)
+  const currentFrontmatterRef = useRef(currentFrontmatter)
+  currentFrontmatterRef.current = currentFrontmatter
 
   const editor = useEditor({
     extensions: [
@@ -216,14 +285,38 @@ export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose
         class: 'prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[200px] p-4'
       }
     },
-    onUpdate: () => setIsDirty(true)
+    onUpdate: ({ editor: ed }) => {
+      if (isInitialLoad.current) return
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      debounceRef.current = setTimeout(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const markdown = (ed.storage as any).markdown.getMarkdown()
+        onSave(markdown, currentFrontmatterRef.current)
+      }, 800)
+    }
   })
+
+  const save = useCallback(() => {
+    if (!editor) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const markdown = (editor.storage as any).markdown.getMarkdown()
+    onSave(markdown, currentFrontmatter)
+  }, [editor, currentFrontmatter, onSave])
+
+  // Clean up debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [])
 
   // Set content when editor is ready
   useEffect(() => {
     if (editor && content) {
+      isInitialLoad.current = true
       editor.commands.setContent(content)
-      setIsDirty(false)
+      // Allow a tick for the onUpdate from setContent to fire, then re-enable
+      requestAnimationFrame(() => { isInitialLoad.current = false })
     }
   }, [editor, content])
 
@@ -232,37 +325,46 @@ export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose
     setCurrentFrontmatter(frontmatter)
   }, [frontmatter])
 
-  const handleSave = useCallback(() => {
-    if (!editor) return
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const markdown = (editor.storage as any).markdown.getMarkdown()
-    onSave(markdown, currentFrontmatter)
-    setIsDirty(false)
-  }, [editor, currentFrontmatter, onSave])
-
   const handleFrontmatterUpdate = useCallback((updates: Partial<FeatureFrontmatter>) => {
-    setCurrentFrontmatter(prev => ({ ...prev, ...updates }))
-    setIsDirty(true)
-  }, [])
+    setCurrentFrontmatter(prev => {
+      const next = { ...prev, ...updates }
+      // Schedule a save with the updated frontmatter
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      debounceRef.current = setTimeout(() => {
+        if (!editor) return
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const markdown = (editor.storage as any).markdown.getMarkdown()
+        onSave(markdown, next)
+      }, 800)
+      return next
+    })
+  }, [editor, onSave])
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault()
-        handleSave()
+        // Flush any pending debounce and save immediately
+        if (debounceRef.current) clearTimeout(debounceRef.current)
+        save()
       }
       if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
         e.preventDefault()
         onStartWithAI('claude', 'default')
       }
       if (e.key === 'Escape') {
+        // Flush any pending save before closing
+        if (debounceRef.current) {
+          clearTimeout(debounceRef.current)
+          save()
+        }
         onClose()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleSave, onClose, onStartWithAI])
+  }, [save, onClose, onStartWithAI])
 
   return (
     <div className="h-full flex flex-col bg-[var(--vscode-editor-background)] border-l border-zinc-200 dark:border-zinc-700">
@@ -270,19 +372,9 @@ export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose
       <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
         <div className="flex items-center gap-3">
           <span className="text-xs font-mono text-zinc-500">{featureId}</span>
-          {isDirty && (
-            <span className="text-xs text-orange-500">Unsaved</span>
-          )}
         </div>
         <div className="flex items-center gap-2">
           <AIDropdown onSelect={onStartWithAI} />
-          <button
-            onClick={handleSave}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
-          >
-            <Save size={14} />
-            Save
-          </button>
           <button
             onClick={onClose}
             className="p-1.5 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
@@ -293,36 +385,46 @@ export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose
       </div>
 
       {/* Metadata bar */}
-      <div className="flex items-center gap-4 px-4 py-2 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
+      <div className="flex items-center gap-4 px-4 py-2 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 flex-wrap">
         <Dropdown
           value={currentFrontmatter.status}
           options={statuses.map(s => ({ value: s, label: statusLabels[s] }))}
           onChange={(v) => handleFrontmatterUpdate({ status: v as FeatureStatus })}
         />
-        <Dropdown
-          value={currentFrontmatter.priority}
-          options={priorities.map(p => ({ value: p, label: priorityLabels[p] }))}
-          onChange={(v) => handleFrontmatterUpdate({ priority: v as Priority })}
+        {cardSettings.showPriorityBadges && (
+          <Dropdown
+            value={currentFrontmatter.priority}
+            options={priorities.map(p => ({ value: p, label: priorityLabels[p] }))}
+            onChange={(v) => handleFrontmatterUpdate({ priority: v as Priority })}
+          />
+        )}
+        {cardSettings.showAssignee && (
+          <div className="flex items-center gap-1 text-xs text-zinc-500">
+            <User size={12} />
+            <input
+              type="text"
+              value={currentFrontmatter.assignee || ''}
+              onChange={(e) => handleFrontmatterUpdate({ assignee: e.target.value || null })}
+              placeholder="Assignee"
+              className="bg-transparent border-none outline-none w-24 placeholder-zinc-400"
+            />
+          </div>
+        )}
+        {cardSettings.showDueDate && (
+          <div className="flex items-center gap-1 text-xs text-zinc-500">
+            <Calendar size={12} />
+            <input
+              type="date"
+              value={currentFrontmatter.dueDate || ''}
+              onChange={(e) => handleFrontmatterUpdate({ dueDate: e.target.value || null })}
+              className="bg-transparent border-none outline-none text-zinc-600 dark:text-zinc-400"
+            />
+          </div>
+        )}
+        <LabelEditor
+          labels={currentFrontmatter.labels}
+          onChange={(labels) => handleFrontmatterUpdate({ labels })}
         />
-        <div className="flex items-center gap-1 text-xs text-zinc-500">
-          <User size={12} />
-          <input
-            type="text"
-            value={currentFrontmatter.assignee || ''}
-            onChange={(e) => handleFrontmatterUpdate({ assignee: e.target.value || null })}
-            placeholder="Assignee"
-            className="bg-transparent border-none outline-none w-24 placeholder-zinc-400"
-          />
-        </div>
-        <div className="flex items-center gap-1 text-xs text-zinc-500">
-          <Calendar size={12} />
-          <input
-            type="date"
-            value={currentFrontmatter.dueDate || ''}
-            onChange={(e) => handleFrontmatterUpdate({ dueDate: e.target.value || null })}
-            className="bg-transparent border-none outline-none text-zinc-600 dark:text-zinc-400"
-          />
-        </div>
       </div>
 
       {/* Editor */}

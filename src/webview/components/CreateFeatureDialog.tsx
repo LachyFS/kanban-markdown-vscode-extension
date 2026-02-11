@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Plus, ChevronDown, Calendar, User } from 'lucide-react'
+import { X, ChevronDown, Calendar, User } from 'lucide-react'
 import type { FeatureStatus, Priority } from '../../shared/types'
 import { useStore } from '../store'
 import { cn } from '../lib/utils'
@@ -110,16 +110,21 @@ function CreateFeatureDialogContent({
 
     const content = `# ${title.trim()}${description.trim() ? '\n\n' + description.trim() : ''}`
     onCreate({ status, priority, content })
+  }
+
+  // Save and close: creates the feature if there's a title, then closes
+  const handleClose = () => {
+    handleSubmit()
     onClose()
   }
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose()
+        handleClose()
       }
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && title.trim()) {
-        handleSubmit()
+        handleClose()
       }
     }
 
@@ -131,7 +136,7 @@ function CreateFeatureDialogContent({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
-      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/30" onClick={handleClose} />
       <div className="relative h-full w-full max-w-lg bg-[var(--vscode-editor-background)] border-l border-zinc-200 dark:border-zinc-700 shadow-xl flex flex-col animate-in slide-in-from-right duration-200">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
@@ -143,15 +148,7 @@ function CreateFeatureDialogContent({
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={handleSubmit}
-              disabled={!title.trim()}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Plus size={14} />
-              Create
-            </button>
-            <button
-              onClick={onClose}
+              onClick={handleClose}
               className="p-1.5 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
             >
               <X size={18} />
@@ -166,30 +163,36 @@ function CreateFeatureDialogContent({
             options={statuses.map(s => ({ value: s, label: statusLabels[s] }))}
             onChange={(v) => setStatus(v as FeatureStatus)}
           />
-          <Dropdown
-            value={priority}
-            options={priorities.map(p => ({ value: p, label: priorityLabels[p] }))}
-            onChange={(v) => setPriority(v as Priority)}
-          />
-          <div className="flex items-center gap-1 text-xs text-zinc-500">
-            <User size={12} />
-            <input
-              type="text"
-              value={assignee}
-              onChange={(e) => setAssignee(e.target.value)}
-              placeholder="Assignee"
-              className="bg-transparent border-none outline-none w-24 placeholder-zinc-400 text-zinc-600 dark:text-zinc-400"
+          {cardSettings.showPriorityBadges && (
+            <Dropdown
+              value={priority}
+              options={priorities.map(p => ({ value: p, label: priorityLabels[p] }))}
+              onChange={(v) => setPriority(v as Priority)}
             />
-          </div>
-          <div className="flex items-center gap-1 text-xs text-zinc-500">
-            <Calendar size={12} />
-            <input
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              className="bg-transparent border-none outline-none text-zinc-600 dark:text-zinc-400"
-            />
-          </div>
+          )}
+          {cardSettings.showAssignee && (
+            <div className="flex items-center gap-1 text-xs text-zinc-500">
+              <User size={12} />
+              <input
+                type="text"
+                value={assignee}
+                onChange={(e) => setAssignee(e.target.value)}
+                placeholder="Assignee"
+                className="bg-transparent border-none outline-none w-24 placeholder-zinc-400 text-zinc-600 dark:text-zinc-400"
+              />
+            </div>
+          )}
+          {cardSettings.showDueDate && (
+            <div className="flex items-center gap-1 text-xs text-zinc-500">
+              <Calendar size={12} />
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="bg-transparent border-none outline-none text-zinc-600 dark:text-zinc-400"
+              />
+            </div>
+          )}
         </div>
 
         {/* Content */}
@@ -225,7 +228,7 @@ function CreateFeatureDialogContent({
         {/* Footer hint */}
         <div className="px-4 py-2 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
           <p className="text-xs text-zinc-500">
-            Press <kbd className="px-1.5 py-0.5 bg-zinc-200 dark:bg-zinc-700 rounded text-[10px] font-mono">⌘ Enter</kbd> to create
+            Auto-saves on close · <kbd className="px-1.5 py-0.5 bg-zinc-200 dark:bg-zinc-700 rounded text-[10px] font-mono">Esc</kbd> or <kbd className="px-1.5 py-0.5 bg-zinc-200 dark:bg-zinc-700 rounded text-[10px] font-mono">⌘ Enter</kbd> to save &amp; close
           </p>
         </div>
       </div>
