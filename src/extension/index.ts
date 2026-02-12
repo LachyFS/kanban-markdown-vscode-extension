@@ -90,7 +90,7 @@ async function createFeatureFromPrompts(): Promise<void> {
   }
 
   const fileContent = serializeFeature(feature)
-  await vscode.workspace.fs.writeFile(vscode.Uri.file(feature.filePath), Buffer.from(fileContent, 'utf-8'))
+  await vscode.workspace.fs.writeFile(vscode.Uri.file(feature.filePath), new TextEncoder().encode(fileContent))
 
   // Open the created file
   const document = await vscode.workspace.openTextDocument(feature.filePath)

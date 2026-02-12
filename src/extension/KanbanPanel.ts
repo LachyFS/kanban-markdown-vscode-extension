@@ -427,7 +427,7 @@ export class KanbanPanel {
 
     await vscode.workspace.fs.createDirectory(vscode.Uri.file(path.dirname(feature.filePath)))
     const content = this._serializeFeature(feature)
-    await vscode.workspace.fs.writeFile(vscode.Uri.file(feature.filePath), Buffer.from(content, 'utf-8'))
+    await vscode.workspace.fs.writeFile(vscode.Uri.file(feature.filePath), new TextEncoder().encode(content))
 
     this._features.push(feature)
     this._sendFeaturesToWebview()
@@ -488,7 +488,7 @@ export class KanbanPanel {
     // Write all modified features to disk
     for (const f of filesToWrite) {
       const content = this._serializeFeature(f)
-      await vscode.workspace.fs.writeFile(vscode.Uri.file(f.filePath), Buffer.from(content, 'utf-8'))
+      await vscode.workspace.fs.writeFile(vscode.Uri.file(f.filePath), new TextEncoder().encode(content))
     }
 
     // Move file to new subfolder if status changed
@@ -535,7 +535,7 @@ export class KanbanPanel {
 
     // Persist to file
     const content = this._serializeFeature(feature)
-    await vscode.workspace.fs.writeFile(vscode.Uri.file(feature.filePath), Buffer.from(content, 'utf-8'))
+    await vscode.workspace.fs.writeFile(vscode.Uri.file(feature.filePath), new TextEncoder().encode(content))
 
     if (oldStatus !== feature.status) {
       this._migrating = true
@@ -602,7 +602,7 @@ export class KanbanPanel {
 
     // Save to file
     const fileContent = this._serializeFeature(feature)
-    await vscode.workspace.fs.writeFile(vscode.Uri.file(feature.filePath), Buffer.from(fileContent, 'utf-8'))
+    await vscode.workspace.fs.writeFile(vscode.Uri.file(feature.filePath), new TextEncoder().encode(fileContent))
 
     if (oldStatus !== feature.status) {
       this._migrating = true
