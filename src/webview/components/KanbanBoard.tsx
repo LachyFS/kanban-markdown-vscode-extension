@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { KanbanColumn } from './KanbanColumn'
 import { useStore } from '../store'
-import type { Feature, FeatureStatus, Priority } from '../../shared/types'
+import type { Feature, FeatureStatus } from '../../shared/types'
 
 export interface DropTarget {
   columnId: string
@@ -13,10 +13,9 @@ interface KanbanBoardProps {
   onAddFeature: (status: string) => void
   onDeleteFeature: (featureId: string) => void
   onMoveFeature: (featureId: string, newStatus: string, newOrder: number) => void
-  onQuickAdd: (data: { status: FeatureStatus; priority: Priority; content: string }) => void
 }
 
-export function KanbanBoard({ onFeatureClick, onAddFeature, onDeleteFeature, onMoveFeature, onQuickAdd }: KanbanBoardProps) {
+export function KanbanBoard({ onFeatureClick, onAddFeature, onDeleteFeature, onMoveFeature }: KanbanBoardProps) {
   const columns = useStore((s) => s.columns)
   const getFilteredFeaturesByStatus = useStore((s) => s.getFilteredFeaturesByStatus)
   const layout = useStore((s) => s.layout)
@@ -105,7 +104,6 @@ export function KanbanBoard({ onFeatureClick, onAddFeature, onDeleteFeature, onM
             onFeatureClick={onFeatureClick}
             onAddFeature={onAddFeature}
             onDeleteFeature={onDeleteFeature}
-            onQuickAdd={onQuickAdd}
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
             onDragOverCard={handleDragOverCard}

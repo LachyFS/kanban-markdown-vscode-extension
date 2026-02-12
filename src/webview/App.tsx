@@ -330,7 +330,6 @@ function App(): React.JSX.Element {
             onAddFeature={handleAddFeatureInColumn}
             onDeleteFeature={handleDeleteFeatureFromCard}
             onMoveFeature={handleMoveFeature}
-            onQuickAdd={handleCreateFeature}
           />
         </div>
         {editingFeature && (

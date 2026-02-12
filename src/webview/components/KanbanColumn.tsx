@@ -1,7 +1,6 @@
 import { Plus } from 'lucide-react'
 import { FeatureCard } from './FeatureCard'
-import { QuickAddInput } from './QuickAddInput'
-import type { Feature, FeatureStatus, Priority, KanbanColumn as KanbanColumnType } from '../../shared/types'
+import type { Feature, FeatureStatus, KanbanColumn as KanbanColumnType } from '../../shared/types'
 import type { LayoutMode } from '../store'
 import type { DropTarget } from './KanbanBoard'
 
@@ -10,7 +9,6 @@ interface KanbanColumnProps {
   features: Feature[]
   onFeatureClick: (feature: Feature) => void
   onAddFeature: (status: string) => void
-  onQuickAdd: (data: { status: FeatureStatus; priority: Priority; content: string }) => void
   onDeleteFeature: (featureId: string) => void
   onDragStart: (e: React.DragEvent, feature: Feature) => void
   onDragOver: (e: React.DragEvent) => void
@@ -27,7 +25,6 @@ export function KanbanColumn({
   features,
   onFeatureClick,
   onAddFeature,
-  onQuickAdd,
   onDeleteFeature,
   onDragStart,
   onDragOver,
@@ -52,7 +49,11 @@ export function KanbanColumn({
       onDrop={(e) => onDrop(e, column.id)}
     >
       {/* Column Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 dark:border-zinc-700">
+      <button
+        onClick={() => onAddFeature(column.id)}
+        className="flex items-center justify-between w-full px-3 py-2 border-b border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/60 transition-colors cursor-pointer"
+        title={`Add to ${column.name}`}
+      >
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: column.color }} />
           <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{column.name}</h3>
@@ -60,19 +61,8 @@ export function KanbanColumn({
             {features.length}
           </span>
         </div>
-        <button
-          onClick={() => onAddFeature(column.id)}
-          className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-          title={`Add to ${column.name}`}
-        >
-          <Plus size={16} />
-        </button>
-      </div>
-
-      {/* Quick Add */}
-      <div className="px-2 py-1.5 border-b border-zinc-200 dark:border-zinc-700">
-        <QuickAddInput status={column.id as FeatureStatus} onAdd={onQuickAdd} />
-      </div>
+        <Plus size={16} className="text-zinc-500" />
+      </button>
 
       {/* Column Content */}
       <div
