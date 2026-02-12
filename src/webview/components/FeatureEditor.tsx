@@ -310,7 +310,7 @@ function LabelEditor({ labels, onChange }: { labels: string[]; onChange: (labels
         </span>
       ))}
       <button
-        onClick={() => inputRef.current?.focus()}
+        onClick={() => { setIsFocused(true); setTimeout(() => inputRef.current?.focus(), 0) }}
         className="inline-flex items-center gap-0.5 px-1 py-0.5 text-[10px] rounded transition-colors vscode-hover-bg"
         style={{ color: 'var(--vscode-descriptionForeground)' }}
       >
