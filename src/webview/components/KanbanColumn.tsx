@@ -1,6 +1,6 @@
 import { Plus } from 'lucide-react'
 import { FeatureCard } from './FeatureCard'
-import type { Feature, FeatureStatus, KanbanColumn as KanbanColumnType } from '../../shared/types'
+import type { Feature, KanbanColumn as KanbanColumnType } from '../../shared/types'
 import type { LayoutMode } from '../store'
 import type { DropTarget } from './KanbanBoard'
 

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import * as path from 'path'
 import { getTitleFromContent } from '../shared/types'
-import type { Feature, FeatureStatus, Priority, KanbanColumn } from '../shared/types'
+import type { FeatureStatus, Priority, KanbanColumn } from '../shared/types'
 import { getStatusFolders } from './featureFileUtils'
 import { KanbanPanel } from './KanbanPanel'
 

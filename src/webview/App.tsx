@@ -23,7 +23,6 @@ function App(): React.JSX.Element {
     columns,
     setFeatures,
     setColumns,
-    updateFeature,
     setIsDarkMode,
     setCardSettings
   } = useStore()
@@ -41,7 +40,9 @@ function App(): React.JSX.Element {
   // Undo delete state
   const [pendingDelete, setPendingDelete] = useState<{ feature: Feature; timer: ReturnType<typeof setTimeout> } | null>(null)
   const pendingDeleteRef = useRef(pendingDelete)
-  pendingDeleteRef.current = pendingDelete
+  useEffect(() => {
+    pendingDeleteRef.current = pendingDelete
+  }, [pendingDelete])
 
   const handleDeleteFeatureFromCard = useCallback((featureId: string) => {
     const { features } = useStore.getState()
