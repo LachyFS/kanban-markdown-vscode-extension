@@ -49,6 +49,11 @@ body {
   background: var(--vscode-scrollbarSlider-activeBackground);
 }
 
+/* Hover background matching VSCode theme */
+.vscode-hover-bg:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+
 /* Focus visible for accessibility */
 button:focus-visible,
 input:focus-visible {

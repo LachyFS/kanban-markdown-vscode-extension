@@ -1,4 +1,4 @@
-import { Calendar, User } from 'lucide-react'
+import { Calendar, X } from 'lucide-react'
 import { getTitleFromContent } from '../../shared/types'
 import type { Feature, Priority } from '../../shared/types'
 import { useStore } from '../store'
@@ -6,6 +6,7 @@ import { useStore } from '../store'
 interface FeatureCardProps {
   feature: Feature
   onClick: () => void
+  onDelete: (featureId: string) => void
   isDragging?: boolean
 }
 
@@ -23,9 +24,22 @@ const priorityLabels: Record<Priority, string> = {
   low: 'Low'
 }
 
-export function FeatureCard({ feature, onClick, isDragging }: FeatureCardProps) {
+function getDescriptionFromContent(content: string): string {
+  // Remove the first # heading line, then grab the first non-empty text
+  const lines = content.split('\n')
+  const headingIndex = lines.findIndex(l => /^#\s+/.test(l))
+  const afterHeading = headingIndex >= 0 ? lines.slice(headingIndex + 1) : lines
+  const desc = afterHeading
+    .map(l => l.replace(/^#{1,6}\s+/, '').trim())
+    .filter(l => l.length > 0)
+    .join(' ')
+  return desc
+}
+
+export function FeatureCard({ feature, onClick, onDelete, isDragging }: FeatureCardProps) {
   const { cardSettings } = useStore()
   const title = getTitleFromContent(feature.content)
+  const description = getDescriptionFromContent(feature.content)
 
   const formatDueDate = (dateStr: string | null) => {
     if (!dateStr) return null
@@ -50,29 +64,44 @@ export function FeatureCard({ feature, onClick, isDragging }: FeatureCardProps) 
   return (
     <div
       onClick={onClick}
-      className={`bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 ${cardSettings.compactMode ? 'p-2' : 'p-3'} cursor-pointer hover:shadow-md transition-shadow ${
+      className={`group relative bg-white dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700 ${cardSettings.compactMode ? 'p-2' : 'p-3'} cursor-pointer hover:shadow-md transition-shadow ${
         isDragging ? 'shadow-lg opacity-90' : ''
       }`}
     >
+      {/* Delete button */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onDelete(feature.id) }}
+        className="absolute top-1.5 right-1.5 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-zinc-200 dark:hover:bg-zinc-600 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-opacity"
+        title="Delete"
+      >
+        <X size={14} />
+      </button>
+
       {/* Header */}
-      <div className={`flex items-start justify-between gap-2 ${cardSettings.compactMode ? 'mb-1' : 'mb-2'}`}>
-        <span className="text-xs font-mono text-zinc-400 dark:text-zinc-500">{feature.id}</span>
-        {cardSettings.showPriorityBadges && (
+      {cardSettings.showPriorityBadges && (
+        <div className={`flex items-start justify-end pr-4 ${cardSettings.compactMode ? 'mb-1' : 'mb-2'}`}>
           <span
             className={`text-xs font-medium px-1.5 py-0.5 rounded ${priorityColors[feature.priority]}`}
           >
             {priorityLabels[feature.priority]}
           </span>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Title */}
-      <h3 className={`text-sm font-medium text-zinc-900 dark:text-zinc-100 ${cardSettings.compactMode ? 'mb-1 line-clamp-1' : 'mb-2 line-clamp-2'}`}>
+      <h3 className={`text-sm font-medium text-zinc-900 dark:text-zinc-100 ${description ? 'mb-1' : cardSettings.compactMode ? 'mb-1' : 'mb-2'} line-clamp-2`}>
         {title}
       </h3>
 
+      {/* Description */}
+      {description && !cardSettings.compactMode && (
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 mb-2">
+          {description}
+        </p>
+      )}
+
       {/* Labels */}
-      {!cardSettings.compactMode && feature.labels.length > 0 && (
+      {cardSettings.showLabels && !cardSettings.compactMode && feature.labels.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
           {feature.labels.slice(0, 3).map((label) => (
             <span

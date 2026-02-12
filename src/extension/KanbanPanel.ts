@@ -703,6 +703,7 @@ export class KanbanPanel {
       showPriorityBadges: config.get<boolean>('showPriorityBadges', true),
       showAssignee: config.get<boolean>('showAssignee', true),
       showDueDate: config.get<boolean>('showDueDate', true),
+      showLabels: config.get<boolean>('showLabels', true),
       showBuildWithAI: config.get<boolean>('showBuildWithAI', true) && !vscode.workspace.getConfiguration('chat').get<boolean>('disableAIFeatures', false),
       compactMode: config.get<boolean>('compactMode', false),
       defaultPriority: config.get<Priority>('defaultPriority', 'medium'),

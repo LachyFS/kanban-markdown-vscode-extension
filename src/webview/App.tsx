@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useStore } from './store'
 import { KanbanBoard } from './components/KanbanBoard'
 import { CreateFeatureDialog } from './components/CreateFeatureDialog'
 import { FeatureEditor } from './components/FeatureEditor'
 import { Toolbar } from './components/Toolbar'
+import { UndoToast } from './components/UndoToast'
 import type { Feature, FeatureStatus, Priority, ExtensionMessage, FeatureFrontmatter } from '../shared/types'
+import { getTitleFromContent } from '../shared/types'
 
 // Declare vscode API type
 declare const acquireVsCodeApi: () => {
@@ -36,6 +38,50 @@ function App(): React.JSX.Element {
     frontmatter: FeatureFrontmatter
   } | null>(null)
 
+  // Undo delete state
+  const [pendingDelete, setPendingDelete] = useState<{ feature: Feature; timer: ReturnType<typeof setTimeout> } | null>(null)
+  const pendingDeleteRef = useRef(pendingDelete)
+  pendingDeleteRef.current = pendingDelete
+
+  const handleDeleteFeatureFromCard = useCallback((featureId: string) => {
+    const { features } = useStore.getState()
+    const feature = features.find(f => f.id === featureId)
+    if (!feature) return
+
+    // Cancel any existing pending delete
+    if (pendingDeleteRef.current) {
+      clearTimeout(pendingDeleteRef.current.timer)
+      // Commit the previous pending delete immediately
+      vscode.postMessage({ type: 'deleteFeature', featureId: pendingDeleteRef.current.feature.id })
+    }
+
+    // Optimistically remove from local state
+    setFeatures(features.filter(f => f.id !== featureId))
+
+    // Close editor if this feature is open
+    if (editingFeature?.id === featureId) {
+      setEditingFeature(null)
+    }
+
+    // Set a timer to actually delete after 5 seconds
+    const timer = setTimeout(() => {
+      vscode.postMessage({ type: 'deleteFeature', featureId })
+      setPendingDelete(null)
+    }, 5000)
+
+    setPendingDelete({ feature, timer })
+  }, [editingFeature, setFeatures])
+
+  const handleUndoDelete = useCallback(() => {
+    if (!pendingDeleteRef.current) return
+    const { feature, timer } = pendingDeleteRef.current
+    clearTimeout(timer)
+    // Restore the feature
+    const { features } = useStore.getState()
+    setFeatures([...features, feature])
+    setPendingDelete(null)
+  }, [setFeatures])
+
   // Keyboard shortcuts
   useEffect(() => {
     let altPressedAlone = false
@@ -48,6 +94,13 @@ function App(): React.JSX.Element {
       }
       if (e.altKey) {
         altPressedAlone = false
+      }
+
+      // Ctrl/Cmd+Z to undo delete (works even in inputs)
+      if (e.key === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey && pendingDeleteRef.current) {
+        e.preventDefault()
+        handleUndoDelete()
+        return
       }
 
       // Ignore if user is typing in an input or contentEditable (e.g. TipTap editor)
@@ -90,7 +143,7 @@ function App(): React.JSX.Element {
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
     }
-  }, [createFeatureOpen, editingFeature])
+  }, [createFeatureOpen, handleUndoDelete])
 
   // Listen for VSCode theme changes
   useEffect(() => {
@@ -118,6 +171,7 @@ function App(): React.JSX.Element {
   useEffect(() => {
     const handleMessage = (event: MessageEvent<ExtensionMessage>) => {
       const message = event.data
+      if (!message || typeof message.type !== 'string') return
 
       switch (message.type) {
         case 'init':
@@ -150,7 +204,7 @@ function App(): React.JSX.Element {
     vscode.postMessage({ type: 'ready' })
 
     return () => window.removeEventListener('message', handleMessage)
-  }, [setFeatures, setColumns])
+  }, [setFeatures, setColumns, setCardSettings])
 
   const handleFeatureClick = (feature: Feature): void => {
     // Request feature content for inline editing
@@ -173,6 +227,11 @@ function App(): React.JSX.Element {
   const handleCloseEditor = (): void => {
     setEditingFeature(null)
     vscode.postMessage({ type: 'closeFeature' })
+  }
+
+  const handleDeleteFeature = (): void => {
+    if (!editingFeature) return
+    handleDeleteFeatureFromCard(editingFeature.id)
   }
 
   const handleStartWithAI = (agent: 'claude' | 'codex' | 'opencode', permissionMode: 'default' | 'plan' | 'acceptEdits' | 'bypassPermissions'): void => {
@@ -269,6 +328,7 @@ function App(): React.JSX.Element {
           <KanbanBoard
             onFeatureClick={handleFeatureClick}
             onAddFeature={handleAddFeatureInColumn}
+            onDeleteFeature={handleDeleteFeatureFromCard}
             onMoveFeature={handleMoveFeature}
             onQuickAdd={handleCreateFeature}
           />
@@ -281,6 +341,7 @@ function App(): React.JSX.Element {
               frontmatter={editingFeature.frontmatter}
               onSave={handleSaveFeature}
               onClose={handleCloseEditor}
+              onDelete={handleDeleteFeature}
               onStartWithAI={handleStartWithAI}
             />
           </div>
@@ -293,6 +354,14 @@ function App(): React.JSX.Element {
         onCreate={handleCreateFeature}
         initialStatus={createFeatureStatus}
       />
+
+      {pendingDelete && (
+        <UndoToast
+          message={`Deleted "${getTitleFromContent(pendingDelete.feature.content)}"`}
+          onUndo={handleUndoDelete}
+          duration={5000}
+        />
+      )}
     </div>
   )
 }

@@ -89,6 +89,7 @@ export const useStore = create<KanbanState>((set, get) => ({
     showPriorityBadges: true,
     showAssignee: true,
     showDueDate: true,
+    showLabels: true,
     showBuildWithAI: true,
     compactMode: false,
     defaultPriority: 'medium',

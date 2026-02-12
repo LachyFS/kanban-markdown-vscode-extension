@@ -1,12 +1,20 @@
-import { useEffect, useCallback, useState, useRef } from 'react'
+import { useEffect, useCallback, useState, useRef, useMemo } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Markdown } from 'tiptap-markdown'
-import { X, User, ChevronDown, Wand2, Tag, Plus, Check, CircleDot, Signal, Calendar } from 'lucide-react'
+import { X, User, ChevronDown, Wand2, Tag, Plus, Check, CircleDot, Signal, Calendar, Trash2 } from 'lucide-react'
 import type { FeatureFrontmatter, Priority, FeatureStatus } from '../../shared/types'
 import { cn } from '../lib/utils'
 import { useStore } from '../store'
+
+interface MarkdownStorage {
+  markdown: { getMarkdown: () => string }
+}
+
+function getMarkdown(editor: { storage: unknown }): string {
+  return (editor.storage as MarkdownStorage).markdown.getMarkdown()
+}
 
 type AIAgent = 'claude' | 'codex' | 'opencode'
 type PermissionMode = 'default' | 'plan' | 'acceptEdits' | 'bypassPermissions'
@@ -17,6 +25,7 @@ interface FeatureEditorProps {
   frontmatter: FeatureFrontmatter
   onSave: (content: string, frontmatter: FeatureFrontmatter) => void
   onClose: () => void
+  onDelete: () => void
   onStartWithAI: (agent: AIAgent, permissionMode: PermissionMode) => void
 }
 
@@ -112,10 +121,8 @@ function Dropdown({ value, options, onChange, className }: DropdownProps) {
     <div className={cn('relative', className)}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-2 py-1 text-xs font-medium rounded transition-colors"
+        className="flex items-center gap-2 px-2 py-1 text-xs font-medium rounded transition-colors vscode-hover-bg"
         style={{ color: 'var(--vscode-foreground)' }}
-        onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'}
-        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
       >
         {current?.dot && <span className={cn('w-2 h-2 rounded-full shrink-0', current.dot)} />}
         <span>{current?.label}</span>
@@ -165,9 +172,7 @@ function Dropdown({ value, options, onChange, className }: DropdownProps) {
 function PropertyRow({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <div
-      className="flex items-center gap-3 px-4 py-[5px] transition-colors"
-      onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'}
-      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+      className="flex items-center gap-3 px-4 py-[5px] transition-colors vscode-hover-bg"
     >
       <div className="flex items-center gap-2 w-[90px] shrink-0">
         <span style={{ color: 'var(--vscode-descriptionForeground)' }}>{icon}</span>
@@ -253,21 +258,31 @@ function AIDropdown({ onSelect }: AIDropdownProps) {
 }
 
 function LabelEditor({ labels, onChange }: { labels: string[]; onChange: (labels: string[]) => void }) {
-  const [isAdding, setIsAdding] = useState(false)
   const [newLabel, setNewLabel] = useState('')
+  const [isFocused, setIsFocused] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const features = useStore(s => s.features)
 
-  useEffect(() => {
-    if (isAdding && inputRef.current) inputRef.current.focus()
-  }, [isAdding])
+  const existingLabels = useMemo(() => {
+    const labelSet = new Set<string>()
+    features.forEach(f => f.labels.forEach(l => labelSet.add(l)))
+    return Array.from(labelSet).sort()
+  }, [features])
 
-  const addLabel = () => {
-    const label = newLabel.trim()
-    if (label && !labels.includes(label)) {
-      onChange([...labels, label])
+  const suggestions = useMemo(() => {
+    const available = existingLabels.filter(l => !labels.includes(l))
+    if (!newLabel.trim()) return available
+    return available.filter(l => l.toLowerCase().includes(newLabel.toLowerCase()))
+  }, [newLabel, existingLabels, labels])
+
+  const showSuggestions = isFocused && suggestions.length > 0
+
+  const addLabel = (label?: string) => {
+    const l = (label || newLabel).trim()
+    if (l && !labels.includes(l)) {
+      onChange([...labels, l])
     }
     setNewLabel('')
-    setIsAdding(false)
   }
 
   const removeLabel = (label: string) => {
@@ -275,7 +290,7 @@ function LabelEditor({ labels, onChange }: { labels: string[]; onChange: (labels
   }
 
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
+    <div className="relative flex items-center gap-1.5 flex-wrap">
       {labels.map(label => (
         <span
           key={label}
@@ -294,42 +309,68 @@ function LabelEditor({ labels, onChange }: { labels: string[]; onChange: (labels
           </button>
         </span>
       ))}
-      {isAdding ? (
-        <input
-          ref={inputRef}
-          type="text"
-          value={newLabel}
-          onChange={(e) => setNewLabel(e.target.value)}
-          onBlur={addLabel}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') addLabel()
-            if (e.key === 'Escape') { setNewLabel(''); setIsAdding(false) }
-          }}
-          placeholder="Label..."
-          className="w-16 px-1 py-0.5 text-[10px] bg-transparent rounded outline-none"
+      <button
+        onClick={() => inputRef.current?.focus()}
+        className="inline-flex items-center gap-0.5 px-1 py-0.5 text-[10px] rounded transition-colors vscode-hover-bg"
+        style={{ color: 'var(--vscode-descriptionForeground)' }}
+      >
+        <Plus size={10} />
+      </button>
+      <input
+        ref={inputRef}
+        type="text"
+        value={newLabel}
+        onChange={(e) => setNewLabel(e.target.value)}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setTimeout(() => setIsFocused(false), 150)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); addLabel() }
+          if (e.key === 'Backspace' && !newLabel && labels.length > 0) {
+            onChange(labels.slice(0, -1))
+          }
+          if (e.key === 'Escape') { setNewLabel(''); inputRef.current?.blur() }
+        }}
+        placeholder={labels.length === 0 ? 'Add labels...' : ''}
+        className="flex-1 min-w-[60px] bg-transparent border-none outline-none text-xs"
+        style={{ color: 'var(--vscode-foreground)', display: isFocused || newLabel ? 'block' : 'none' }}
+      />
+      {showSuggestions && (
+        <div
+          className="absolute top-full left-0 mt-1 z-20 rounded-lg shadow-lg py-1 max-h-[160px] overflow-auto min-w-[180px]"
           style={{
-            border: '1px solid var(--vscode-focusBorder)',
-            color: 'var(--vscode-foreground)',
+            background: 'var(--vscode-dropdown-background)',
+            border: '1px solid var(--vscode-dropdown-border, var(--vscode-panel-border))',
           }}
-        />
-      ) : (
-        <button
-          onClick={() => setIsAdding(true)}
-          className="inline-flex items-center gap-0.5 px-1 py-0.5 text-[10px] rounded transition-colors"
-          style={{ color: 'var(--vscode-descriptionForeground)' }}
-          onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
         >
-          <Plus size={10} />
-        </button>
+          {suggestions.map(label => (
+            <button
+              key={label}
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); addLabel(label) }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors"
+              style={{ color: 'var(--vscode-dropdown-foreground)' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              <span
+                className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded"
+                style={{
+                  background: 'var(--vscode-badge-background)',
+                  color: 'var(--vscode-badge-foreground)',
+                }}
+              >{label}</span>
+            </button>
+          ))}
+        </div>
       )}
     </div>
   )
 }
 
-export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose, onStartWithAI }: FeatureEditorProps) {
+export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose, onDelete, onStartWithAI }: FeatureEditorProps) {
   const { cardSettings } = useStore()
   const [currentFrontmatter, setCurrentFrontmatter] = useState(frontmatter)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isInitialLoad = useRef(true)
   const currentFrontmatterRef = useRef(currentFrontmatter)
@@ -351,8 +392,7 @@ export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose
       if (isInitialLoad.current) return
       if (debounceRef.current) clearTimeout(debounceRef.current)
       debounceRef.current = setTimeout(() => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const markdown = (ed.storage as any).markdown.getMarkdown()
+        const markdown = getMarkdown(ed)
         onSave(markdown, currentFrontmatterRef.current)
       }, 800)
     }
@@ -360,8 +400,7 @@ export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose
 
   const save = useCallback(() => {
     if (!editor) return
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const markdown = (editor.storage as any).markdown.getMarkdown()
+    const markdown = getMarkdown(editor)
     onSave(markdown, currentFrontmatter)
   }, [editor, currentFrontmatter, onSave])
 
@@ -372,7 +411,7 @@ export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose
     }
   }, [])
 
-  // Set content when editor is ready
+  // Set content when a new feature is opened (keyed by featureId, not content)
   useEffect(() => {
     if (editor && content) {
       isInitialLoad.current = true
@@ -380,7 +419,8 @@ export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose
       // Allow a tick for the onUpdate from setContent to fire, then re-enable
       requestAnimationFrame(() => { isInitialLoad.current = false })
     }
-  }, [editor, content])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor, featureId])
 
   // Reset frontmatter when prop changes
   useEffect(() => {
@@ -394,8 +434,7 @@ export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose
       if (debounceRef.current) clearTimeout(debounceRef.current)
       debounceRef.current = setTimeout(() => {
         if (!editor) return
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const markdown = (editor.storage as any).markdown.getMarkdown()
+        const markdown = getMarkdown(editor)
         onSave(markdown, next)
       }, 800)
       return next
@@ -443,15 +482,40 @@ export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose
       >
         <div className="flex items-center gap-3">
           <span className="text-xs font-mono" style={{ color: 'var(--vscode-descriptionForeground)' }}>{featureId}</span>
+          {confirmingDelete ? (
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs" style={{ color: 'var(--vscode-errorForeground)' }}>Delete?</span>
+              <button
+                onClick={() => { setConfirmingDelete(false); onDelete() }}
+                className="px-2 py-1 text-xs font-medium rounded transition-colors text-white bg-red-600 hover:bg-red-700"
+              >
+                Yes
+              </button>
+              <button
+                onClick={() => setConfirmingDelete(false)}
+                className="px-2 py-1 text-xs font-medium rounded transition-colors vscode-hover-bg"
+                style={{ color: 'var(--vscode-foreground)' }}
+              >
+                No
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmingDelete(true)}
+              className="p-1.5 rounded transition-colors vscode-hover-bg"
+              style={{ color: 'var(--vscode-descriptionForeground)' }}
+              title="Delete ticket"
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {cardSettings.showBuildWithAI && <AIDropdown onSelect={onStartWithAI} />}
           <button
             onClick={onClose}
-            className="p-1.5 rounded transition-colors"
+            className="p-1.5 rounded transition-colors vscode-hover-bg"
             style={{ color: 'var(--vscode-descriptionForeground)' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
             <X size={18} />
           </button>
@@ -489,7 +553,7 @@ export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose
                     background: 'var(--vscode-badge-background)',
                     color: 'var(--vscode-badge-foreground)',
                   }}
-                >{currentFrontmatter.assignee.split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2)}</span>
+                >{currentFrontmatter.assignee.split(/\s+/).filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0, 2)}</span>
               )}
               <input
                 type="text"
@@ -513,12 +577,14 @@ export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose
             />
           </PropertyRow>
         )}
+        {cardSettings.showLabels && (
         <PropertyRow label="Labels" icon={<Tag size={13} />}>
           <LabelEditor
             labels={currentFrontmatter.labels}
             onChange={(labels) => handleFrontmatterUpdate({ labels })}
           />
         </PropertyRow>
+        )}
       </div>
 
       {/* Editor */}

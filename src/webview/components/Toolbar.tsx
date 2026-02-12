@@ -96,6 +96,7 @@ export function Toolbar() {
       )}
 
       {/* Label Filter */}
+      {cardSettings.showLabels && (
       <select
         value={labelFilter}
         onChange={(e) => setLabelFilter(e.target.value)}
@@ -108,6 +109,7 @@ export function Toolbar() {
           </option>
         ))}
       </select>
+      )}
 
       {/* Due Date Filter */}
       {cardSettings.showDueDate && (

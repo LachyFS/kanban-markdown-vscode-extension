@@ -199,6 +199,11 @@
           "default": true,
           "description": "Show due date on feature cards."
         },
+        "kanban-markdown.showLabels": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show labels on feature cards and in editors."
+        },
         "kanban-markdown.showBuildWithAI": {
           "type": "boolean",
           "default": true,

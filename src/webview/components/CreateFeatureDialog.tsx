@@ -425,9 +425,11 @@ function CreateFeatureDialogContent({
               <DatePicker value={dueDate} onChange={setDueDate} />
             </PropertyRow>
           )}
+          {cardSettings.showLabels && (
           <PropertyRow label="Labels" icon={<Tag size={13} />}>
             <LabelInput labels={labels} onChange={setLabels} />
           </PropertyRow>
+          )}
         </div>
 
         {/* Content */}

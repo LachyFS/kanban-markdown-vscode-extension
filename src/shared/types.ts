@@ -56,6 +56,7 @@ export interface CardDisplaySettings {
   showPriorityBadges: boolean
   showAssignee: boolean
   showDueDate: boolean
+  showLabels: boolean
   showBuildWithAI: boolean
   compactMode: boolean
   defaultPriority: Priority

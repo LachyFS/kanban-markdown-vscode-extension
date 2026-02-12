@@ -11,11 +11,12 @@ export interface DropTarget {
 interface KanbanBoardProps {
   onFeatureClick: (feature: Feature) => void
   onAddFeature: (status: string) => void
+  onDeleteFeature: (featureId: string) => void
   onMoveFeature: (featureId: string, newStatus: string, newOrder: number) => void
   onQuickAdd: (data: { status: FeatureStatus; priority: Priority; content: string }) => void
 }
 
-export function KanbanBoard({ onFeatureClick, onAddFeature, onMoveFeature, onQuickAdd }: KanbanBoardProps) {
+export function KanbanBoard({ onFeatureClick, onAddFeature, onDeleteFeature, onMoveFeature, onQuickAdd }: KanbanBoardProps) {
   const columns = useStore((s) => s.columns)
   const getFilteredFeaturesByStatus = useStore((s) => s.getFilteredFeaturesByStatus)
   const layout = useStore((s) => s.layout)
@@ -103,6 +104,7 @@ export function KanbanBoard({ onFeatureClick, onAddFeature, onMoveFeature, onQui
             features={getFilteredFeaturesByStatus(column.id as FeatureStatus)}
             onFeatureClick={onFeatureClick}
             onAddFeature={onAddFeature}
+            onDeleteFeature={onDeleteFeature}
             onQuickAdd={onQuickAdd}
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
