@@ -9,6 +9,9 @@ interface CreateFeatureData {
   status: FeatureStatus
   priority: Priority
   content: string
+  assignee: string | null
+  dueDate: string | null
+  labels: string[]
 }
 
 export class KanbanPanel {
@@ -23,6 +26,7 @@ export class KanbanPanel {
   private _fileWatcher: vscode.FileSystemWatcher | undefined
   private _currentEditingFeatureId: string | null = null
   private _migrating = false
+  private _onDisposeCallbacks: (() => void)[] = []
 
   public static createOrShow(extensionUri: vscode.Uri, context: vscode.ExtensionContext) {
     const column = vscode.window.activeTextEditor
@@ -175,8 +179,17 @@ export class KanbanPanel {
     this._disposables.push(this._fileWatcher)
   }
 
+  public onDispose(callback: () => void): void {
+    this._onDisposeCallbacks.push(callback)
+  }
+
   public dispose() {
     KanbanPanel.currentPanel = undefined
+
+    for (const cb of this._onDisposeCallbacks) {
+      cb()
+    }
+    this._onDisposeCallbacks = []
 
     this._panel.dispose()
 
@@ -383,6 +396,10 @@ export class KanbanPanel {
     this._panel.webview.postMessage({ type: 'triggerCreateDialog' })
   }
 
+  public openFeature(featureId: string): void {
+    this._sendFeatureContent(featureId)
+  }
+
   private async _createFeature(data: CreateFeatureData): Promise<void> {
     const featuresDir = await this._ensureFeaturesDir()
     if (!featuresDir) {
@@ -399,11 +416,11 @@ export class KanbanPanel {
       id: filename,
       status: data.status,
       priority: data.priority,
-      assignee: null,
-      dueDate: null,
+      assignee: data.assignee,
+      dueDate: data.dueDate,
       created: now,
       modified: now,
-      labels: [],
+      labels: data.labels,
       order: featuresInStatus.length,
       content: data.content,
       filePath: getFeatureFilePath(featuresDir, data.status, filename)

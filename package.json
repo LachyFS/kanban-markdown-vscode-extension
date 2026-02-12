@@ -33,10 +33,29 @@
     "board"
   ],
   "activationEvents": [
-    "onWebviewPanel:kanban-markdown.panel"
+    "onWebviewPanel:kanban-markdown.panel",
+    "onView:kanban-markdown.boardView"
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "kanban-markdown",
+          "title": "Kanban Markdown",
+          "icon": "resources/kanban.svg"
+        }
+      ]
+    },
+    "views": {
+      "kanban-markdown": [
+        {
+          "id": "kanban-markdown.boardView",
+          "name": "Board",
+          "type": "webview"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "kanban-markdown.open",

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Three columns -->
+  <rect x="2" y="3" width="5.5" height="18" rx="1" />
+  <rect x="9.25" y="3" width="5.5" height="18" rx="1" />
+  <rect x="16.5" y="3" width="5.5" height="18" rx="1" />
+  <!-- Cards in column 1 -->
+  <line x1="3.5" y1="6" x2="6" y2="6" />
+  <line x1="3.5" y1="9" x2="6" y2="9" />
+  <line x1="3.5" y1="12" x2="6" y2="12" />
+  <!-- Cards in column 2 -->
+  <line x1="10.75" y1="6" x2="13.25" y2="6" />
+  <line x1="10.75" y1="9" x2="13.25" y2="9" />
+  <!-- Cards in column 3 -->
+  <line x1="18" y1="6" x2="20.5" y2="6" />
+</svg>

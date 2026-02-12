@@ -2,6 +2,7 @@ import * as vscode from 'vscode'
 import * as fs from 'fs'
 import * as path from 'path'
 import { KanbanPanel } from './KanbanPanel'
+import { SidebarViewProvider } from './SidebarViewProvider'
 import { generateFeatureFilename } from '../shared/types'
 import type { Feature, FeatureStatus, Priority } from '../shared/types'
 import { ensureStatusSubfolders, getFeatureFilePath } from './featureFileUtils'
@@ -119,9 +120,22 @@ function serializeFeature(feature: Feature): string {
 }
 
 export function activate(context: vscode.ExtensionContext) {
+  // Sidebar webview in the activity bar
+  const sidebarProvider = new SidebarViewProvider(context.extensionUri, context)
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(SidebarViewProvider.viewType, sidebarProvider)
+  )
+
   context.subscriptions.push(
     vscode.commands.registerCommand('kanban-markdown.open', () => {
+      const wasOpen = !!KanbanPanel.currentPanel
       KanbanPanel.createOrShow(context.extensionUri, context)
+      if (!wasOpen && KanbanPanel.currentPanel) {
+        sidebarProvider.setBoardOpen(true)
+        KanbanPanel.currentPanel.onDispose(() => {
+          sidebarProvider.setBoardOpen(false)
+        })
+      }
     })
   )
 
@@ -136,6 +150,10 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.registerWebviewPanelSerializer(KanbanPanel.viewType, {
       async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel) {
         KanbanPanel.revive(webviewPanel, context.extensionUri, context)
+        sidebarProvider.setBoardOpen(true)
+        KanbanPanel.currentPanel?.onDispose(() => {
+          sidebarProvider.setBoardOpen(false)
+        })
       }
     })
   }
