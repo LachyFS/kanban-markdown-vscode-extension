@@ -1,5 +1,4 @@
 import * as vscode from 'vscode'
-import * as fs from 'fs'
 import * as path from 'path'
 import { getTitleFromContent, generateFeatureFilename } from '../shared/types'
 import type { Feature, FeatureStatus, Priority, KanbanColumn, FeatureFrontmatter, CardDisplaySettings } from '../shared/types'
@@ -255,7 +254,7 @@ export class KanbanPanel {
     if (!featuresDir) return null
 
     try {
-      await fs.promises.mkdir(featuresDir, { recursive: true })
+      await vscode.workspace.fs.createDirectory(vscode.Uri.file(featuresDir))
       await ensureStatusSubfolders(featuresDir)
       return featuresDir
     } catch {
@@ -271,18 +270,18 @@ export class KanbanPanel {
     }
 
     try {
-      await fs.promises.mkdir(featuresDir, { recursive: true })
+      await vscode.workspace.fs.createDirectory(vscode.Uri.file(featuresDir))
       await ensureStatusSubfolders(featuresDir)
 
       // Phase 1: Migrate root-level .md files into status subfolders
       this._migrating = true
       try {
-        const rootEntries = await fs.promises.readdir(featuresDir, { withFileTypes: true })
-        for (const entry of rootEntries) {
-          if (!entry.isFile() || !entry.name.endsWith('.md')) continue
-          const filePath = path.join(featuresDir, entry.name)
+        const rootEntries = await vscode.workspace.fs.readDirectory(vscode.Uri.file(featuresDir))
+        for (const [name, type] of rootEntries) {
+          if (type !== vscode.FileType.File || !name.endsWith('.md')) continue
+          const filePath = path.join(featuresDir, name)
           try {
-            const content = await fs.promises.readFile(filePath, 'utf-8')
+            const content = new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.file(filePath)))
             const feature = this._parseFeatureFile(content, filePath)
             const status = feature?.status || 'backlog'
             await moveFeatureFile(filePath, featuresDir, status)
@@ -301,11 +300,11 @@ export class KanbanPanel {
       for (const status of statusFolders) {
         const subdir = path.join(featuresDir, status)
         try {
-          const files = await fs.promises.readdir(subdir)
-          for (const file of files) {
-            if (!file.endsWith('.md')) continue
+          const entries = await vscode.workspace.fs.readDirectory(vscode.Uri.file(subdir))
+          for (const [file, fileType] of entries) {
+            if (fileType !== vscode.FileType.File || !file.endsWith('.md')) continue
             const filePath = path.join(subdir, file)
-            const content = await fs.promises.readFile(filePath, 'utf-8')
+            const content = new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.file(filePath)))
             const feature = this._parseFeatureFile(content, filePath)
             if (feature) features.push(feature)
           }
@@ -426,9 +425,9 @@ export class KanbanPanel {
       filePath: getFeatureFilePath(featuresDir, data.status, filename)
     }
 
-    await fs.promises.mkdir(path.dirname(feature.filePath), { recursive: true })
+    await vscode.workspace.fs.createDirectory(vscode.Uri.file(path.dirname(feature.filePath)))
     const content = this._serializeFeature(feature)
-    await fs.promises.writeFile(feature.filePath, content, 'utf-8')
+    await vscode.workspace.fs.writeFile(vscode.Uri.file(feature.filePath), Buffer.from(content, 'utf-8'))
 
     this._features.push(feature)
     this._sendFeaturesToWebview()
@@ -489,7 +488,7 @@ export class KanbanPanel {
     // Write all modified features to disk
     for (const f of filesToWrite) {
       const content = this._serializeFeature(f)
-      await fs.promises.writeFile(f.filePath, content, 'utf-8')
+      await vscode.workspace.fs.writeFile(vscode.Uri.file(f.filePath), Buffer.from(content, 'utf-8'))
     }
 
     // Move file to new subfolder if status changed
@@ -513,7 +512,7 @@ export class KanbanPanel {
     if (!feature) return
 
     try {
-      await fs.promises.unlink(feature.filePath)
+      await vscode.workspace.fs.delete(vscode.Uri.file(feature.filePath))
       this._features = this._features.filter(f => f.id !== featureId)
       this._sendFeaturesToWebview()
     } catch (err) {
@@ -536,7 +535,7 @@ export class KanbanPanel {
 
     // Persist to file
     const content = this._serializeFeature(feature)
-    await fs.promises.writeFile(feature.filePath, content, 'utf-8')
+    await vscode.workspace.fs.writeFile(vscode.Uri.file(feature.filePath), Buffer.from(content, 'utf-8'))
 
     if (oldStatus !== feature.status) {
       this._migrating = true
@@ -603,7 +602,7 @@ export class KanbanPanel {
 
     // Save to file
     const fileContent = this._serializeFeature(feature)
-    await fs.promises.writeFile(feature.filePath, fileContent, 'utf-8')
+    await vscode.workspace.fs.writeFile(vscode.Uri.file(feature.filePath), Buffer.from(fileContent, 'utf-8'))
 
     if (oldStatus !== feature.status) {
       this._migrating = true

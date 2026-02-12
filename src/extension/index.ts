@@ -1,5 +1,4 @@
 import * as vscode from 'vscode'
-import * as fs from 'fs'
 import * as path from 'path'
 import { KanbanPanel } from './KanbanPanel'
 import { SidebarViewProvider } from './SidebarViewProvider'
@@ -67,7 +66,7 @@ async function createFeatureFromPrompts(): Promise<void> {
   const config = vscode.workspace.getConfiguration('kanban-markdown')
   const featuresDirectory = config.get<string>('featuresDirectory') || '.devtool/features'
   const featuresDir = path.join(workspaceFolders[0].uri.fsPath, featuresDirectory)
-  await fs.promises.mkdir(featuresDir, { recursive: true })
+  await vscode.workspace.fs.createDirectory(vscode.Uri.file(featuresDir))
   await ensureStatusSubfolders(featuresDir)
 
   const filename = generateFeatureFilename(title)
@@ -91,7 +90,7 @@ async function createFeatureFromPrompts(): Promise<void> {
   }
 
   const fileContent = serializeFeature(feature)
-  await fs.promises.writeFile(feature.filePath, fileContent, 'utf-8')
+  await vscode.workspace.fs.writeFile(vscode.Uri.file(feature.filePath), Buffer.from(fileContent, 'utf-8'))
 
   // Open the created file
   const document = await vscode.workspace.openTextDocument(feature.filePath)

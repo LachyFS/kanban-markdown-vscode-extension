@@ -376,7 +376,6 @@ function CreateFeatureDialogContent({
           style={{ borderBottom: '1px solid var(--vscode-panel-border)' }}
         >
           <div className="flex items-center gap-3">
-            <span className="text-xs font-mono" style={{ color: 'var(--vscode-descriptionForeground)' }}>NEW</span>
             <h2 className="font-medium" style={{ color: 'var(--vscode-foreground)' }}>
               Create Feature
             </h2>

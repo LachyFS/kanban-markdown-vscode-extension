@@ -1,5 +1,4 @@
 import * as vscode from 'vscode'
-import * as fs from 'fs'
 import * as path from 'path'
 import { getTitleFromContent } from '../shared/types'
 import type { Feature, FeatureStatus, Priority, KanbanColumn } from '../shared/types'
@@ -173,12 +172,12 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
     for (const status of statusFolders) {
       const subdir = path.join(featuresDir, status)
       try {
-        const files = await fs.promises.readdir(subdir)
-        for (const file of files) {
-          if (!file.endsWith('.md')) continue
+        const entries = await vscode.workspace.fs.readDirectory(vscode.Uri.file(subdir))
+        for (const [file, fileType] of entries) {
+          if (fileType !== vscode.FileType.File || !file.endsWith('.md')) continue
           const filePath = path.join(subdir, file)
           try {
-            const content = await fs.promises.readFile(filePath, 'utf-8')
+            const content = new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.file(filePath)))
             const parsed = this._parseFrontmatter(content, file)
             if (parsed) features.push(parsed)
           } catch {
