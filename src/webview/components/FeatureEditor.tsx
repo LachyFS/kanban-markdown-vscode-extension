@@ -3,7 +3,7 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Markdown } from 'tiptap-markdown'
-import { X, Calendar, User, ChevronDown, Wand2, Tag, Plus } from 'lucide-react'
+import { X, User, ChevronDown, Wand2, Tag, Plus, Check, CircleDot, Signal, Calendar } from 'lucide-react'
 import type { FeatureFrontmatter, Priority, FeatureStatus } from '../../shared/types'
 import { cn } from '../lib/utils'
 import { useStore } from '../store'
@@ -37,6 +37,21 @@ const statusLabels: Record<FeatureStatus, string> = {
 
 const priorities: Priority[] = ['critical', 'high', 'medium', 'low']
 const statuses: FeatureStatus[] = ['backlog', 'todo', 'in-progress', 'review', 'done']
+
+const priorityDots: Record<Priority, string> = {
+  critical: 'bg-red-500',
+  high: 'bg-orange-500',
+  medium: 'bg-yellow-500',
+  low: 'bg-green-500',
+}
+
+const statusDots: Record<FeatureStatus, string> = {
+  backlog: 'bg-zinc-400',
+  todo: 'bg-blue-400',
+  'in-progress': 'bg-amber-400',
+  review: 'bg-purple-400',
+  done: 'bg-emerald-400',
+}
 
 const aiAgentTabs: { agent: AIAgent; label: string; color: string; activeColor: string }[] = [
   { agent: 'claude', label: 'Claude', color: 'hover:bg-amber-100 dark:hover:bg-amber-900/30', activeColor: 'bg-amber-700 text-white' },
@@ -84,7 +99,7 @@ const aiModesByAgent: Record<AIAgent, { permissionMode: PermissionMode; label: s
 
 interface DropdownProps {
   value: string
-  options: { value: string; label: string }[]
+  options: { value: string; label: string; dot?: string }[]
   onChange: (value: string) => void
   className?: string
 }
@@ -97,15 +112,25 @@ function Dropdown({ value, options, onChange, className }: DropdownProps) {
     <div className={cn('relative', className)}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 px-2 py-1 text-xs rounded bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
+        className="flex items-center gap-2 px-2 py-1 text-xs font-medium rounded transition-colors"
+        style={{ color: 'var(--vscode-foreground)' }}
+        onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'}
+        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
       >
+        {current?.dot && <span className={cn('w-2 h-2 rounded-full shrink-0', current.dot)} />}
         <span>{current?.label}</span>
-        <ChevronDown size={12} />
+        <ChevronDown size={12} style={{ color: 'var(--vscode-descriptionForeground)' }} className="ml-0.5" />
       </button>
       {isOpen && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 z-20 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md shadow-lg py-1 min-w-[120px]">
+          <div
+            className="absolute top-full left-0 mt-1 z-20 rounded-lg shadow-lg py-1 min-w-[140px]"
+            style={{
+              background: 'var(--vscode-dropdown-background)',
+              border: '1px solid var(--vscode-dropdown-border, var(--vscode-panel-border))',
+            }}
+          >
             {options.map(option => (
               <button
                 key={option.value}
@@ -113,17 +138,44 @@ function Dropdown({ value, options, onChange, className }: DropdownProps) {
                   onChange(option.value)
                   setIsOpen(false)
                 }}
-                className={cn(
-                  'w-full text-left px-3 py-1.5 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-700',
-                  option.value === value && 'bg-zinc-100 dark:bg-zinc-700'
-                )}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors"
+                style={{
+                  color: 'var(--vscode-dropdown-foreground)',
+                  background: option.value === value ? 'var(--vscode-list-activeSelectionBackground)' : undefined,
+                }}
+                onMouseEnter={e => {
+                  if (option.value !== value) e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'
+                }}
+                onMouseLeave={e => {
+                  if (option.value !== value) e.currentTarget.style.background = 'transparent'
+                }}
               >
-                {option.label}
+                {option.dot && <span className={cn('w-2 h-2 rounded-full shrink-0', option.dot)} />}
+                <span className="flex-1 text-left">{option.label}</span>
+                {option.value === value && <Check size={12} style={{ color: 'var(--vscode-focusBorder)' }} className="shrink-0" />}
               </button>
             ))}
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+function PropertyRow({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div
+      className="flex items-center gap-3 px-4 py-[5px] transition-colors"
+      onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+    >
+      <div className="flex items-center gap-2 w-[90px] shrink-0">
+        <span style={{ color: 'var(--vscode-descriptionForeground)' }}>{icon}</span>
+        <span className="text-[11px]" style={{ color: 'var(--vscode-descriptionForeground)' }}>{label}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        {children}
+      </div>
     </div>
   )
 }
@@ -224,18 +276,21 @@ function LabelEditor({ labels, onChange }: { labels: string[]; onChange: (labels
 
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
-      <Tag size={12} className="text-zinc-400 shrink-0" />
       {labels.map(label => (
         <span
           key={label}
-          className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium bg-zinc-200 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-300 rounded"
+          className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded"
+          style={{
+            background: 'var(--vscode-badge-background)',
+            color: 'var(--vscode-badge-foreground)',
+          }}
         >
           {label}
           <button
             onClick={() => removeLabel(label)}
             className="hover:text-red-500 transition-colors"
           >
-            <X size={10} />
+            <X size={9} />
           </button>
         </span>
       ))}
@@ -251,12 +306,19 @@ function LabelEditor({ labels, onChange }: { labels: string[]; onChange: (labels
             if (e.key === 'Escape') { setNewLabel(''); setIsAdding(false) }
           }}
           placeholder="Label..."
-          className="w-16 px-1 py-0.5 text-[10px] bg-transparent border border-zinc-300 dark:border-zinc-600 rounded outline-none focus:border-blue-500 text-zinc-700 dark:text-zinc-300 placeholder-zinc-400"
+          className="w-16 px-1 py-0.5 text-[10px] bg-transparent rounded outline-none"
+          style={{
+            border: '1px solid var(--vscode-focusBorder)',
+            color: 'var(--vscode-foreground)',
+          }}
         />
       ) : (
         <button
           onClick={() => setIsAdding(true)}
-          className="inline-flex items-center gap-0.5 px-1 py-0.5 text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded transition-colors"
+          className="inline-flex items-center gap-0.5 px-1 py-0.5 text-[10px] rounded transition-colors"
+          style={{ color: 'var(--vscode-descriptionForeground)' }}
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
         >
           <Plus size={10} />
         </button>
@@ -367,70 +429,96 @@ export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose
   }, [save, onClose, onStartWithAI, cardSettings.showBuildWithAI])
 
   return (
-    <div className="h-full flex flex-col bg-[var(--vscode-editor-background)] border-l border-zinc-200 dark:border-zinc-700">
+    <div
+      className="h-full flex flex-col"
+      style={{
+        background: 'var(--vscode-editor-background)',
+        borderLeft: '1px solid var(--vscode-panel-border)',
+      }}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
+      <div
+        className="flex items-center justify-between px-4 py-3"
+        style={{ borderBottom: '1px solid var(--vscode-panel-border)' }}
+      >
         <div className="flex items-center gap-3">
-          <span className="text-xs font-mono text-zinc-500">{featureId}</span>
+          <span className="text-xs font-mono" style={{ color: 'var(--vscode-descriptionForeground)' }}>{featureId}</span>
         </div>
         <div className="flex items-center gap-2">
           {cardSettings.showBuildWithAI && <AIDropdown onSelect={onStartWithAI} />}
           <button
             onClick={onClose}
-            className="p-1.5 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
+            className="p-1.5 rounded transition-colors"
+            style={{ color: 'var(--vscode-descriptionForeground)' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
             <X size={18} />
           </button>
         </div>
       </div>
 
-      {/* Metadata bar */}
-      <div className="flex items-center gap-4 px-4 py-2 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 flex-wrap">
-        <Dropdown
-          value={currentFrontmatter.status}
-          options={statuses.map(s => ({ value: s, label: statusLabels[s] }))}
-          onChange={(v) => handleFrontmatterUpdate({ status: v as FeatureStatus })}
-        />
-        {cardSettings.showPriorityBadges && (
+      {/* Metadata */}
+      <div
+        className="flex flex-col py-0.5"
+        style={{ borderBottom: '1px solid var(--vscode-panel-border)' }}
+      >
+        <PropertyRow label="Status" icon={<CircleDot size={13} />}>
           <Dropdown
-            value={currentFrontmatter.priority}
-            options={priorities.map(p => ({ value: p, label: priorityLabels[p] }))}
-            onChange={(v) => handleFrontmatterUpdate({ priority: v as Priority })}
+            value={currentFrontmatter.status}
+            options={statuses.map(s => ({ value: s, label: statusLabels[s], dot: statusDots[s] }))}
+            onChange={(v) => handleFrontmatterUpdate({ status: v as FeatureStatus })}
           />
+        </PropertyRow>
+        {cardSettings.showPriorityBadges && (
+          <PropertyRow label="Priority" icon={<Signal size={13} />}>
+            <Dropdown
+              value={currentFrontmatter.priority}
+              options={priorities.map(p => ({ value: p, label: priorityLabels[p], dot: priorityDots[p] }))}
+              onChange={(v) => handleFrontmatterUpdate({ priority: v as Priority })}
+            />
+          </PropertyRow>
         )}
         {cardSettings.showAssignee && (
-          <div className="flex items-center gap-1.5 text-xs text-zinc-500">
-            {currentFrontmatter.assignee ? (
-              <span
-                className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold bg-zinc-200 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-300"
-              >{currentFrontmatter.assignee.split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2)}</span>
-            ) : (
-              <User size={13} />
-            )}
-            <input
-              type="text"
-              value={currentFrontmatter.assignee || ''}
-              onChange={(e) => handleFrontmatterUpdate({ assignee: e.target.value || null })}
-              placeholder="Assignee..."
-              className="bg-transparent border-none outline-none w-32 placeholder-zinc-400"
-            />
-          </div>
+          <PropertyRow label="Assignee" icon={<User size={13} />}>
+            <div className="flex items-center gap-2">
+              {currentFrontmatter.assignee && (
+                <span
+                  className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold"
+                  style={{
+                    background: 'var(--vscode-badge-background)',
+                    color: 'var(--vscode-badge-foreground)',
+                  }}
+                >{currentFrontmatter.assignee.split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2)}</span>
+              )}
+              <input
+                type="text"
+                value={currentFrontmatter.assignee || ''}
+                onChange={(e) => handleFrontmatterUpdate({ assignee: e.target.value || null })}
+                placeholder="No assignee"
+                className="bg-transparent border-none outline-none text-xs w-32"
+                style={{ color: currentFrontmatter.assignee ? 'var(--vscode-foreground)' : 'var(--vscode-descriptionForeground)' }}
+              />
+            </div>
+          </PropertyRow>
         )}
         {cardSettings.showDueDate && (
-          <div className="flex items-center gap-1 text-xs text-zinc-500">
-            <Calendar size={12} />
+          <PropertyRow label="Due date" icon={<Calendar size={13} />}>
             <input
               type="date"
               value={currentFrontmatter.dueDate || ''}
               onChange={(e) => handleFrontmatterUpdate({ dueDate: e.target.value || null })}
-              className="bg-transparent border-none outline-none text-zinc-600 dark:text-zinc-400"
+              className="bg-transparent border-none outline-none text-xs"
+              style={{ color: currentFrontmatter.dueDate ? 'var(--vscode-foreground)' : 'var(--vscode-descriptionForeground)' }}
             />
-          </div>
+          </PropertyRow>
         )}
-        <LabelEditor
-          labels={currentFrontmatter.labels}
-          onChange={(labels) => handleFrontmatterUpdate({ labels })}
-        />
+        <PropertyRow label="Labels" icon={<Tag size={13} />}>
+          <LabelEditor
+            labels={currentFrontmatter.labels}
+            onChange={(labels) => handleFrontmatterUpdate({ labels })}
+          />
+        </PropertyRow>
       </div>
 
       {/* Editor */}

@@ -364,7 +364,7 @@ function CreateFeatureDialogContent({
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="absolute inset-0 bg-black/30" onClick={handleClose} />
       <div
-        className="relative h-full w-full max-w-lg shadow-xl flex flex-col animate-in slide-in-from-right duration-200"
+        className="relative h-full w-1/2 shadow-xl flex flex-col animate-in slide-in-from-right duration-200"
         style={{
           background: 'var(--vscode-editor-background)',
           borderLeft: '1px solid var(--vscode-panel-border)',
