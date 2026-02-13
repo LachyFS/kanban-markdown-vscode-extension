@@ -1,26 +1,15 @@
 import * as path from 'path'
 import * as vscode from 'vscode'
 
-const DEFAULT_STATUS_FOLDERS = ['backlog', 'todo', 'in-progress', 'review', 'done']
-
-export function getStatusFolders(): string[] {
-  const config = vscode.workspace.getConfiguration('kanban-markdown')
-  const columns = config.get<{ id: string }[]>('columns')
-  if (columns && columns.length > 0) {
-    return columns.map(c => c.id)
-  }
-  return DEFAULT_STATUS_FOLDERS
-}
-
 export function getFeatureFilePath(featuresDir: string, status: string, filename: string): string {
-  return path.join(featuresDir, status, `${filename}.md`)
+  if (status === 'done') {
+    return path.join(featuresDir, 'done', `${filename}.md`)
+  }
+  return path.join(featuresDir, `${filename}.md`)
 }
 
 export async function ensureStatusSubfolders(featuresDir: string): Promise<void> {
-  const statuses = getStatusFolders()
-  for (const status of statuses) {
-    await vscode.workspace.fs.createDirectory(vscode.Uri.file(path.join(featuresDir, status)))
-  }
+  await vscode.workspace.fs.createDirectory(vscode.Uri.file(path.join(featuresDir, 'done')))
 }
 
 export async function moveFeatureFile(
@@ -29,7 +18,9 @@ export async function moveFeatureFile(
   newStatus: string
 ): Promise<string> {
   const filename = path.basename(currentPath)
-  const targetDir = path.join(featuresDir, newStatus)
+  const targetDir = newStatus === 'done'
+    ? path.join(featuresDir, 'done')
+    : featuresDir
   let targetPath = path.join(targetDir, filename)
 
   if (currentPath === targetPath) return currentPath
@@ -51,8 +42,8 @@ export async function moveFeatureFile(
 export function getStatusFromPath(filePath: string, featuresDir: string): string | null {
   const relative = path.relative(featuresDir, filePath)
   const parts = relative.split(path.sep)
-  if (parts.length === 2) {
-    return parts[0]
+  if (parts.length === 2 && parts[0] === 'done') {
+    return 'done'
   }
   return null
 }

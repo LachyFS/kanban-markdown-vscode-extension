@@ -2,7 +2,6 @@ import * as vscode from 'vscode'
 import * as path from 'path'
 import { getTitleFromContent } from '../shared/types'
 import type { FeatureStatus, Priority, KanbanColumn } from '../shared/types'
-import { getStatusFolders } from './featureFileUtils'
 import { KanbanPanel } from './KanbanPanel'
 
 interface SidebarFeature {
@@ -167,26 +166,42 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
     }
 
     const features: SidebarFeature[] = []
-    const statusFolders = getStatusFolders()
 
-    for (const status of statusFolders) {
-      const subdir = path.join(featuresDir, status)
-      try {
-        const entries = await vscode.workspace.fs.readDirectory(vscode.Uri.file(subdir))
-        for (const [file, fileType] of entries) {
-          if (fileType !== vscode.FileType.File || !file.endsWith('.md')) continue
-          const filePath = path.join(subdir, file)
-          try {
-            const content = new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.file(filePath)))
-            const parsed = this._parseFrontmatter(content, file)
-            if (parsed) features.push(parsed)
-          } catch {
-            // Skip unreadable files
-          }
+    // Load root-level files (non-done statuses)
+    try {
+      const rootEntries = await vscode.workspace.fs.readDirectory(vscode.Uri.file(featuresDir))
+      for (const [file, fileType] of rootEntries) {
+        if (fileType !== vscode.FileType.File || !file.endsWith('.md')) continue
+        const filePath = path.join(featuresDir, file)
+        try {
+          const content = new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.file(filePath)))
+          const parsed = this._parseFrontmatter(content, file)
+          if (parsed) features.push(parsed)
+        } catch {
+          // Skip unreadable files
         }
-      } catch {
-        // Subdirectory may not exist
       }
+    } catch {
+      // Root directory may not exist
+    }
+
+    // Load done/ subfolder files
+    const doneDir = path.join(featuresDir, 'done')
+    try {
+      const doneEntries = await vscode.workspace.fs.readDirectory(vscode.Uri.file(doneDir))
+      for (const [file, fileType] of doneEntries) {
+        if (fileType !== vscode.FileType.File || !file.endsWith('.md')) continue
+        const filePath = path.join(doneDir, file)
+        try {
+          const content = new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.file(filePath)))
+          const parsed = this._parseFrontmatter(content, file)
+          if (parsed) features.push(parsed)
+        } catch {
+          // Skip unreadable files
+        }
+      }
+    } catch {
+      // done/ subfolder may not exist
     }
 
     this._features = features
