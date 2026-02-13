@@ -1,4 +1,4 @@
-import { Calendar, X } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 import { getTitleFromContent } from '../../shared/types'
 import type { Feature, Priority } from '../../shared/types'
 import { useStore } from '../store'
@@ -6,7 +6,6 @@ import { useStore } from '../store'
 interface FeatureCardProps {
   feature: Feature
   onClick: () => void
-  onDelete: (featureId: string) => void
   isDragging?: boolean
 }
 
@@ -36,7 +35,7 @@ function getDescriptionFromContent(content: string): string {
   return desc
 }
 
-export function FeatureCard({ feature, onClick, onDelete, isDragging }: FeatureCardProps) {
+export function FeatureCard({ feature, onClick, isDragging }: FeatureCardProps) {
   const { cardSettings } = useStore()
   const title = getTitleFromContent(feature.content)
   const description = getDescriptionFromContent(feature.content)
@@ -68,31 +67,20 @@ export function FeatureCard({ feature, onClick, onDelete, isDragging }: FeatureC
         isDragging ? 'shadow-lg opacity-90' : ''
       }`}
     >
-      {/* Delete button */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onDelete(feature.id) }}
-        className="absolute top-1.5 right-1.5 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-zinc-200 dark:hover:bg-zinc-600 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-opacity"
-        title="Delete"
-      >
-        <X size={14} />
-      </button>
-
-      {/* Header */}
-      {cardSettings.showPriorityBadges && (
-        <div className={`flex items-start justify-end pr-4 ${cardSettings.compactMode ? 'mb-1' : 'mb-2'}`}>
-          <span
-            className={`text-xs font-medium px-1.5 py-0.5 rounded ${priorityColors[feature.priority]}`}
-          >
-            {priorityLabels[feature.priority]}
-          </span>
-        </div>
-      )}
-
       {/* Title & Content */}
       <div className="flex-1">
-        <h3 className={`text-sm font-medium text-zinc-900 dark:text-zinc-100 ${description ? 'mb-1' : cardSettings.compactMode ? 'mb-1' : 'mb-2'} line-clamp-2`}>
-          {title}
-        </h3>
+        <div className={`flex items-start gap-2 ${description ? 'mb-1' : cardSettings.compactMode ? 'mb-1' : 'mb-2'}`}>
+          <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 line-clamp-2 flex-1">
+            {title}
+          </h3>
+          {cardSettings.showPriorityBadges && (
+            <span
+              className={`text-xs font-medium px-1.5 py-0.5 rounded shrink-0 ${priorityColors[feature.priority]}`}
+            >
+              {priorityLabels[feature.priority]}
+            </span>
+          )}
+        </div>
 
         {/* Description */}
         {description && !cardSettings.compactMode && (

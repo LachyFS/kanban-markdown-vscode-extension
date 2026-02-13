@@ -9,7 +9,6 @@ interface KanbanColumnProps {
   features: Feature[]
   onFeatureClick: (feature: Feature) => void
   onAddFeature: (status: string) => void
-  onDeleteFeature: (featureId: string) => void
   onDragStart: (e: React.DragEvent, feature: Feature) => void
   onDragOver: (e: React.DragEvent) => void
   onDragOverCard: (e: React.DragEvent, columnId: string, cardIndex: number) => void
@@ -25,7 +24,6 @@ export function KanbanColumn({
   features,
   onFeatureClick,
   onAddFeature,
-  onDeleteFeature,
   onDragStart,
   onDragOver,
   onDragOverCard,
@@ -87,7 +85,7 @@ export function KanbanColumn({
                 draggedFeature?.id === feature.id ? "opacity-40" : ""
               }`}
             >
-              <FeatureCard feature={feature} onClick={() => onFeatureClick(feature)} onDelete={onDeleteFeature} />
+              <FeatureCard feature={feature} onClick={() => onFeatureClick(feature)} />
             </div>
           </div>
         ))}

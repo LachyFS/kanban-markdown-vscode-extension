@@ -329,7 +329,6 @@ function App(): React.JSX.Element {
           <KanbanBoard
             onFeatureClick={handleFeatureClick}
             onAddFeature={handleAddFeatureInColumn}
-            onDeleteFeature={handleDeleteFeatureFromCard}
             onMoveFeature={handleMoveFeature}
           />
         </div>
