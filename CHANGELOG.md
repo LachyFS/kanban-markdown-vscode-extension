@@ -5,6 +5,17 @@ All notable changes to the Kanban Markdown extension will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-02-13
+
+### Added
+- `completedAt` frontmatter field that records when a feature was marked as done, displayed as relative time on cards (e.g. "completed 2 days ago")
+
+### Changed
+- Simplified status subfolders to use only a `done` folder instead of per-status folders
+
+### Dependencies
+- Bumped `qs` from 6.14.1 to 6.14.2
+
 ## [1.1.0] - 2026-02-13
 
 ### Added
