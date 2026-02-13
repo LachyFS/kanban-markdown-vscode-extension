@@ -24,6 +24,7 @@ export class KanbanPanel {
   private _disposables: vscode.Disposable[] = []
   private _fileWatcher: vscode.FileSystemWatcher | undefined
   private _currentEditingFeatureId: string | null = null
+  private _lastWrittenContent: string = ''
   private _migrating = false
   private _onDisposeCallbacks: (() => void)[] = []
 
@@ -113,8 +114,16 @@ export class KanbanPanel {
             await this._saveFeatureContent(message.featureId, message.content, message.frontmatter)
             break
           case 'closeFeature':
-            // Nothing to do on extension side
+            this._currentEditingFeatureId = null
             break
+          case 'openFile': {
+            const feat = this._features.find(f => f.id === message.featureId)
+            if (feat) {
+              const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(feat.filePath))
+              await vscode.window.showTextDocument(doc, { viewColumn: vscode.ViewColumn.Beside })
+            }
+            break
+          }
           case 'focusMenuBar':
             vscode.commands.executeCommand('workbench.action.focusMenuBar')
             break
@@ -162,18 +171,30 @@ export class KanbanPanel {
     // Debounce to avoid multiple rapid updates
     let debounceTimer: NodeJS.Timeout | undefined
 
-    const handleFileChange = () => {
+    const handleFileChange = (uri?: vscode.Uri) => {
       if (this._migrating) return
       if (debounceTimer) clearTimeout(debounceTimer)
       debounceTimer = setTimeout(async () => {
         await this._loadFeatures()
         this._sendFeaturesToWebview()
+
+        // If the changed file is the currently-edited feature, check for external changes
+        if (this._currentEditingFeatureId && uri) {
+          const editingFeature = this._features.find(f => f.id === this._currentEditingFeatureId)
+          if (editingFeature && editingFeature.filePath === uri.fsPath) {
+            const currentContent = this._serializeFeature(editingFeature)
+            if (currentContent !== this._lastWrittenContent) {
+              // External change detected — refresh the editor
+              this._sendFeatureContent(this._currentEditingFeatureId)
+            }
+          }
+        }
       }, 100)
     }
 
-    this._fileWatcher.onDidChange(handleFileChange, null, this._disposables)
-    this._fileWatcher.onDidCreate(handleFileChange, null, this._disposables)
-    this._fileWatcher.onDidDelete(handleFileChange, null, this._disposables)
+    this._fileWatcher.onDidChange((uri) => handleFileChange(uri), null, this._disposables)
+    this._fileWatcher.onDidCreate((uri) => handleFileChange(uri), null, this._disposables)
+    this._fileWatcher.onDidDelete((uri) => handleFileChange(uri), null, this._disposables)
 
     this._disposables.push(this._fileWatcher)
   }
@@ -602,6 +623,7 @@ export class KanbanPanel {
 
     // Save to file
     const fileContent = this._serializeFeature(feature)
+    this._lastWrittenContent = fileContent
     await vscode.workspace.fs.writeFile(vscode.Uri.file(feature.filePath), new TextEncoder().encode(fileContent))
 
     if (oldStatus !== feature.status) {

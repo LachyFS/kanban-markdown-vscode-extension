@@ -3,7 +3,7 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Markdown } from 'tiptap-markdown'
-import { X, User, ChevronDown, Wand2, Tag, Plus, Check, CircleDot, Signal, Calendar, Trash2 } from 'lucide-react'
+import { X, User, ChevronDown, Wand2, Tag, Plus, Check, CircleDot, Signal, Calendar, Trash2, FileText } from 'lucide-react'
 import type { FeatureFrontmatter, Priority, FeatureStatus } from '../../shared/types'
 import { cn } from '../lib/utils'
 import { useStore } from '../store'
@@ -23,9 +23,11 @@ interface FeatureEditorProps {
   featureId: string
   content: string
   frontmatter: FeatureFrontmatter
+  contentVersion?: number
   onSave: (content: string, frontmatter: FeatureFrontmatter) => void
   onClose: () => void
   onDelete: () => void
+  onOpenFile: () => void
   onStartWithAI: (agent: AIAgent, permissionMode: PermissionMode) => void
 }
 
@@ -367,7 +369,7 @@ function LabelEditor({ labels, onChange }: { labels: string[]; onChange: (labels
   )
 }
 
-export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose, onDelete, onStartWithAI }: FeatureEditorProps) {
+export function FeatureEditor({ featureId, content, frontmatter, contentVersion, onSave, onClose, onDelete, onOpenFile, onStartWithAI }: FeatureEditorProps) {
   const { cardSettings } = useStore()
   const [currentFrontmatter, setCurrentFrontmatter] = useState(frontmatter)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
@@ -420,7 +422,7 @@ export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose
       requestAnimationFrame(() => { isInitialLoad.current = false })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editor, featureId])
+  }, [editor, featureId, contentVersion])
 
   // Reset frontmatter when prop changes
   useEffect(() => {
@@ -500,14 +502,26 @@ export function FeatureEditor({ featureId, content, frontmatter, onSave, onClose
               </button>
             </div>
           ) : (
-            <button
-              onClick={() => setConfirmingDelete(true)}
-              className="p-1.5 rounded transition-colors vscode-hover-bg"
-              style={{ color: 'var(--vscode-descriptionForeground)' }}
-              title="Delete ticket"
-            >
-              <Trash2 size={16} />
-            </button>
+            <>
+              <button
+                onClick={() => { onOpenFile(); onClose(); }}
+                className="p-1.5 px-2 rounded border transition-colors vscode-hover-bg flex items-center gap-1"
+                style={{ color: 'var(--vscode-descriptionForeground)', borderColor: 'var(--vscode-widget-border, var(--vscode-contrastBorder, rgba(128,128,128,0.35)))' }}
+                title="Open .md file"
+              >
+                <FileText size={16} />
+                <span className="text-xs">OPEN</span>
+              </button>
+              <button
+                onClick={() => setConfirmingDelete(true)}
+                className="p-1.5 px-2 rounded border transition-colors vscode-hover-bg flex items-center gap-1"
+                style={{ color: 'var(--vscode-descriptionForeground)', borderColor: 'var(--vscode-widget-border, var(--vscode-contrastBorder, rgba(128,128,128,0.35)))' }}
+                title="Delete ticket"
+              >
+                <Trash2 size={16} />
+                <span className="text-xs">DELETE</span>
+              </button>
+            </>
           )}
         </div>
         <div className="flex items-center gap-2">

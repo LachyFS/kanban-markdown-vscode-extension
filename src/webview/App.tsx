@@ -31,10 +31,12 @@ function App(): React.JSX.Element {
   const [createFeatureStatus, setCreateFeatureStatus] = useState<FeatureStatus>('backlog')
 
   // Editor state
+  const contentVersionRef = useRef(0)
   const [editingFeature, setEditingFeature] = useState<{
     id: string
     content: string
     frontmatter: FeatureFrontmatter
+    contentVersion: number
   } | null>(null)
 
   // Undo delete state
@@ -190,10 +192,12 @@ function App(): React.JSX.Element {
           setCreateFeatureOpen(true)
           break
         case 'featureContent':
+          contentVersionRef.current += 1
           setEditingFeature({
             id: message.featureId,
             content: message.content,
-            frontmatter: message.frontmatter
+            frontmatter: message.frontmatter,
+            contentVersion: contentVersionRef.current
           })
           break
       }
@@ -233,6 +237,11 @@ function App(): React.JSX.Element {
   const handleDeleteFeature = (): void => {
     if (!editingFeature) return
     handleDeleteFeatureFromCard(editingFeature.id)
+  }
+
+  const handleOpenFile = (): void => {
+    if (!editingFeature) return
+    vscode.postMessage({ type: 'openFile', featureId: editingFeature.id })
   }
 
   const handleStartWithAI = (agent: 'claude' | 'codex' | 'opencode', permissionMode: 'default' | 'plan' | 'acceptEdits' | 'bypassPermissions'): void => {
@@ -338,9 +347,11 @@ function App(): React.JSX.Element {
               featureId={editingFeature.id}
               content={editingFeature.content}
               frontmatter={editingFeature.frontmatter}
+              contentVersion={editingFeature.contentVersion}
               onSave={handleSaveFeature}
               onClose={handleCloseEditor}
               onDelete={handleDeleteFeature}
+              onOpenFile={handleOpenFile}
               onStartWithAI={handleStartWithAI}
             />
           </div>

@@ -92,3 +92,4 @@ export type WebviewMessage =
   | { type: 'openFeature'; featureId: string }
   | { type: 'saveFeatureContent'; featureId: string; content: string; frontmatter: FeatureFrontmatter }
   | { type: 'closeFeature' }
+  | { type: 'openFile'; featureId: string }
