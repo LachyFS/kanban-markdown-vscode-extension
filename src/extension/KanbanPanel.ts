@@ -2,7 +2,8 @@ import * as vscode from 'vscode'
 import * as path from 'path'
 import { getTitleFromContent, generateFeatureFilename } from '../shared/types'
 import type { Feature, FeatureStatus, Priority, KanbanColumn, FeatureFrontmatter, CardDisplaySettings } from '../shared/types'
-import { ensureStatusSubfolders, moveFeatureFile, getFeatureFilePath, getStatusFromPath } from './featureFileUtils'
+import { ensureStatusSubfolders, moveFeatureFile, getFeatureFilePath, getStatusFromPath, getGitHubIssuesDir } from './featureFileUtils'
+import { GitHubService } from './GitHubService'
 
 interface CreateFeatureData {
   status: FeatureStatus
@@ -23,6 +24,8 @@ export class KanbanPanel {
   private _features: Feature[] = []
   private _disposables: vscode.Disposable[] = []
   private _fileWatcher: vscode.FileSystemWatcher | undefined
+  private _githubFileWatcher: vscode.FileSystemWatcher | undefined
+  private _githubService: GitHubService | null = null
   private _currentEditingFeatureId: string | null = null
   private _lastWrittenContent: string = ''
   private _migrating = false
@@ -94,6 +97,14 @@ export class KanbanPanel {
           case 'ready':
             await this._loadFeatures()
             this._sendFeaturesToWebview()
+            // Notify webview of GitHub connection status
+            if (this._githubService) {
+              this._panel.webview.postMessage({
+                type: 'githubConnected',
+                connected: this._githubService.isConnected(),
+                repo: this._githubService.getRepo() || undefined
+              })
+            }
             break
           case 'createFeature':
             await this._createFeature(message.data)
@@ -130,6 +141,15 @@ export class KanbanPanel {
           case 'startWithAI':
             await this._startWithAI(message.agent, message.permissionMode)
             break
+          case 'syncGitHub':
+            await this._syncGitHub()
+            break
+          case 'unlinkGitHub':
+            await this._unlinkGitHub()
+            break
+          case 'openGitHubIssue':
+            vscode.env.openExternal(vscode.Uri.parse(message.url))
+            break
         }
       },
       null,
@@ -146,6 +166,8 @@ export class KanbanPanel {
           // Features directory changed - need to reload everything
           this._setupFileWatcher()
           this._loadFeatures().then(() => this._sendFeaturesToWebview())
+        } else if (e.affectsConfiguration('kanban-markdown.github.enabled')) {
+          this._initGitHubService()
         } else {
           this._sendFeaturesToWebview()
         }
@@ -153,20 +175,22 @@ export class KanbanPanel {
         this._sendFeaturesToWebview()
       }
     }, null, this._disposables)
+
+    // Initialize GitHub service if enabled
+    this._initGitHubService()
   }
 
   private _setupFileWatcher(): void {
-    // Dispose old watcher if re-setting up (e.g. featuresDirectory changed)
+    // Dispose old watchers if re-setting up (e.g. featuresDirectory changed)
     if (this._fileWatcher) {
       this._fileWatcher.dispose()
+    }
+    if (this._githubFileWatcher) {
+      this._githubFileWatcher.dispose()
     }
 
     const featuresDir = this._getWorkspaceFeaturesDir()
     if (!featuresDir) return
-
-    // Watch for changes in the features directory (recursive for status subfolders)
-    const pattern = new vscode.RelativePattern(featuresDir, '**/*.md')
-    this._fileWatcher = vscode.workspace.createFileSystemWatcher(pattern)
 
     // Debounce to avoid multiple rapid updates
     let debounceTimer: NodeJS.Timeout | undefined
@@ -192,11 +216,25 @@ export class KanbanPanel {
       }, 100)
     }
 
+    // Watch for changes in the features directory (recursive for status subfolders)
+    const pattern = new vscode.RelativePattern(featuresDir, '**/*.md')
+    this._fileWatcher = vscode.workspace.createFileSystemWatcher(pattern)
     this._fileWatcher.onDidChange((uri) => handleFileChange(uri), null, this._disposables)
     this._fileWatcher.onDidCreate((uri) => handleFileChange(uri), null, this._disposables)
     this._fileWatcher.onDidDelete((uri) => handleFileChange(uri), null, this._disposables)
-
     this._disposables.push(this._fileWatcher)
+
+    // Watch for changes in the github-issues directory
+    const workspaceRoot = this._getWorkspaceRoot()
+    if (workspaceRoot) {
+      const ghIssuesDir = getGitHubIssuesDir(workspaceRoot)
+      const ghPattern = new vscode.RelativePattern(ghIssuesDir, '**/*.md')
+      this._githubFileWatcher = vscode.workspace.createFileSystemWatcher(ghPattern)
+      this._githubFileWatcher.onDidChange((uri) => handleFileChange(uri), null, this._disposables)
+      this._githubFileWatcher.onDidCreate((uri) => handleFileChange(uri), null, this._disposables)
+      this._githubFileWatcher.onDidDelete((uri) => handleFileChange(uri), null, this._disposables)
+      this._disposables.push(this._githubFileWatcher)
+    }
   }
 
   public onDispose(callback: () => void): void {
@@ -205,6 +243,9 @@ export class KanbanPanel {
 
   public dispose() {
     KanbanPanel.currentPanel = undefined
+
+    this._githubService?.dispose()
+    this._githubService = null
 
     for (const cb of this._onDisposeCallbacks) {
       cb()
@@ -240,7 +281,7 @@ export class KanbanPanel {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'nonce-${nonce}';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https://github.com https://*.githubusercontent.com; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'nonce-${nonce}';">
   <link href="${styleUri}" rel="stylesheet">
   <title>Kanban Board</title>
 </head>
@@ -260,14 +301,20 @@ export class KanbanPanel {
     return text
   }
 
-  private _getWorkspaceFeaturesDir(): string | null {
+  private _getWorkspaceRoot(): string | null {
     const workspaceFolders = vscode.workspace.workspaceFolders
     if (!workspaceFolders || workspaceFolders.length === 0) {
       return null
     }
+    return workspaceFolders[0].uri.fsPath
+  }
+
+  private _getWorkspaceFeaturesDir(): string | null {
+    const root = this._getWorkspaceRoot()
+    if (!root) return null
     const config = vscode.workspace.getConfiguration('kanban-markdown')
     const featuresDirectory = config.get<string>('featuresDirectory') || '.devtool/features'
-    return path.join(workspaceFolders[0].uri.fsPath, featuresDirectory)
+    return path.join(root, featuresDirectory)
   }
 
   private async _ensureFeaturesDir(): Promise<string | null> {
@@ -413,6 +460,40 @@ export class KanbanPanel {
         this._migrating = false
       }
 
+      // Phase 4: Load GitHub issue files from .devtool/github-issues/
+      const workspaceRoot = this._getWorkspaceRoot()
+      if (workspaceRoot) {
+        const ghIssuesDir = getGitHubIssuesDir(workspaceRoot)
+        try {
+          // Load root-level (open issues)
+          const ghRootEntries = await vscode.workspace.fs.readDirectory(vscode.Uri.file(ghIssuesDir))
+          for (const [file, fileType] of ghRootEntries) {
+            if (fileType !== vscode.FileType.File || !file.endsWith('.md')) continue
+            const filePath = path.join(ghIssuesDir, file)
+            const content = new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.file(filePath)))
+            const feature = this._parseFeatureFile(content, filePath)
+            if (feature) features.push(feature)
+          }
+
+          // Load done/ subfolder (closed issues)
+          const ghDoneDir = path.join(ghIssuesDir, 'done')
+          try {
+            const ghDoneEntries = await vscode.workspace.fs.readDirectory(vscode.Uri.file(ghDoneDir))
+            for (const [file, fileType] of ghDoneEntries) {
+              if (fileType !== vscode.FileType.File || !file.endsWith('.md')) continue
+              const filePath = path.join(ghDoneDir, file)
+              const content = new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.file(filePath)))
+              const feature = this._parseFeatureFile(content, filePath)
+              if (feature) features.push(feature)
+            }
+          } catch {
+            // done/ subfolder may not exist yet; skip
+          }
+        } catch {
+          // github-issues/ directory doesn't exist yet; skip
+        }
+      }
+
       this._features = features.sort((a, b) => a.order - b.order)
     } catch {
       this._features = []
@@ -440,6 +521,14 @@ export class KanbanPanel {
       return match[1].split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean)
     }
 
+    const ghIssueNumber = getValue('github_issueNumber')
+    const github = ghIssueNumber ? {
+      issueNumber: parseInt(ghIssueNumber),
+      repo: getValue('github_repo'),
+      htmlUrl: getValue('github_htmlUrl'),
+      syncedAt: getValue('github_syncedAt')
+    } : undefined
+
     return {
       id: getValue('id') || path.basename(filePath, '.md'),
       status: (getValue('status') as FeatureStatus) || 'backlog',
@@ -452,12 +541,13 @@ export class KanbanPanel {
       labels: getArrayValue('labels'),
       order: parseInt(getValue('order')) || 0,
       content: body.trim(),
-      filePath
+      filePath,
+      github
     }
   }
 
   private _serializeFeature(feature: Feature): string {
-    const frontmatter = [
+    const lines = [
       '---',
       `id: "${feature.id}"`,
       `status: "${feature.status}"`,
@@ -468,12 +558,19 @@ export class KanbanPanel {
       `modified: "${feature.modified}"`,
       `completedAt: ${feature.completedAt ? `"${feature.completedAt}"` : 'null'}`,
       `labels: [${feature.labels.map(l => `"${l}"`).join(', ')}]`,
-      `order: ${feature.order}`,
-      '---',
-      ''
-    ].join('\n')
+      `order: ${feature.order}`
+    ]
 
-    return frontmatter + feature.content
+    if (feature.github) {
+      lines.push(`github_issueNumber: ${feature.github.issueNumber}`)
+      lines.push(`github_repo: "${feature.github.repo}"`)
+      lines.push(`github_htmlUrl: "${feature.github.htmlUrl}"`)
+      lines.push(`github_syncedAt: "${feature.github.syncedAt}"`)
+    }
+
+    lines.push('---', '')
+
+    return lines.join('\n') + feature.content
   }
 
   public triggerCreateDialog(): void {
@@ -594,6 +691,13 @@ export class KanbanPanel {
       }
     }
 
+    // Auto-push to GitHub if synced
+    if (feature.github && this._githubService) {
+      this._githubService.pushFeature(feature).catch(err =>
+        vscode.window.showWarningMessage(`Failed to update GitHub issue #${feature.github!.issueNumber}: ${err instanceof Error ? err.message : String(err)}`)
+      )
+    }
+
     this._sendFeaturesToWebview()
   }
 
@@ -664,6 +768,13 @@ export class KanbanPanel {
       }
     }
 
+    // Auto-push to GitHub if synced
+    if (feature.github && this._githubService) {
+      this._githubService.pushFeature(feature).catch(err =>
+        vscode.window.showWarningMessage(`Failed to update GitHub issue #${feature.github!.issueNumber}: ${err instanceof Error ? err.message : String(err)}`)
+      )
+    }
+
     this._sendFeaturesToWebview()
   }
 
@@ -683,7 +794,8 @@ export class KanbanPanel {
       modified: feature.modified,
       completedAt: feature.completedAt,
       labels: feature.labels,
-      order: feature.order
+      order: feature.order,
+      github: feature.github || null
     }
 
     this._panel.webview.postMessage({
@@ -692,6 +804,13 @@ export class KanbanPanel {
       content: feature.content,
       frontmatter
     })
+
+    // Fire-and-forget: fetch GitHub comments for synced features
+    if (feature.github && this._githubService?.isConnected()) {
+      this._githubService.fetchComments(feature.github.issueNumber)
+        .then(data => this._panel.webview.postMessage({ type: 'issueComments', featureId: feature.id, ...data }))
+        .catch(() => { /* silent */ })
+    }
   }
 
   private async _saveFeatureContent(
@@ -736,6 +855,13 @@ export class KanbanPanel {
       } finally {
         this._migrating = false
       }
+    }
+
+    // Auto-push to GitHub if synced
+    if (feature.github && this._githubService) {
+      this._githubService.pushFeature(feature).catch(err =>
+        vscode.window.showWarningMessage(`Failed to update GitHub issue #${feature.github!.issueNumber}: ${err instanceof Error ? err.message : String(err)}`)
+      )
     }
 
     // Update all features in webview
@@ -809,6 +935,153 @@ export class KanbanPanel {
     terminal.sendText(command)
   }
 
+  // --- GitHub sync ---
+
+  private _initGitHubService(): void {
+    const config = vscode.workspace.getConfiguration('kanban-markdown')
+    const enabled = config.get<boolean>('github.enabled', false)
+
+    if (enabled) {
+      const workspaceRoot = this._getWorkspaceRoot()
+      if (workspaceRoot && !this._githubService) {
+        this._githubService = new GitHubService(workspaceRoot, (status, message) => {
+          this._panel.webview.postMessage({ type: 'syncStatus', status, message })
+        })
+        this._githubService.initialize().then(() => {
+          this._panel.webview.postMessage({
+            type: 'githubConnected',
+            connected: this._githubService!.isConnected(),
+            repo: this._githubService!.getRepo() || undefined
+          })
+        })
+      }
+    } else if (this._githubService) {
+      this._githubService.dispose()
+      this._githubService = null
+      this._panel.webview.postMessage({ type: 'githubConnected', connected: false })
+    }
+  }
+
+  public async syncGitHub(): Promise<void> {
+    await this._syncGitHub()
+  }
+
+  private async _syncGitHub(): Promise<void> {
+    if (!this._githubService) {
+      // Try to initialize on first sync attempt
+      this._initGitHubService()
+      if (!this._githubService) {
+        vscode.window.showWarningMessage('GitHub sync is not enabled. Enable it in settings: kanban-markdown.github.enabled')
+        return
+      }
+    }
+
+    const result = await this._githubService.sync(this._features)
+
+    if (result.errors.length > 0) {
+      vscode.window.showErrorMessage(`GitHub Sync error: ${result.errors[0]}`)
+      return
+    }
+
+    const workspaceRoot = this._getWorkspaceRoot()
+    if (!workspaceRoot) return
+
+    const ghIssuesDir = getGitHubIssuesDir(workspaceRoot)
+
+    // Write created features to disk
+    this._migrating = true
+    try {
+      // Ensure github-issues directories exist
+      await vscode.workspace.fs.createDirectory(vscode.Uri.file(ghIssuesDir))
+      await vscode.workspace.fs.createDirectory(vscode.Uri.file(path.join(ghIssuesDir, 'done')))
+
+      for (const feature of result.created) {
+        feature.filePath = getFeatureFilePath(ghIssuesDir, feature.status, feature.id)
+        await vscode.workspace.fs.createDirectory(vscode.Uri.file(path.dirname(feature.filePath)))
+        const content = this._serializeFeature(feature)
+        await vscode.workspace.fs.writeFile(vscode.Uri.file(feature.filePath), new TextEncoder().encode(content))
+        this._features.push(feature)
+      }
+
+      // Rewrite updated features
+      for (const feature of result.updated) {
+        const content = this._serializeFeature(feature)
+        await vscode.workspace.fs.writeFile(vscode.Uri.file(feature.filePath), new TextEncoder().encode(content))
+      }
+
+      // Rewrite pushed features (syncedAt was updated)
+      for (const feature of result.pushed) {
+        const content = this._serializeFeature(feature)
+        await vscode.workspace.fs.writeFile(vscode.Uri.file(feature.filePath), new TextEncoder().encode(content))
+      }
+    } finally {
+      this._migrating = false
+    }
+
+    // Auto-gitignore the github-issues directory
+    await this._ensureGitignore(workspaceRoot)
+
+    this._sendFeaturesToWebview()
+
+    // Show summary notification
+    const parts: string[] = []
+    if (result.created.length) parts.push(`${result.created.length} imported`)
+    if (result.updated.length) parts.push(`${result.updated.length} updated`)
+    if (result.pushed.length) parts.push(`${result.pushed.length} pushed`)
+    if (parts.length) {
+      vscode.window.showInformationMessage(`GitHub Sync: ${parts.join(', ')}`)
+    } else {
+      vscode.window.showInformationMessage('GitHub Sync: everything up to date')
+    }
+  }
+
+  private async _unlinkGitHub(): Promise<void> {
+    if (this._githubService) {
+      this._githubService.dispose()
+      this._githubService = null
+    }
+
+    // Remove synced issue files from memory
+    this._features = this._features.filter(f => !f.github)
+
+    // Delete the github-issues directory
+    const workspaceRoot = this._getWorkspaceRoot()
+    if (workspaceRoot) {
+      const ghIssuesDir = getGitHubIssuesDir(workspaceRoot)
+      try {
+        await vscode.workspace.fs.delete(vscode.Uri.file(ghIssuesDir), { recursive: true })
+      } catch {
+        // Directory may not exist; skip
+      }
+    }
+
+    this._panel.webview.postMessage({ type: 'githubConnected', connected: false })
+    this._panel.webview.postMessage({ type: 'syncStatus', status: 'idle' })
+    this._sendFeaturesToWebview()
+
+    vscode.window.showInformationMessage('GitHub Issues unlinked. Synced issue files removed.')
+  }
+
+  private async _ensureGitignore(workspaceRoot: string): Promise<void> {
+    const gitignorePath = path.join(workspaceRoot, '.gitignore')
+    const entry = '.devtool/github-issues'
+
+    try {
+      const existing = new TextDecoder().decode(
+        await vscode.workspace.fs.readFile(vscode.Uri.file(gitignorePath))
+      )
+      if (existing.includes(entry)) return
+      const newContent = existing.endsWith('\n') ? existing + entry + '\n' : existing + '\n' + entry + '\n'
+      await vscode.workspace.fs.writeFile(vscode.Uri.file(gitignorePath), new TextEncoder().encode(newContent))
+    } catch {
+      // .gitignore doesn't exist — create it
+      await vscode.workspace.fs.writeFile(
+        vscode.Uri.file(gitignorePath),
+        new TextEncoder().encode(entry + '\n')
+      )
+    }
+  }
+
   private _sendFeaturesToWebview(): void {
     const config = vscode.workspace.getConfiguration('kanban-markdown')
 
@@ -827,6 +1100,7 @@ export class KanbanPanel {
       showLabels: config.get<boolean>('showLabels', true),
       showBuildWithAI: config.get<boolean>('showBuildWithAI', true) && !vscode.workspace.getConfiguration('chat').get<boolean>('disableAIFeatures', false),
       showFileName: config.get<boolean>('showFileName', false),
+      showGitHubBadge: config.get<boolean>('showGitHubBadge', true),
       compactMode: config.get<boolean>('compactMode', false),
       defaultPriority: config.get<Priority>('defaultPriority', 'medium'),
       defaultStatus: config.get<FeatureStatus>('defaultStatus', 'backlog')

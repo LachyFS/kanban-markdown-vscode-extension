@@ -91,12 +91,23 @@ export function FeatureCard({ feature, onClick, isDragging }: FeatureCardProps) 
       {/* Title & Content */}
       <div className="flex-1">
         {/* File Name + Priority badge row (when fileName enabled) */}
-        {cardSettings.showFileName && fileName && (
+        {cardSettings.showFileName && (fileName || feature.github) && (
           <div className="flex items-center gap-1.5 mb-1">
-            <FileText size={10} className="shrink-0 text-zinc-400 dark:text-zinc-500" />
-            <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate flex-1">
-              {fileName}
-            </span>
+            {feature.github ? (
+              <>
+                <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" className="shrink-0 text-zinc-400 dark:text-zinc-500"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate flex-1">
+                  #{feature.github.issueNumber}
+                </span>
+              </>
+            ) : (
+              <>
+                <FileText size={10} className="shrink-0 text-zinc-400 dark:text-zinc-500" />
+                <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate flex-1">
+                  {fileName}
+                </span>
+              </>
+            )}
             {cardSettings.showPriorityBadges && (
               <span
                 className={`text-[10px] font-medium px-1.5 py-0.5 rounded shrink-0 ${priorityColors[feature.priority]}`}
@@ -147,13 +158,30 @@ export function FeatureCard({ feature, onClick, isDragging }: FeatureCardProps) 
 
       {/* Footer */}
       <div className="flex items-center justify-between text-xs mt-auto">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           {cardSettings.showAssignee && feature.assignee && feature.assignee !== 'null' && (
             <div className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400">
-              <span className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold bg-zinc-200 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-300">
+              {feature.github ? (
+                <img
+                  src={`https://github.com/${feature.assignee}.png?size=32`}
+                  alt={feature.assignee}
+                  className="shrink-0 w-4 h-4 rounded-full"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextSibling as HTMLElement)?.style.removeProperty('display') }}
+                />
+              ) : null}
+              <span
+                className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold bg-zinc-200 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-300"
+                style={feature.github ? { display: 'none' } : undefined}
+              >
                 {feature.assignee.split(/\s+/).map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
               </span>
               <span>{feature.assignee}</span>
+            </div>
+          )}
+          {cardSettings.showGitHubBadge && feature.github && (
+            <div className="flex items-center gap-1 text-zinc-400 dark:text-zinc-500" title={`GitHub #${feature.github.issueNumber}`}>
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+              <span className="text-[10px]">#{feature.github.issueNumber}</span>
             </div>
           )}
         </div>

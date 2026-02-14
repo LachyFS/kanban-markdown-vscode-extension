@@ -4,6 +4,8 @@ import type { Feature, FeatureStatus, KanbanColumn, Priority, CardDisplaySetting
 export type DueDateFilter = 'all' | 'overdue' | 'today' | 'this-week' | 'no-date'
 export type LayoutMode = 'horizontal' | 'vertical'
 
+export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error'
+
 interface KanbanState {
   features: Feature[]
   columns: KanbanColumn[]
@@ -15,6 +17,8 @@ interface KanbanState {
   dueDateFilter: DueDateFilter
   layout: LayoutMode
   cardSettings: CardDisplaySettings
+  syncStatus: SyncStatus
+  githubConnected: boolean
 
   setFeatures: (features: Feature[]) => void
   setColumns: (columns: KanbanColumn[]) => void
@@ -28,6 +32,8 @@ interface KanbanState {
   setLayout: (layout: LayoutMode) => void
   toggleLayout: () => void
   clearAllFilters: () => void
+  setSyncStatus: (status: SyncStatus) => void
+  setGitHubConnected: (connected: boolean) => void
 
   addFeature: (feature: Feature) => void
   updateFeature: (id: string, updates: Partial<Feature>) => void
@@ -92,10 +98,13 @@ export const useStore = create<KanbanState>((set, get) => ({
     showLabels: true,
     showBuildWithAI: true,
     showFileName: false,
+    showGitHubBadge: true,
     compactMode: false,
     defaultPriority: 'medium',
     defaultStatus: 'backlog'
   },
+  syncStatus: 'idle',
+  githubConnected: false,
 
   setFeatures: (features) => set({ features }),
   setColumns: (columns) => set({ columns }),
@@ -108,6 +117,8 @@ export const useStore = create<KanbanState>((set, get) => ({
   setDueDateFilter: (filter) => set({ dueDateFilter: filter }),
   setLayout: (layout) => set({ layout }),
   toggleLayout: () => set((state) => ({ layout: state.layout === 'horizontal' ? 'vertical' : 'horizontal' })),
+  setSyncStatus: (syncStatus) => set({ syncStatus }),
+  setGitHubConnected: (githubConnected) => set({ githubConnected }),
 
   clearAllFilters: () =>
     set({

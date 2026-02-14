@@ -3,8 +3,8 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Markdown } from 'tiptap-markdown'
-import { X, User, ChevronDown, Wand2, Tag, Plus, Check, CircleDot, Signal, Calendar, Trash2, FileText } from 'lucide-react'
-import type { FeatureFrontmatter, Priority, FeatureStatus } from '../../shared/types'
+import { X, User, ChevronDown, Wand2, Tag, Plus, Check, CircleDot, Signal, Calendar, Trash2, FileText, MessageSquare } from 'lucide-react'
+import type { FeatureFrontmatter, Priority, FeatureStatus, GitHubComment, GitHubReactions } from '../../shared/types'
 import { cn } from '../lib/utils'
 import { useStore } from '../store'
 
@@ -19,16 +19,28 @@ function getMarkdown(editor: { storage: unknown }): string {
 type AIAgent = 'claude' | 'codex' | 'opencode'
 type PermissionMode = 'default' | 'plan' | 'acceptEdits' | 'bypassPermissions'
 
+interface IssueCommentsData {
+  featureId: string
+  comments: GitHubComment[]
+  issueBody: string
+  issueAuthor: string
+  issueAuthorAvatar: string
+  issueCreatedAt: string
+  issueReactions: GitHubReactions
+}
+
 interface FeatureEditorProps {
   featureId: string
   content: string
   frontmatter: FeatureFrontmatter
   contentVersion?: number
+  issueComments?: IssueCommentsData | null
   onSave: (content: string, frontmatter: FeatureFrontmatter) => void
   onClose: () => void
   onDelete: () => void
   onOpenFile: () => void
   onStartWithAI: (agent: AIAgent, permissionMode: PermissionMode) => void
+  onOpenGitHubIssue?: (url: string) => void
 }
 
 const priorityLabels: Record<Priority, string> = {
@@ -369,10 +381,213 @@ function LabelEditor({ labels, onChange }: { labels: string[]; onChange: (labels
   )
 }
 
-export function FeatureEditor({ featureId, content, frontmatter, contentVersion, onSave, onClose, onDelete, onOpenFile, onStartWithAI }: FeatureEditorProps) {
+function relativeTime(dateStr: string): string {
+  const now = Date.now()
+  const then = new Date(dateStr).getTime()
+  const seconds = Math.floor((now - then) / 1000)
+  if (seconds < 60) return 'just now'
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`
+  const days = Math.floor(hours / 24)
+  if (days < 30) return `${days} day${days !== 1 ? 's' : ''} ago`
+  const months = Math.floor(days / 30)
+  if (months < 12) return `${months} month${months !== 1 ? 's' : ''} ago`
+  const years = Math.floor(months / 12)
+  return `${years} year${years !== 1 ? 's' : ''} ago`
+}
+
+function renderMarkdown(md: string): string {
+  let s = md
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+
+  // Fenced code blocks
+  s = s.replace(/```\w*\n([\s\S]*?)```/g, (_, code: string) =>
+    `<pre style="background:var(--vscode-textCodeBlock-background);padding:8px 12px;border-radius:6px;overflow-x:auto;margin:8px 0;font-family:var(--vscode-editor-font-family);font-size:12px;line-height:1.45"><code>${code.trimEnd()}</code></pre>`
+  )
+
+  // Inline code
+  s = s.replace(/`([^`\n]+)`/g,
+    '<code style="background:var(--vscode-textCodeBlock-background);padding:1px 5px;border-radius:3px;font-family:var(--vscode-editor-font-family);font-size:0.9em">$1</code>'
+  )
+
+  // Bold
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+
+  // Links — only http/https
+  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
+    '<a style="color:var(--vscode-textLink-foreground);text-decoration:underline" href="$2">$1</a>'
+  )
+
+  // Blockquotes (lines starting with >)
+  s = s.replace(/^&gt;\s?(.*)$/gm,
+    '<span style="display:block;border-left:3px solid var(--vscode-panel-border);padding-left:10px;color:var(--vscode-descriptionForeground)">$1</span>'
+  )
+
+  // Line breaks
+  s = s.replace(/\n/g, '<br>')
+
+  return s
+}
+
+const reactionEmoji: Record<string, string> = {
+  '+1': '\u{1F44D}',
+  '-1': '\u{1F44E}',
+  laugh: '\u{1F604}',
+  hooray: '\u{1F389}',
+  confused: '\u{1F615}',
+  heart: '\u{2764}\u{FE0F}',
+  rocket: '\u{1F680}',
+  eyes: '\u{1F440}',
+}
+
+function ReactionBar({ reactions }: { reactions: GitHubReactions }) {
+  const entries = Object.entries(reactions).filter(
+    ([key, count]) => count > 0 && key in reactionEmoji
+  ) as [string, number][]
+
+  if (entries.length === 0) return null
+
+  return (
+    <div className="flex items-center gap-1 flex-wrap mt-2 pt-2" style={{ borderTop: '1px solid var(--vscode-panel-border)' }}>
+      {entries.map(([key, count]) => (
+        <span
+          key={key}
+          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px]"
+          style={{
+            background: 'var(--vscode-badge-background)',
+            color: 'var(--vscode-badge-foreground)',
+            opacity: 0.9,
+          }}
+        >
+          <span>{reactionEmoji[key]}</span>
+          <span className="font-medium">{count}</span>
+        </span>
+      ))}
+    </div>
+  )
+}
+
+function CommentCard({ author, avatarUrl, body, createdAt, showTimeline, reactions }: {
+  author: string; avatarUrl: string; body: string; createdAt: string; showTimeline: boolean; reactions: GitHubReactions
+}) {
+  const borderColor = 'var(--vscode-panel-border)'
+  const headerBg = 'var(--vscode-sideBarSectionHeader-background, rgba(128,128,128,0.08))'
+
+  return (
+    <div className="flex gap-3 relative">
+      {/* Avatar + timeline */}
+      <div className="flex flex-col items-center shrink-0 w-8">
+        {avatarUrl ? (
+          <img src={avatarUrl} alt={author} className="w-8 h-8 rounded-full object-cover relative z-[1]" />
+        ) : (
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold relative z-[1]"
+            style={{ background: 'var(--vscode-badge-background)', color: 'var(--vscode-badge-foreground)' }}
+          >
+            {author.charAt(0).toUpperCase()}
+          </div>
+        )}
+        {showTimeline && (
+          <div className="flex-1 w-px mt-1" style={{ background: borderColor }} />
+        )}
+      </div>
+
+      {/* Comment bubble */}
+      <div className="flex-1 min-w-0 pb-4 relative">
+        {/* Speech bubble arrow */}
+        <div
+          className="absolute top-[10px] -left-[8px] w-0 h-0"
+          style={{
+            borderTop: '8px solid transparent',
+            borderBottom: '8px solid transparent',
+            borderRight: `8px solid ${borderColor}`,
+          }}
+        />
+        <div
+          className="absolute top-[10px] -left-[7px] w-0 h-0"
+          style={{
+            borderTop: '8px solid transparent',
+            borderBottom: '8px solid transparent',
+            borderRight: '8px solid var(--vscode-editor-background)',
+          }}
+        />
+
+        <div className="rounded-md overflow-hidden" style={{ border: `1px solid ${borderColor}` }}>
+          {/* Header */}
+          <div
+            className="px-3 py-1.5 flex items-center gap-1 text-xs"
+            style={{ background: headerBg, borderBottom: `1px solid ${borderColor}` }}
+          >
+            <span className="font-semibold" style={{ color: 'var(--vscode-foreground)' }}>{author}</span>
+            <span style={{ color: 'var(--vscode-descriptionForeground)' }}>commented {relativeTime(createdAt)}</span>
+          </div>
+
+          {/* Body */}
+          <div className="px-3 py-3">
+            {body ? (
+              <div
+                className="text-[13px] leading-relaxed break-words"
+                style={{ color: 'var(--vscode-foreground)' }}
+                dangerouslySetInnerHTML={{ __html: renderMarkdown(body) }}
+              />
+            ) : (
+              <p className="text-xs italic m-0" style={{ color: 'var(--vscode-descriptionForeground)' }}>No description provided.</p>
+            )}
+            <ReactionBar reactions={reactions} />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SkeletonBlock({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn('rounded animate-pulse', className)}
+      style={{ background: 'var(--vscode-editor-inactiveSelectionBackground, rgba(128,128,128,0.12))' }}
+    />
+  )
+}
+
+function CommentCardSkeleton({ showTimeline }: { showTimeline: boolean }) {
+  const borderColor = 'var(--vscode-panel-border)'
+  const headerBg = 'var(--vscode-sideBarSectionHeader-background, rgba(128,128,128,0.08))'
+
+  return (
+    <div className="flex gap-3 relative">
+      <div className="flex flex-col items-center shrink-0 w-8">
+        <SkeletonBlock className="w-8 h-8 rounded-full" />
+        {showTimeline && (
+          <div className="flex-1 w-px mt-1" style={{ background: borderColor }} />
+        )}
+      </div>
+      <div className="flex-1 min-w-0 pb-4">
+        <div className="rounded-md overflow-hidden" style={{ border: `1px solid ${borderColor}` }}>
+          <div className="px-3 py-2 flex items-center gap-2" style={{ background: headerBg, borderBottom: `1px solid ${borderColor}` }}>
+            <SkeletonBlock className="h-3 w-20" />
+            <SkeletonBlock className="h-3 w-28" />
+          </div>
+          <div className="px-3 py-3 space-y-2">
+            <SkeletonBlock className="h-3 w-full" />
+            <SkeletonBlock className="h-3 w-4/5" />
+            <SkeletonBlock className="h-3 w-3/5" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function FeatureEditor({ featureId, content, frontmatter, contentVersion, issueComments, onSave, onClose, onDelete, onOpenFile, onStartWithAI, onOpenGitHubIssue }: FeatureEditorProps) {
   const { cardSettings } = useStore()
   const [currentFrontmatter, setCurrentFrontmatter] = useState(frontmatter)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [conversationOpen, setConversationOpen] = useState(true)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isInitialLoad = useRef(true)
   const currentFrontmatterRef = useRef(currentFrontmatter)
@@ -483,7 +698,14 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
         style={{ borderBottom: '1px solid var(--vscode-panel-border)' }}
       >
         <div className="flex items-center gap-3">
-          <span className="text-xs font-mono" style={{ color: 'var(--vscode-descriptionForeground)' }}>{featureId}</span>
+          {currentFrontmatter.github ? (
+            <span className="flex items-center gap-1.5 text-xs font-mono" style={{ color: 'var(--vscode-descriptionForeground)' }}>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+              #{currentFrontmatter.github.issueNumber}
+            </span>
+          ) : (
+            <span className="text-xs font-mono" style={{ color: 'var(--vscode-descriptionForeground)' }}>{featureId}</span>
+          )}
           {confirmingDelete ? (
             <div className="flex items-center gap-1.5">
               <span className="text-xs" style={{ color: 'var(--vscode-errorForeground)' }}>Delete?</span>
@@ -503,15 +725,27 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
             </div>
           ) : (
             <>
-              <button
-                onClick={() => { onOpenFile(); onClose(); }}
-                className="p-1.5 px-2 rounded border transition-colors vscode-hover-bg flex items-center gap-1"
-                style={{ color: 'var(--vscode-descriptionForeground)', borderColor: 'var(--vscode-widget-border, var(--vscode-contrastBorder, rgba(128,128,128,0.35)))' }}
-                title="Open .md file"
-              >
-                <FileText size={16} />
-                <span className="text-xs">OPEN</span>
-              </button>
+              {currentFrontmatter.github && onOpenGitHubIssue ? (
+                <button
+                  onClick={() => onOpenGitHubIssue(currentFrontmatter.github!.htmlUrl)}
+                  className="p-1.5 px-2 rounded border transition-colors vscode-hover-bg flex items-center gap-1"
+                  style={{ color: 'var(--vscode-descriptionForeground)', borderColor: 'var(--vscode-widget-border, var(--vscode-contrastBorder, rgba(128,128,128,0.35)))' }}
+                  title="Open on GitHub"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                  <span className="text-xs">OPEN</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => { onOpenFile(); onClose(); }}
+                  className="p-1.5 px-2 rounded border transition-colors vscode-hover-bg flex items-center gap-1"
+                  style={{ color: 'var(--vscode-descriptionForeground)', borderColor: 'var(--vscode-widget-border, var(--vscode-contrastBorder, rgba(128,128,128,0.35)))' }}
+                  title="Open .md file"
+                >
+                  <FileText size={16} />
+                  <span className="text-xs">OPEN</span>
+                </button>
+              )}
               <button
                 onClick={() => setConfirmingDelete(true)}
                 className="p-1.5 px-2 rounded border transition-colors vscode-hover-bg flex items-center gap-1"
@@ -601,9 +835,64 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
         )}
       </div>
 
-      {/* Editor */}
+      {/* Editor + Conversation */}
       <div className="flex-1 overflow-auto">
-        <EditorContent editor={editor} className="h-full" />
+        <EditorContent editor={editor} />
+
+        {/* Conversation thread (GitHub-synced features only) */}
+        {currentFrontmatter.github && (
+          <div style={{ borderTop: '1px solid var(--vscode-panel-border)' }}>
+            <button
+              onClick={() => setConversationOpen(prev => !prev)}
+              className="flex items-center gap-2 w-full px-4 py-2.5 text-xs font-medium transition-colors vscode-hover-bg"
+              style={{ color: 'var(--vscode-foreground)' }}
+            >
+              <ChevronDown size={12} className={cn('transition-transform', !conversationOpen && '-rotate-90')} />
+              <MessageSquare size={13} style={{ color: 'var(--vscode-descriptionForeground)' }} />
+              <span>
+                {issueComments
+                  ? `Conversation (${issueComments.comments.length + 1})`
+                  : 'Conversation'
+                }
+              </span>
+              {!issueComments && (
+                <span className="inline-block w-3 h-3 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--vscode-descriptionForeground)', borderTopColor: 'transparent' }} />
+              )}
+            </button>
+            {conversationOpen && (
+              <div className="px-4 pb-4">
+                {issueComments ? (
+                  <>
+                    <CommentCard
+                      author={issueComments.issueAuthor}
+                      avatarUrl={issueComments.issueAuthorAvatar}
+                      body={issueComments.issueBody}
+                      createdAt={issueComments.issueCreatedAt}
+                      showTimeline={issueComments.comments.length > 0}
+                      reactions={issueComments.issueReactions}
+                    />
+                    {issueComments.comments.map((comment, i) => (
+                      <CommentCard
+                        key={comment.id}
+                        author={comment.author}
+                        avatarUrl={comment.avatarUrl}
+                        body={comment.body}
+                        createdAt={comment.createdAt}
+                        showTimeline={i < issueComments.comments.length - 1}
+                        reactions={comment.reactions}
+                      />
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    <CommentCardSkeleton showTimeline={true} />
+                    <CommentCardSkeleton showTimeline={false} />
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

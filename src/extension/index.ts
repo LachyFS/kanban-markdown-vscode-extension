@@ -101,7 +101,7 @@ async function createFeatureFromPrompts(): Promise<void> {
 }
 
 function serializeFeature(feature: Feature): string {
-  const frontmatter = [
+  const lines = [
     '---',
     `id: "${feature.id}"`,
     `status: "${feature.status}"`,
@@ -112,12 +112,19 @@ function serializeFeature(feature: Feature): string {
     `modified: "${feature.modified}"`,
     `completedAt: ${feature.completedAt ? `"${feature.completedAt}"` : 'null'}`,
     `labels: [${feature.labels.map(l => `"${l}"`).join(', ')}]`,
-    `order: ${feature.order}`,
-    '---',
-    ''
-  ].join('\n')
+    `order: ${feature.order}`
+  ]
 
-  return frontmatter + feature.content
+  if (feature.github) {
+    lines.push(`github_issueNumber: ${feature.github.issueNumber}`)
+    lines.push(`github_repo: "${feature.github.repo}"`)
+    lines.push(`github_htmlUrl: "${feature.github.htmlUrl}"`)
+    lines.push(`github_syncedAt: "${feature.github.syncedAt}"`)
+  }
+
+  lines.push('---', '')
+
+  return lines.join('\n') + feature.content
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -143,6 +150,12 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('kanban-markdown.addFeature', () => {
       createFeatureFromPrompts()
+    })
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('kanban-markdown.syncGitHub', () => {
+      KanbanPanel.currentPanel?.syncGitHub()
     })
   )
 

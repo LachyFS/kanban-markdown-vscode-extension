@@ -48,6 +48,10 @@ export function getStatusFromPath(filePath: string, featuresDir: string): string
   return null
 }
 
+export function getGitHubIssuesDir(workspaceRoot: string): string {
+  return path.join(workspaceRoot, '.devtool', 'github-issues')
+}
+
 async function fileExists(filePath: string): Promise<boolean> {
   try {
     await vscode.workspace.fs.stat(vscode.Uri.file(filePath))

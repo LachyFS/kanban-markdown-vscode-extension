@@ -3,6 +3,13 @@
 export type Priority = 'critical' | 'high' | 'medium' | 'low'
 export type FeatureStatus = 'backlog' | 'todo' | 'in-progress' | 'review' | 'done'
 
+export interface GitHubMeta {
+  issueNumber: number
+  repo: string            // "owner/repo"
+  htmlUrl: string
+  syncedAt: string        // ISO timestamp of last sync
+}
+
 export interface Feature {
   id: string
   status: FeatureStatus
@@ -16,6 +23,7 @@ export interface Feature {
   order: number
   content: string
   filePath: string
+  github?: GitHubMeta | null
 }
 
 // Parse title from the first # heading in markdown content
@@ -53,6 +61,26 @@ export const DEFAULT_COLUMNS: KanbanColumn[] = [
   { id: 'done', name: 'Done', color: '#22c55e' }
 ]
 
+export interface GitHubReactions {
+  '+1': number
+  '-1': number
+  laugh: number
+  hooray: number
+  confused: number
+  heart: number
+  rocket: number
+  eyes: number
+}
+
+export interface GitHubComment {
+  id: number
+  author: string
+  avatarUrl: string
+  body: string
+  createdAt: string
+  reactions: GitHubReactions
+}
+
 export interface CardDisplaySettings {
   showPriorityBadges: boolean
   showAssignee: boolean
@@ -60,6 +88,7 @@ export interface CardDisplaySettings {
   showLabels: boolean
   showBuildWithAI: boolean
   showFileName: boolean
+  showGitHubBadge: boolean
   compactMode: boolean
   defaultPriority: Priority
   defaultStatus: FeatureStatus
@@ -71,6 +100,9 @@ export type ExtensionMessage =
   | { type: 'featuresUpdated'; features: Feature[] }
   | { type: 'triggerCreateDialog' }
   | { type: 'featureContent'; featureId: string; content: string; frontmatter: FeatureFrontmatter }
+  | { type: 'syncStatus'; status: 'idle' | 'syncing' | 'success' | 'error'; message?: string }
+  | { type: 'githubConnected'; connected: boolean; repo?: string }
+  | { type: 'issueComments'; featureId: string; comments: GitHubComment[]; issueBody: string; issueAuthor: string; issueAuthorAvatar: string; issueCreatedAt: string; issueReactions: GitHubReactions }
 
 // Frontmatter for editing
 export interface FeatureFrontmatter {
@@ -84,6 +116,7 @@ export interface FeatureFrontmatter {
   completedAt: string | null
   labels: string[]
   order: number
+  github?: GitHubMeta | null
 }
 
 export type WebviewMessage =
@@ -96,3 +129,6 @@ export type WebviewMessage =
   | { type: 'saveFeatureContent'; featureId: string; content: string; frontmatter: FeatureFrontmatter }
   | { type: 'closeFeature' }
   | { type: 'openFile'; featureId: string }
+  | { type: 'syncGitHub' }
+  | { type: 'unlinkGitHub' }
+  | { type: 'openGitHubIssue'; url: string }

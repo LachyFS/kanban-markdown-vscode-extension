@@ -5,7 +5,7 @@ import { CreateFeatureDialog } from './components/CreateFeatureDialog'
 import { FeatureEditor } from './components/FeatureEditor'
 import { Toolbar } from './components/Toolbar'
 import { UndoToast } from './components/UndoToast'
-import type { Feature, FeatureStatus, Priority, ExtensionMessage, FeatureFrontmatter } from '../shared/types'
+import type { Feature, FeatureStatus, Priority, ExtensionMessage, FeatureFrontmatter, GitHubComment, GitHubReactions } from '../shared/types'
 import { getTitleFromContent } from '../shared/types'
 
 // Declare vscode API type
@@ -24,7 +24,9 @@ function App(): React.JSX.Element {
     setFeatures,
     setColumns,
     setIsDarkMode,
-    setCardSettings
+    setCardSettings,
+    setSyncStatus,
+    setGitHubConnected
   } = useStore()
 
   const [createFeatureOpen, setCreateFeatureOpen] = useState(false)
@@ -37,6 +39,17 @@ function App(): React.JSX.Element {
     content: string
     frontmatter: FeatureFrontmatter
     contentVersion: number
+  } | null>(null)
+
+  // Issue comments for GitHub-synced features
+  const [issueCommentsData, setIssueCommentsData] = useState<{
+    featureId: string
+    comments: GitHubComment[]
+    issueBody: string
+    issueAuthor: string
+    issueAuthorAvatar: string
+    issueCreatedAt: string
+    issueReactions: GitHubReactions
   } | null>(null)
 
   // Undo delete stack
@@ -202,6 +215,25 @@ function App(): React.JSX.Element {
             frontmatter: message.frontmatter,
             contentVersion: contentVersionRef.current
           })
+          // Clear stale comments when opening a different feature
+          setIssueCommentsData(prev => prev?.featureId === message.featureId ? prev : null)
+          break
+        case 'issueComments':
+          setIssueCommentsData({
+            featureId: message.featureId,
+            comments: message.comments,
+            issueBody: message.issueBody,
+            issueAuthor: message.issueAuthor,
+            issueAuthorAvatar: message.issueAuthorAvatar,
+            issueCreatedAt: message.issueCreatedAt,
+            issueReactions: message.issueReactions
+          })
+          break
+        case 'syncStatus':
+          setSyncStatus(message.status)
+          break
+        case 'githubConnected':
+          setGitHubConnected(message.connected)
           break
       }
     }
@@ -212,7 +244,7 @@ function App(): React.JSX.Element {
     vscode.postMessage({ type: 'ready' })
 
     return () => window.removeEventListener('message', handleMessage)
-  }, [setFeatures, setColumns, setCardSettings])
+  }, [setFeatures, setColumns, setCardSettings, setSyncStatus, setGitHubConnected])
 
   const handleFeatureClick = (feature: Feature): void => {
     // Request feature content for inline editing
@@ -234,6 +266,7 @@ function App(): React.JSX.Element {
 
   const handleCloseEditor = (): void => {
     setEditingFeature(null)
+    setIssueCommentsData(null)
     vscode.postMessage({ type: 'closeFeature' })
   }
 
@@ -335,7 +368,10 @@ function App(): React.JSX.Element {
 
   return (
     <div className="h-full w-full flex flex-col bg-[var(--vscode-editor-background)]">
-      <Toolbar />
+      <Toolbar
+        onSyncGitHub={() => vscode.postMessage({ type: 'syncGitHub' })}
+        onUnlinkGitHub={() => vscode.postMessage({ type: 'unlinkGitHub' })}
+      />
       <div className="flex-1 flex overflow-hidden">
         <div className={editingFeature ? 'w-1/2' : 'w-full'}>
           <KanbanBoard
@@ -351,11 +387,13 @@ function App(): React.JSX.Element {
               content={editingFeature.content}
               frontmatter={editingFeature.frontmatter}
               contentVersion={editingFeature.contentVersion}
+              issueComments={issueCommentsData?.featureId === editingFeature.id ? issueCommentsData : null}
               onSave={handleSaveFeature}
               onClose={handleCloseEditor}
               onDelete={handleDeleteFeature}
               onOpenFile={handleOpenFile}
               onStartWithAI={handleStartWithAI}
+              onOpenGitHubIssue={(url) => vscode.postMessage({ type: 'openGitHubIssue', url })}
             />
           </div>
         )}

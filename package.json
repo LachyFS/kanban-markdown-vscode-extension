@@ -70,6 +70,11 @@
         "command": "kanban-markdown.addFeature",
         "title": "Add Feature",
         "category": "Kanban Markdown"
+      },
+      {
+        "command": "kanban-markdown.syncGitHub",
+        "title": "Sync GitHub Issues",
+        "category": "Kanban Markdown"
       }
     ],
     "configuration": {
@@ -218,6 +223,38 @@
           "type": "boolean",
           "default": false,
           "description": "Use compact card layout to show more features."
+        },
+        "kanban-markdown.showGitHubBadge": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show GitHub issue badge on synced feature cards."
+        },
+        "kanban-markdown.github.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable two-way sync with GitHub Issues."
+        },
+        "kanban-markdown.github.repo": {
+          "type": "string",
+          "default": "",
+          "description": "GitHub repository in 'owner/repo' format. Auto-detected from git remote if empty."
+        },
+        "kanban-markdown.github.defaultIssueStatus": {
+          "type": "string",
+          "default": "todo",
+          "enum": [
+            "backlog",
+            "todo",
+            "in-progress",
+            "review"
+          ],
+          "enumDescriptions": [
+            "Backlog - not yet planned",
+            "To Do - planned for work",
+            "In Progress - currently being worked on",
+            "Review - ready for review"
+          ],
+          "description": "Default kanban status for newly synced open GitHub issues."
         }
       }
     },
