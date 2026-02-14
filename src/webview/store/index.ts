@@ -91,6 +91,7 @@ export const useStore = create<KanbanState>((set, get) => ({
     showDueDate: true,
     showLabels: true,
     showBuildWithAI: true,
+    showFileName: false,
     compactMode: false,
     defaultPriority: 'medium',
     defaultStatus: 'backlog'

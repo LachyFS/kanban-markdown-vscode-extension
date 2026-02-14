@@ -209,6 +209,11 @@
           "default": true,
           "description": "Show the 'Build with AI' button on feature cards."
         },
+        "kanban-markdown.showFileName": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show the source markdown filename on feature cards."
+        },
         "kanban-markdown.compactMode": {
           "type": "boolean",
           "default": false,

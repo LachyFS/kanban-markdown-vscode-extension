@@ -59,6 +59,7 @@ export interface CardDisplaySettings {
   showDueDate: boolean
   showLabels: boolean
   showBuildWithAI: boolean
+  showFileName: boolean
   compactMode: boolean
   defaultPriority: Priority
   defaultStatus: FeatureStatus

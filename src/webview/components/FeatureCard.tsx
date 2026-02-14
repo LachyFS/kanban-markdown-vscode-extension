@@ -1,4 +1,4 @@
-import { Calendar, Check } from 'lucide-react'
+import { Calendar, Check, FileText } from 'lucide-react'
 import { getTitleFromContent } from '../../shared/types'
 import type { Feature, Priority } from '../../shared/types'
 import { useStore } from '../store'
@@ -39,6 +39,7 @@ export function FeatureCard({ feature, onClick, isDragging }: FeatureCardProps) 
   const { cardSettings } = useStore()
   const title = getTitleFromContent(feature.content)
   const description = getDescriptionFromContent(feature.content)
+  const fileName = feature.filePath ? feature.filePath.split('/').pop() || '' : ''
 
   const formatDueDate = (dateStr: string | null) => {
     if (!dateStr) return null
@@ -89,11 +90,28 @@ export function FeatureCard({ feature, onClick, isDragging }: FeatureCardProps) 
     >
       {/* Title & Content */}
       <div className="flex-1">
+        {/* File Name + Priority badge row (when fileName enabled) */}
+        {cardSettings.showFileName && fileName && (
+          <div className="flex items-center gap-1.5 mb-1">
+            <FileText size={10} className="shrink-0 text-zinc-400 dark:text-zinc-500" />
+            <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 truncate flex-1">
+              {fileName}
+            </span>
+            {cardSettings.showPriorityBadges && (
+              <span
+                className={`text-[10px] font-medium px-1.5 py-0.5 rounded shrink-0 ${priorityColors[feature.priority]}`}
+              >
+                {priorityLabels[feature.priority]}
+              </span>
+            )}
+          </div>
+        )}
+
         <div className={`flex items-start gap-2 ${description ? 'mb-1' : cardSettings.compactMode ? 'mb-1' : 'mb-2'}`}>
           <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100 line-clamp-2 flex-1">
             {title}
           </h3>
-          {cardSettings.showPriorityBadges && (
+          {cardSettings.showPriorityBadges && !(cardSettings.showFileName && fileName) && (
             <span
               className={`text-xs font-medium px-1.5 py-0.5 rounded shrink-0 ${priorityColors[feature.priority]}`}
             >
