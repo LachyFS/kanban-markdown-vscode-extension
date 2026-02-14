@@ -352,6 +352,10 @@ function CreateFeatureDialogContent({
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && title.trim()) {
         handleClose()
       }
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault()
+        handleClose()
+      }
     }
 
     if (isOpen) {
@@ -480,7 +484,11 @@ function CreateFeatureDialogContent({
             <kbd
               className="px-1.5 py-0.5 rounded text-[10px] font-mono"
               style={{ background: 'var(--vscode-keybindingLabel-background, var(--vscode-badge-background))', color: 'var(--vscode-keybindingLabel-foreground, var(--vscode-foreground))', border: '1px solid var(--vscode-keybindingLabel-border, var(--vscode-panel-border))' }}
-            >Esc</kbd>{' '}or{' '}
+            >Esc</kbd>{' '}
+            <kbd
+              className="px-1.5 py-0.5 rounded text-[10px] font-mono"
+              style={{ background: 'var(--vscode-keybindingLabel-background, var(--vscode-badge-background))', color: 'var(--vscode-keybindingLabel-foreground, var(--vscode-foreground))', border: '1px solid var(--vscode-keybindingLabel-border, var(--vscode-panel-border))' }}
+            >⌘S</kbd>{' '}
             <kbd
               className="px-1.5 py-0.5 rounded text-[10px] font-mono"
               style={{ background: 'var(--vscode-keybindingLabel-background, var(--vscode-badge-background))', color: 'var(--vscode-keybindingLabel-foreground, var(--vscode-foreground))', border: '1px solid var(--vscode-keybindingLabel-border, var(--vscode-panel-border))' }}
