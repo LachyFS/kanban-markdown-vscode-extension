@@ -1,9 +1,21 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import Placeholder from '@tiptap/extension-placeholder'
+import { Markdown } from 'tiptap-markdown'
 import { X, ChevronDown, User, Tag, Check, CircleDot, Signal, Calendar } from 'lucide-react'
 import type { FeatureStatus, Priority } from '../../shared/types'
 import { useStore } from '../store'
 import { cn } from '../lib/utils'
 import { DatePicker } from './DatePicker'
+
+interface MarkdownStorage {
+  markdown: { getMarkdown: () => string }
+}
+
+function getMarkdown(editor: { storage: unknown }): string {
+  return (editor.storage as MarkdownStorage).markdown.getMarkdown()
+}
 
 interface CreateFeatureDialogProps {
   isOpen: boolean
@@ -316,14 +328,26 @@ function CreateFeatureDialogContent({
 }: CreateFeatureDialogProps) {
   const { cardSettings } = useStore()
   const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
   const [status, setStatus] = useState<FeatureStatus>(initialStatus ?? cardSettings.defaultStatus)
   const [priority, setPriority] = useState<Priority>(cardSettings.defaultPriority)
   const [assignee, setAssignee] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [labels, setLabels] = useState<string[]>([])
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  const descriptionRef = useRef<HTMLTextAreaElement>(null)
+
+  const descriptionEditor = useEditor({
+    extensions: [
+      StarterKit,
+      Placeholder.configure({ placeholder: 'Add a description...' }),
+      Markdown.configure({ html: false, transformPastedText: true })
+    ],
+    content: '',
+    editorProps: {
+      attributes: {
+        class: 'prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[200px]'
+      }
+    }
+  })
 
   // Focus input on mount
   useEffect(() => {
@@ -334,7 +358,8 @@ function CreateFeatureDialogContent({
   const handleSubmit = () => {
     if (!title.trim()) return
 
-    const content = `# ${title.trim()}${description.trim() ? '\n\n' + description.trim() : ''}`
+    const description = descriptionEditor ? getMarkdown(descriptionEditor).trim() : ''
+    const content = `# ${title.trim()}${description ? '\n\n' + description : ''}`
     onCreate({ status, priority, content, assignee: assignee.trim() || null, dueDate: dueDate || null, labels })
   }
 
@@ -455,20 +480,11 @@ function CreateFeatureDialogContent({
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
-                descriptionRef.current?.focus()
+                descriptionEditor?.commands.focus()
               }
             }}
           />
-          <textarea
-            ref={descriptionRef}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Add a description..."
-            className="w-full text-sm bg-transparent border-none outline-none resize-none min-h-[200px]"
-            style={{
-              color: 'var(--vscode-descriptionForeground)',
-            }}
-          />
+          <EditorContent editor={descriptionEditor} />
         </div>
 
         {/* Footer hint */}

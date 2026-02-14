@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Undo2 } from 'lucide-react'
 
 interface UndoToastProps {
   message: string
   onUndo: () => void
+  onExpire: () => void
   duration: number
+  index: number
 }
 
-export function UndoToast({ message, onUndo, duration }: UndoToastProps) {
+export function UndoToast({ message, onUndo, onExpire, duration, index }: UndoToastProps) {
   const [progress, setProgress] = useState(100)
 
   useEffect(() => {
@@ -16,28 +17,52 @@ export function UndoToast({ message, onUndo, duration }: UndoToastProps) {
     const timer = setInterval(() => {
       setProgress(prev => {
         const next = prev - step
-        return next <= 0 ? 0 : next
+        if (next <= 0) {
+          clearInterval(timer)
+          return 0
+        }
+        return next
       })
     }, interval)
 
     return () => clearInterval(timer)
   }, [duration])
 
+  useEffect(() => {
+    if (progress <= 0) {
+      onExpire()
+    }
+  }, [progress, onExpire])
+
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-zinc-800 dark:bg-zinc-700 text-white rounded-lg shadow-lg pl-4 pr-2 py-2 min-w-[280px] max-w-[400px]">
-      <span className="text-sm truncate flex-1">{message}</span>
-      <button
-        onClick={onUndo}
-        className="flex items-center gap-1.5 text-sm font-medium px-2.5 py-1 rounded hover:bg-zinc-600 dark:hover:bg-zinc-500 text-blue-400 hover:text-blue-300 transition-colors shrink-0"
-      >
-        <Undo2 size={14} />
-        Undo
-      </button>
-      {/* Progress bar */}
-      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-zinc-600 dark:bg-zinc-500 rounded-b-lg overflow-hidden">
+    <div
+      className="fixed right-4 z-50 flex flex-col min-w-[320px] max-w-[420px] shadow-[0_4px_16px_rgba(0,0,0,0.4)] transition-[bottom] duration-200 ease-out"
+      style={{
+        bottom: `${24 + index * 52}px`,
+        background: 'var(--vscode-notifications-background)',
+        color: 'var(--vscode-notifications-foreground)',
+        border: '1px solid var(--vscode-notifications-border, var(--vscode-widget-border))',
+      }}
+    >
+      <div className="flex items-center gap-3 px-3 py-2.5">
+        <span className="text-[13px] leading-snug flex-1 truncate">{message}</span>
+        <button
+          onClick={onUndo}
+          className="text-[13px] px-2 py-0.5 shrink-0"
+          style={{
+            background: 'var(--vscode-button-background)',
+            color: 'var(--vscode-button-foreground)',
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-button-hoverBackground)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'var(--vscode-button-background)'}
+        >
+          Undo
+        </button>
+      </div>
+      <div className="h-[2px] w-full" style={{ background: 'var(--vscode-widget-border)' }}>
         <div
-          className="h-full bg-blue-400 transition-none"
-          style={{ width: `${progress}%` }}
+          className="h-full transition-none"
+          style={{ width: `${progress}%`, background: 'var(--vscode-progressBar-background)' }}
         />
       </div>
     </div>

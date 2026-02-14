@@ -39,24 +39,19 @@ function App(): React.JSX.Element {
     contentVersion: number
   } | null>(null)
 
-  // Undo delete state
-  const [pendingDelete, setPendingDelete] = useState<{ feature: Feature; timer: ReturnType<typeof setTimeout> } | null>(null)
-  const pendingDeleteRef = useRef(pendingDelete)
+  // Undo delete stack
+  const [pendingDeletes, setPendingDeletes] = useState<{ id: string; feature: Feature }[]>([])
+  const pendingDeletesRef = useRef(pendingDeletes)
   useEffect(() => {
-    pendingDeleteRef.current = pendingDelete
-  }, [pendingDelete])
+    pendingDeletesRef.current = pendingDeletes
+  }, [pendingDeletes])
+
+  const nextIdRef = useRef(0)
 
   const handleDeleteFeatureFromCard = useCallback((featureId: string) => {
     const { features } = useStore.getState()
     const feature = features.find(f => f.id === featureId)
     if (!feature) return
-
-    // Cancel any existing pending delete
-    if (pendingDeleteRef.current) {
-      clearTimeout(pendingDeleteRef.current.timer)
-      // Commit the previous pending delete immediately
-      vscode.postMessage({ type: 'deleteFeature', featureId: pendingDeleteRef.current.feature.id })
-    }
 
     // Optimistically remove from local state
     setFeatures(features.filter(f => f.id !== featureId))
@@ -66,24 +61,32 @@ function App(): React.JSX.Element {
       setEditingFeature(null)
     }
 
-    // Set a timer to actually delete after 5 seconds
-    const timer = setTimeout(() => {
-      vscode.postMessage({ type: 'deleteFeature', featureId })
-      setPendingDelete(null)
-    }, 5000)
-
-    setPendingDelete({ feature, timer })
+    // Push onto the undo stack
+    const id = String(nextIdRef.current++)
+    setPendingDeletes(prev => [...prev, { id, feature }])
   }, [editingFeature, setFeatures])
 
-  const handleUndoDelete = useCallback(() => {
-    if (!pendingDeleteRef.current) return
-    const { feature, timer } = pendingDeleteRef.current
-    clearTimeout(timer)
+  const commitDelete = useCallback((entryId: string) => {
+    const entry = pendingDeletesRef.current.find(d => d.id === entryId)
+    if (!entry) return
+    vscode.postMessage({ type: 'deleteFeature', featureId: entry.feature.id })
+    setPendingDeletes(prev => prev.filter(d => d.id !== entryId))
+  }, [])
+
+  const handleUndoDelete = useCallback((entryId: string) => {
+    const entry = pendingDeletesRef.current.find(d => d.id === entryId)
+    if (!entry) return
     // Restore the feature
     const { features } = useStore.getState()
-    setFeatures([...features, feature])
-    setPendingDelete(null)
+    setFeatures([...features, entry.feature])
+    setPendingDeletes(prev => prev.filter(d => d.id !== entryId))
   }, [setFeatures])
+
+  const handleUndoLatest = useCallback(() => {
+    const stack = pendingDeletesRef.current
+    if (stack.length === 0) return
+    handleUndoDelete(stack[stack.length - 1].id)
+  }, [handleUndoDelete])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -100,9 +103,9 @@ function App(): React.JSX.Element {
       }
 
       // Ctrl/Cmd+Z to undo delete (works even in inputs)
-      if (e.key === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey && pendingDeleteRef.current) {
+      if (e.key === 'z' && (e.ctrlKey || e.metaKey) && !e.shiftKey && pendingDeletesRef.current.length > 0) {
         e.preventDefault()
-        handleUndoDelete()
+        handleUndoLatest()
         return
       }
 
@@ -146,7 +149,7 @@ function App(): React.JSX.Element {
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
     }
-  }, [createFeatureOpen, handleUndoDelete])
+  }, [createFeatureOpen, handleUndoLatest])
 
   // Listen for VSCode theme changes
   useEffect(() => {
@@ -365,13 +368,16 @@ function App(): React.JSX.Element {
         initialStatus={createFeatureStatus}
       />
 
-      {pendingDelete && (
+      {pendingDeletes.map((entry, i) => (
         <UndoToast
-          message={`Deleted "${getTitleFromContent(pendingDelete.feature.content)}"`}
-          onUndo={handleUndoDelete}
+          key={entry.id}
+          message={`Deleted "${getTitleFromContent(entry.feature.content)}"`}
+          onUndo={() => handleUndoDelete(entry.id)}
+          onExpire={() => commitDelete(entry.id)}
           duration={5000}
+          index={i}
         />
-      )}
+      ))}
     </div>
   )
 }
