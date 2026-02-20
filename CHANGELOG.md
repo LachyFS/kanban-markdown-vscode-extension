@@ -5,6 +5,61 @@ All notable changes to the Kanban Markdown extension will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-02-20
+
+### Added
+- Settings button in the toolbar to quickly open extension settings
+- Markdown editor mode for opening features in the native VS Code editor
+- Kanban skill installation instructions to README
+
+### Changed
+- Replaced PNG icons with SVG versions for better quality and smaller file size
+
+## [1.6.4] - 2026-02-20
+
+### Changed
+- Added new SVG icon and updated PNG icon
+
+## [1.6.3] - 2026-02-19
+
+### Added
+- Allow saving features without a title (falls back to description)
+
+### Fixed
+- Activity bar incorrectly opening on ALT key press
+
+## [1.6.2] - 2026-02-19
+
+### Fixed
+- Removed incorrect `fontSize` configuration from KanbanPanel
+
+## [1.6.1] - 2026-02-19
+
+### Fixed
+- Focus must leave the webview before `focusMenuBar` works (VS Code limitation)
+
+## [1.6.0] - 2026-02-14
+
+### Added
+- Undo delete functionality with a stack-based history
+- Rich text editor in the CreateFeatureDialog
+
+## [1.5.0] - 2026-02-14
+
+### Added
+- Keyboard shortcut for saving and closing the CreateFeatureDialog
+
+## [1.4.0] - 2026-02-14
+
+### Added
+- File name display on cards with a toggle setting
+
+## [1.3.0] - 2026-02-13
+
+### Added
+- Automatic cleanup of empty old status folders during board updates
+- CONTRIBUTING.md guide for new contributors
+
 ## [1.2.0] - 2026-02-13
 
 ### Added
