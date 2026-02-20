@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <radialGradient id="bg" cx="40%" cy="35%" r="70%">
+      <stop offset="0%" stop-color="#1c1c27"/>
+      <stop offset="100%" stop-color="#08080d"/>
+    </radialGradient>
+    <clipPath id="squircle-clip">
+      <path d="M128,4 C200,4 252,4 252,56 C252,108 252,148 252,200 C252,252 200,252 128,252 C56,252 4,252 4,200 C4,148 4,108 4,56 C4,4 56,4 128,4 Z"/>
+    </clipPath>
+    <filter id="outer-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="14" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Outer glow -->
+  <path d="M128,4 C200,4 252,4 252,56 C252,108 252,148 252,200 C252,252 200,252 128,252 C56,252 4,252 4,200 C4,148 4,108 4,56 C4,4 56,4 128,4 Z" fill="none" stroke="#a78bfa" stroke-width="2" opacity="0.2" filter="url(#outer-glow)"/>
+  <!-- iOS-style squircle shape -->
+  <path d="M128,4 C200,4 252,4 252,56 C252,108 252,148 252,200 C252,252 200,252 128,252 C56,252 4,252 4,200 C4,148 4,108 4,56 C4,4 56,4 128,4 Z" fill="url(#bg)"/>
+  <!-- Border with subtle gradient feel -->
+  <path d="M128,4 C200,4 252,4 252,56 C252,108 252,148 252,200 C252,252 200,252 128,252 C56,252 4,252 4,200 C4,148 4,108 4,56 C4,4 56,4 128,4 Z" fill="none" stroke="white" stroke-width="1" opacity="0.1"/>
+  <g clip-path="url(#squircle-clip)">
+    <g>
+      <polygon points="48,160 48,48 84,66 84,178" fill="#be123c" stroke="#be123c" stroke-width="1" stroke-linejoin="round"/>
+      <polygon points="84,66 120,48 120,160 84,178" fill="#e11d48" stroke="#e11d48" stroke-width="1" stroke-linejoin="round"/>
+      <polygon points="48,48 84,30 120,48 84,66" fill="#fb7185" stroke="#fb7185" stroke-width="1" stroke-linejoin="round"/>
+    </g>
+    <g>
+      <polygon points="92,184 92,86 128,104 128,202" fill="#a16207" stroke="#a16207" stroke-width="1" stroke-linejoin="round"/>
+      <polygon points="128,104 164,86 164,184 128,202" fill="#ca8a04" stroke="#ca8a04" stroke-width="1" stroke-linejoin="round"/>
+      <polygon points="92,86 128,68 164,86 128,104" fill="#fbbf24" stroke="#fbbf24" stroke-width="1" stroke-linejoin="round"/>
+    </g>
+    <g>
+      <polygon points="136,208 136,124 172,142 172,226" fill="#15803d" stroke="#15803d" stroke-width="1" stroke-linejoin="round"/>
+      <polygon points="172,142 208,124 208,208 172,226" fill="#22c55e" stroke="#22c55e" stroke-width="1" stroke-linejoin="round"/>
+      <polygon points="136,124 172,106 208,124 172,142" fill="#4ade80" stroke="#4ade80" stroke-width="1" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>
