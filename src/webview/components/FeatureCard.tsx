@@ -128,7 +128,7 @@ export function FeatureCard({ feature, onClick, isDragging }: FeatureCardProps) 
         )}
 
         {/* Labels */}
-        {cardSettings.showLabels && !cardSettings.compactMode && feature.labels.length > 0 && (
+        {cardSettings.showLabels && feature.labels.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-2">
             {feature.labels.slice(0, 3).map((label) => (
               <span
