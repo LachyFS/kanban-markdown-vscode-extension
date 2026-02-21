@@ -358,6 +358,7 @@ function CreateFeatureDialogContent({
   const handleSubmit = () => {
     const description = descriptionEditor ? getMarkdown(descriptionEditor).trim() : ''
     const heading = title.trim()
+    if (!heading && !description) return
     const content = heading
       ? `# ${heading}${description ? '\n\n' + description : ''}`
       : description
