@@ -15,6 +15,7 @@ interface KanbanState {
   dueDateFilter: DueDateFilter
   layout: LayoutMode
   cardSettings: CardDisplaySettings
+  collapsedColumns: Set<string>
 
   setFeatures: (features: Feature[]) => void
   setColumns: (columns: KanbanColumn[]) => void
@@ -27,6 +28,8 @@ interface KanbanState {
   setDueDateFilter: (filter: DueDateFilter) => void
   setLayout: (layout: LayoutMode) => void
   toggleLayout: () => void
+  setCollapsedColumns: (ids: string[]) => void
+  toggleColumnCollapsed: (columnId: string) => void
   clearAllFilters: () => void
 
   addFeature: (feature: Feature) => void
@@ -85,6 +88,7 @@ export const useStore = create<KanbanState>((set, get) => ({
   labelFilter: 'all',
   dueDateFilter: 'all',
   layout: 'horizontal',
+  collapsedColumns: new Set<string>(),
   cardSettings: {
     showPriorityBadges: true,
     showAssignee: true,
@@ -109,6 +113,16 @@ export const useStore = create<KanbanState>((set, get) => ({
   setDueDateFilter: (filter) => set({ dueDateFilter: filter }),
   setLayout: (layout) => set({ layout }),
   toggleLayout: () => set((state) => ({ layout: state.layout === 'horizontal' ? 'vertical' : 'horizontal' })),
+  setCollapsedColumns: (ids) => set({ collapsedColumns: new Set(ids) }),
+  toggleColumnCollapsed: (columnId) => set((state) => {
+    const next = new Set(state.collapsedColumns)
+    if (next.has(columnId)) {
+      next.delete(columnId)
+    } else {
+      next.add(columnId)
+    }
+    return { collapsedColumns: next }
+  }),
 
   clearAllFilters: () =>
     set({

@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react'
+import { Plus, ChevronLeft } from 'lucide-react'
 import { FeatureCard } from './FeatureCard'
 import type { Feature, KanbanColumn as KanbanColumnType } from '../../shared/types'
 import type { LayoutMode } from '../store'
@@ -9,6 +9,7 @@ interface KanbanColumnProps {
   features: Feature[]
   onFeatureClick: (feature: Feature) => void
   onAddFeature: (status: string) => void
+  onCollapse: () => void
   onDragStart: (e: React.DragEvent, feature: Feature) => void
   onDragOver: (e: React.DragEvent) => void
   onDragOverCard: (e: React.DragEvent, columnId: string, cardIndex: number) => void
@@ -24,6 +25,7 @@ export function KanbanColumn({
   features,
   onFeatureClick,
   onAddFeature,
+  onCollapse,
   onDragStart,
   onDragOver,
   onDragOverCard,
@@ -47,11 +49,7 @@ export function KanbanColumn({
       onDrop={(e) => onDrop(e, column.id)}
     >
       {/* Column Header */}
-      <button
-        onClick={() => onAddFeature(column.id)}
-        className="flex items-center justify-between w-full px-3 py-2 border-b border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/60 transition-colors cursor-pointer"
-        title={`Add to ${column.name}`}
-      >
+      <div className="flex items-center justify-between w-full px-3 py-2 border-b border-zinc-200 dark:border-zinc-700">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: column.color }} />
           <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{column.name}</h3>
@@ -59,8 +57,23 @@ export function KanbanColumn({
             {features.length}
           </span>
         </div>
-        <Plus size={16} className="text-zinc-500" />
-      </button>
+        <div className="flex items-center gap-0.5">
+          <button
+            onClick={onCollapse}
+            className="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+            title={`Collapse ${column.name}`}
+          >
+            <ChevronLeft size={16} className="text-zinc-500" />
+          </button>
+          <button
+            onClick={() => onAddFeature(column.id)}
+            className="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+            title={`Add to ${column.name}`}
+          >
+            <Plus size={16} className="text-zinc-500" />
+          </button>
+        </div>
+      </div>
 
       {/* Column Content */}
       <div

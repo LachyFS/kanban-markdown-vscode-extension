@@ -70,7 +70,7 @@ export interface CardDisplaySettings {
 
 // Messages between extension and webview
 export type ExtensionMessage =
-  | { type: 'init'; features: Feature[]; columns: KanbanColumn[]; settings: CardDisplaySettings }
+  | { type: 'init'; features: Feature[]; columns: KanbanColumn[]; settings: CardDisplaySettings; collapsedColumns: string[] }
   | { type: 'featuresUpdated'; features: Feature[] }
   | { type: 'triggerCreateDialog' }
   | { type: 'featureContent'; featureId: string; content: string; frontmatter: FeatureFrontmatter }
@@ -100,3 +100,4 @@ export type WebviewMessage =
   | { type: 'closeFeature' }
   | { type: 'openFile'; featureId: string }
   | { type: 'openSettings' }
+  | { type: 'toggleColumnCollapsed'; columnId: string }

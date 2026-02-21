@@ -149,6 +149,17 @@ export class KanbanPanel {
             await vscode.commands.executeCommand('workbench.action.focusActivityBar')
             await vscode.commands.executeCommand('workbench.action.focusMenuBar')
             break
+          case 'toggleColumnCollapsed': {
+            const collapsed: string[] = this._context.workspaceState.get('kanban-markdown.collapsedColumns', [])
+            const idx = collapsed.indexOf(message.columnId)
+            if (idx >= 0) {
+              collapsed.splice(idx, 1)
+            } else {
+              collapsed.push(message.columnId)
+            }
+            await this._context.workspaceState.update('kanban-markdown.collapsedColumns', collapsed)
+            break
+          }
           case 'startWithAI':
             await this._startWithAI(message.agent, message.permissionMode)
             break
@@ -852,11 +863,14 @@ export class KanbanPanel {
       defaultStatus: config.get<FeatureStatus>('defaultStatus', 'backlog')
     }
 
+    const collapsedColumns: string[] = this._context.workspaceState.get('kanban-markdown.collapsedColumns', [])
+
     this._panel.webview.postMessage({
       type: 'init',
       features: this._features,
       columns,
-      settings
+      settings,
+      collapsedColumns
     })
   }
 }

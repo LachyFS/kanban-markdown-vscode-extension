@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react'
 import { KanbanColumn } from './KanbanColumn'
+import { CollapsedColumn } from './CollapsedColumn'
 import { useStore } from '../store'
+import { vscode } from '../vscodeApi'
 import type { Feature, FeatureStatus } from '../../shared/types'
 
 export interface DropTarget {
@@ -19,6 +21,8 @@ export function KanbanBoard({ onFeatureClick, onAddFeature, onMoveFeature }: Kan
   const getFilteredFeaturesByStatus = useStore((s) => s.getFilteredFeaturesByStatus)
   const getFeaturesByStatus = useStore((s) => s.getFeaturesByStatus)
   const layout = useStore((s) => s.layout)
+  const collapsedColumns = useStore((s) => s.collapsedColumns)
+  const toggleColumnCollapsed = useStore((s) => s.toggleColumnCollapsed)
   const [draggedFeature, setDraggedFeature] = useState<Feature | null>(null)
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null)
 
@@ -112,28 +116,46 @@ export function KanbanBoard({ onFeatureClick, onAddFeature, onMoveFeature }: Kan
     setDropTarget(null)
   }, [])
 
+  const handleToggleCollapse = useCallback((columnId: string) => {
+    toggleColumnCollapsed(columnId)
+    vscode.postMessage({ type: 'toggleColumnCollapsed', columnId })
+  }, [toggleColumnCollapsed])
+
   const isVertical = layout === 'vertical'
 
   return (
     <div className={isVertical ? "h-full overflow-y-auto p-4" : "h-full overflow-x-auto p-4"}>
       <div className={isVertical ? "flex flex-col gap-4" : "flex gap-4 h-full min-w-max"}>
-        {columns.map((column) => (
-          <KanbanColumn
-            key={column.id}
-            column={column}
-            features={getFilteredFeaturesByStatus(column.id as FeatureStatus)}
-            onFeatureClick={onFeatureClick}
-            onAddFeature={onAddFeature}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDragOverCard={handleDragOverCard}
-            onDrop={handleDrop}
-            onDragEnd={handleDragEnd}
-            draggedFeature={draggedFeature}
-            dropTarget={dropTarget}
-            layout={layout}
-          />
-        ))}
+        {columns.map((column) =>
+          collapsedColumns.has(column.id) ? (
+            <CollapsedColumn
+              key={column.id}
+              column={column}
+              featureCount={getFeaturesByStatus(column.id as FeatureStatus).length}
+              onExpand={() => handleToggleCollapse(column.id)}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              layout={layout}
+            />
+          ) : (
+            <KanbanColumn
+              key={column.id}
+              column={column}
+              features={getFilteredFeaturesByStatus(column.id as FeatureStatus)}
+              onFeatureClick={onFeatureClick}
+              onAddFeature={onAddFeature}
+              onCollapse={() => handleToggleCollapse(column.id)}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragOverCard={handleDragOverCard}
+              onDrop={handleDrop}
+              onDragEnd={handleDragEnd}
+              draggedFeature={draggedFeature}
+              dropTarget={dropTarget}
+              layout={layout}
+            />
+          )
+        )}
       </div>
     </div>
   )

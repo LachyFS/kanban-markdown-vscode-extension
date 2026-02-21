@@ -8,15 +8,7 @@ import { Toolbar } from './components/Toolbar'
 import { UndoToast } from './components/UndoToast'
 import type { Feature, FeatureStatus, Priority, ExtensionMessage, FeatureFrontmatter } from '../shared/types'
 import { getTitleFromContent } from '../shared/types'
-
-// Declare vscode API type
-declare const acquireVsCodeApi: () => {
-  postMessage: (message: unknown) => void
-  getState: () => unknown
-  setState: (state: unknown) => void
-}
-
-const vscode = acquireVsCodeApi()
+import { vscode } from './vscodeApi'
 
 function App(): React.JSX.Element {
 
@@ -25,7 +17,8 @@ function App(): React.JSX.Element {
     setFeatures,
     setColumns,
     setIsDarkMode,
-    setCardSettings
+    setCardSettings,
+    setCollapsedColumns
   } = useStore()
 
   const [createFeatureOpen, setCreateFeatureOpen] = useState(false)
@@ -196,6 +189,7 @@ function App(): React.JSX.Element {
         case 'init':
           setFeatures(message.features)
           setColumns(message.columns)
+          setCollapsedColumns(message.collapsedColumns ?? [])
           if (message.settings) {
             if (message.settings.markdownEditorMode && editingFeature) {
               setEditingFeature(null)
@@ -231,7 +225,7 @@ function App(): React.JSX.Element {
     vscode.postMessage({ type: 'ready' })
 
     return () => window.removeEventListener('message', handleMessage)
-  }, [setFeatures, setColumns, setCardSettings])
+  }, [setFeatures, setColumns, setCardSettings, setCollapsedColumns])
 
   const handleFeatureClick = (feature: Feature): void => {
     // Request feature content for inline editing
