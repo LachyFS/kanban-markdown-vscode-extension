@@ -66,6 +66,7 @@ export interface CardDisplaySettings {
   markdownEditorMode: boolean
   defaultPriority: Priority
   defaultStatus: FeatureStatus
+  addNewCardsToTop: boolean
 }
 
 // Messages between extension and webview
