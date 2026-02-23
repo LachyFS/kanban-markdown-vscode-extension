@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import * as path from 'path'
 import { generateKeyBetween, generateNKeysBetween } from 'fractional-indexing'
 import { getTitleFromContent, generateFeatureFilename } from '../shared/types'
-import type { Feature, FeatureStatus, Priority, KanbanColumn, FeatureFrontmatter, CardDisplaySettings } from '../shared/types'
+import type { Feature, FeatureStatus, Priority, KanbanColumn, FeatureFrontmatter, CardDisplaySettings, FilenamePattern } from '../shared/types'
 import { ensureStatusSubfolders, moveFeatureFile, getFeatureFilePath, getStatusFromPath } from './featureFileUtils'
 
 interface CreateFeatureData {
@@ -181,6 +181,9 @@ export class KanbanPanel {
           this._loadFeatures().then(() => this._sendFeaturesToWebview())
         } else {
           this._sendFeaturesToWebview()
+          if (e.affectsConfiguration('kanban-markdown.filenamePattern')) {
+            this._promptFilenamePatternMigration()
+          }
         }
       } else if (e.affectsConfiguration('chat.disableAIFeatures')) {
         this._sendFeaturesToWebview()
@@ -556,7 +559,9 @@ export class KanbanPanel {
     }
 
     const title = getTitleFromContent(data.content)
-    const filename = generateFeatureFilename(title)
+    const config = vscode.workspace.getConfiguration('kanban-markdown')
+    const pattern = config.get<FilenamePattern>('filenamePattern', 'name-date')
+    const filename = generateFeatureFilename(title, pattern)
     const now = new Date().toISOString()
     const featuresInStatus = this._features
       .filter(f => f.status === data.status)
@@ -837,6 +842,73 @@ export class KanbanPanel {
     })
     terminal.show()
     terminal.sendText(command)
+  }
+
+  private async _promptFilenamePatternMigration(): Promise<void> {
+    const count = this._features.length
+    if (count === 0) return
+
+    const answer = await vscode.window.showInformationMessage(
+      `Kanban Markdown: filename pattern changed. Rename ${count} existing feature file${count === 1 ? '' : 's'} to match the new pattern?`,
+      'Rename',
+      'Keep existing'
+    )
+    if (answer !== 'Rename') return
+
+    await this._migrateFilenames()
+  }
+
+  private async _migrateFilenames(): Promise<void> {
+    const featuresDir = this._getWorkspaceFeaturesDir()
+    if (!featuresDir) return
+
+    const config = vscode.workspace.getConfiguration('kanban-markdown')
+    const pattern = config.get<FilenamePattern>('filenamePattern', 'name-date')
+
+    let renamed = 0
+    let skipped = 0
+
+    this._migrating = true
+    try {
+      for (const feature of this._features) {
+        const title = getTitleFromContent(feature.content)
+        const createdDate = new Date(feature.created)
+        const newFilename = generateFeatureFilename(title, pattern, createdDate)
+
+        if (newFilename === feature.id) continue // no change needed
+
+        const newFilePath = getFeatureFilePath(featuresDir, feature.status, newFilename)
+
+        // Skip if target file already exists (collision)
+        try {
+          await vscode.workspace.fs.stat(vscode.Uri.file(newFilePath))
+          skipped++
+          continue
+        } catch {
+          // Target doesn't exist — safe to proceed
+        }
+
+        const oldPath = feature.filePath
+        feature.id = newFilename
+        feature.filePath = newFilePath
+
+        const serialized = this._serializeFeature(feature)
+        await vscode.workspace.fs.createDirectory(vscode.Uri.file(path.dirname(newFilePath)))
+        await vscode.workspace.fs.writeFile(vscode.Uri.file(newFilePath), new TextEncoder().encode(serialized))
+        await vscode.workspace.fs.delete(vscode.Uri.file(oldPath))
+        renamed++
+      }
+    } finally {
+      this._migrating = false
+    }
+
+    await this._loadFeatures()
+    this._sendFeaturesToWebview()
+
+    const msg = skipped > 0
+      ? `Renamed ${renamed} file${renamed === 1 ? '' : 's'}. Skipped ${skipped} due to naming conflicts.`
+      : `Renamed ${renamed} file${renamed === 1 ? '' : 's'}.`
+    vscode.window.showInformationMessage(`Kanban Markdown: ${msg}`)
   }
 
   private _sendFeaturesToWebview(): void {
