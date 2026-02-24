@@ -219,6 +219,11 @@
           "default": false,
           "description": "Use compact card layout to show more features."
         },
+        "kanban-markdown.addNewCardsToTop": {
+          "type": "boolean",
+          "default": false,
+          "description": "When enabled, new cards are added to the top of the column instead of the bottom."
+        },
         "kanban-markdown.markdownEditorMode": {
           "type": "boolean",
           "default": false,

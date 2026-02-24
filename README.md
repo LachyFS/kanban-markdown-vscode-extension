@@ -126,6 +126,7 @@ Available settings in VSCode/Cursor preferences:
 | `kanban-markdown.showLabels` | `true` | Show labels on cards and in editors |
 | `kanban-markdown.showBuildWithAI` | `true` | Show "Build with AI" button on cards |
 | `kanban-markdown.compactMode` | `false` | Enable compact card display |
+| `kanban-markdown.addNewCardsToTop` | `false` | Add new cards to the top of the column instead of the bottom |
 
 Default columns configuration:
 ```json

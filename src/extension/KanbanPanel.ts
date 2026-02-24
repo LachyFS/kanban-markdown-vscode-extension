@@ -558,10 +558,14 @@ export class KanbanPanel {
     const title = getTitleFromContent(data.content)
     const filename = generateFeatureFilename(title)
     const now = new Date().toISOString()
+    const config = vscode.workspace.getConfiguration('kanban-markdown')
+    const addNewCardsToTop = config.get<boolean>('addNewCardsToTop', false)
     const featuresInStatus = this._features
       .filter(f => f.status === data.status)
       .sort((a, b) => (a.order < b.order ? -1 : a.order > b.order ? 1 : 0))
-    const lastOrder = featuresInStatus.length > 0 ? featuresInStatus[featuresInStatus.length - 1].order : null
+    const newOrder = addNewCardsToTop
+      ? generateKeyBetween(null, featuresInStatus.length > 0 ? featuresInStatus[0].order : null)
+      : generateKeyBetween(featuresInStatus.length > 0 ? featuresInStatus[featuresInStatus.length - 1].order : null, null)
 
     const feature: Feature = {
       id: filename,
@@ -573,7 +577,7 @@ export class KanbanPanel {
       modified: now,
       completedAt: data.status === 'done' ? now : null,
       labels: data.labels,
-      order: generateKeyBetween(lastOrder, null),
+      order: newOrder,
       content: data.content,
       filePath: getFeatureFilePath(featuresDir, data.status, filename)
     }
@@ -860,7 +864,8 @@ export class KanbanPanel {
       compactMode: config.get<boolean>('compactMode', false),
       markdownEditorMode: config.get<boolean>('markdownEditorMode', false),
       defaultPriority: config.get<Priority>('defaultPriority', 'medium'),
-      defaultStatus: config.get<FeatureStatus>('defaultStatus', 'backlog')
+      defaultStatus: config.get<FeatureStatus>('defaultStatus', 'backlog'),
+      addNewCardsToTop: config.get<boolean>('addNewCardsToTop', false)
     }
 
     const collapsedColumns: string[] = this._context.workspaceState.get('kanban-markdown.collapsedColumns', [])
