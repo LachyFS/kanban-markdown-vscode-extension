@@ -121,6 +121,14 @@ export function KanbanBoard({ onFeatureClick, onAddFeature, onMoveFeature }: Kan
     vscode.postMessage({ type: 'toggleColumnCollapsed', columnId })
   }, [toggleColumnCollapsed])
 
+  const handleMoveAllCards = useCallback((sourceColumnId: string, targetColumnId: string) => {
+    const sourceFeatures = getFeaturesByStatus(sourceColumnId as FeatureStatus)
+    const targetFeatures = getFeaturesByStatus(targetColumnId as FeatureStatus)
+    sourceFeatures.forEach((feature, i) => {
+      onMoveFeature(feature.id, targetColumnId, targetFeatures.length + i)
+    })
+  }, [getFeaturesByStatus, onMoveFeature])
+
   const isVertical = layout === 'vertical'
 
   return (
@@ -145,6 +153,7 @@ export function KanbanBoard({ onFeatureClick, onAddFeature, onMoveFeature }: Kan
               onFeatureClick={onFeatureClick}
               onAddFeature={onAddFeature}
               onCollapse={() => handleToggleCollapse(column.id)}
+              onMoveAllCards={(targetColumnId) => handleMoveAllCards(column.id, targetColumnId)}
               onDragStart={handleDragStart}
               onDragOver={handleDragOver}
               onDragOverCard={handleDragOverCard}

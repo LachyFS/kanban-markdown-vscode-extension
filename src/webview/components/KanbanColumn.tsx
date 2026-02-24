@@ -1,7 +1,8 @@
-import { Plus, ChevronLeft } from 'lucide-react'
+import { Plus, ChevronLeft, MoreVertical, ChevronRight } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
 import { FeatureCard } from './FeatureCard'
 import type { Feature, KanbanColumn as KanbanColumnType } from '../../shared/types'
-import type { LayoutMode } from '../store'
+import { useStore, type LayoutMode } from '../store'
 import type { DropTarget } from './KanbanBoard'
 
 interface KanbanColumnProps {
@@ -10,6 +11,7 @@ interface KanbanColumnProps {
   onFeatureClick: (feature: Feature) => void
   onAddFeature: (status: string) => void
   onCollapse: () => void
+  onMoveAllCards: (targetColumnId: string) => void
   onDragStart: (e: React.DragEvent, feature: Feature) => void
   onDragOver: (e: React.DragEvent) => void
   onDragOverCard: (e: React.DragEvent, columnId: string, cardIndex: number) => void
@@ -26,6 +28,7 @@ export function KanbanColumn({
   onFeatureClick,
   onAddFeature,
   onCollapse,
+  onMoveAllCards,
   onDragStart,
   onDragOver,
   onDragOverCard,
@@ -37,6 +40,22 @@ export function KanbanColumn({
 }: KanbanColumnProps) {
   const isVertical = layout === 'vertical'
   const isDropTarget = dropTarget && dropTarget.columnId === column.id
+  const columns = useStore((s) => s.columns)
+  const otherColumns = columns.filter((c) => c.id !== column.id)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [submenuOpen, setSubmenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [menuOpen])
 
   return (
     <div
@@ -72,6 +91,45 @@ export function KanbanColumn({
           >
             <Plus size={16} className="text-zinc-500" />
           </button>
+          <div ref={menuRef} className="relative flex">
+            <button
+              onClick={() => setMenuOpen((o) => !o)}
+              className="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+              title="Column options"
+            >
+              <MoreVertical size={16} className="text-zinc-500" />
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-1 z-50 min-w-[200px] bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md shadow-lg py-1">
+                <div
+                  className={`relative ${features.length === 0 ? 'opacity-40 pointer-events-none' : ''}`}
+                  onMouseEnter={() => setSubmenuOpen(true)}
+                  onMouseLeave={() => setSubmenuOpen(false)}
+                >
+                  <button
+                    className="w-full text-left px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center justify-between gap-2"
+                  >
+                    <span>Move all cards in this list</span>
+                    <ChevronRight size={14} className="text-zinc-400 flex-shrink-0" />
+                  </button>
+                  {submenuOpen && (
+                    <div className="absolute left-full top-0 ml-0.5 z-50 min-w-[160px] bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md shadow-lg py-1">
+                      {otherColumns.map((col) => (
+                        <button
+                          key={col.id}
+                          className="w-full text-left px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2"
+                          onClick={() => { onMoveAllCards(col.id); setMenuOpen(false); setSubmenuOpen(false) }}
+                        >
+                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: col.color }} />
+                          {col.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
