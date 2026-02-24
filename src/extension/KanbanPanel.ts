@@ -1000,9 +1000,15 @@ export class KanbanPanel {
 
     const collapsedColumns: string[] = this._context.workspaceState.get('kanban-markdown.collapsedColumns', [])
 
+    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+    const features = this._features.map(f => ({
+      ...f,
+      filePath: workspaceRoot ? path.relative(workspaceRoot, f.filePath) : f.filePath
+    }))
+
     this._panel.webview.postMessage({
       type: 'init',
-      features: this._features,
+      features,
       columns,
       settings,
       collapsedColumns

@@ -39,7 +39,7 @@ export function FeatureCard({ feature, onClick, isDragging }: FeatureCardProps) 
   const { cardSettings } = useStore()
   const title = getTitleFromContent(feature.content)
   const description = getDescriptionFromContent(feature.content)
-  const fileName = feature.filePath ? feature.filePath.split('/').pop() || '' : ''
+  const fileName = feature.filePath ? feature.filePath.split(/[/\\]/).pop() || '' : ''
 
   const formatDueDate = (dateStr: string | null) => {
     if (!dateStr) return null
