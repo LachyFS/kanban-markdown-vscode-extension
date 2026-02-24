@@ -3,7 +3,7 @@ import * as path from 'path'
 import { generateKeyBetween, generateNKeysBetween } from 'fractional-indexing'
 import { getTitleFromContent, generateFeatureFilename } from '../shared/types'
 import type { Feature, FeatureStatus, Priority, KanbanColumn, FeatureFrontmatter, CardDisplaySettings, FilenamePattern } from '../shared/types'
-import { ensureStatusSubfolders, moveFeatureFile, getFeatureFilePath, getStatusFromPath } from './featureFileUtils'
+import { ensureStatusSubfolders, moveFeatureFile, getFeatureFilePath, getStatusFromPath, fileExists } from './featureFileUtils'
 
 interface CreateFeatureData {
   status: FeatureStatus
@@ -574,8 +574,17 @@ export class KanbanPanel {
       ? generateKeyBetween(null, featuresInStatus.length > 0 ? featuresInStatus[0].order : null)
       : generateKeyBetween(featuresInStatus.length > 0 ? featuresInStatus[featuresInStatus.length - 1].order : null, null)
 
+    let filePath = getFeatureFilePath(featuresDir, data.status, filename)
+    let uniqueFilename = filename
+    let counter = 1
+    while (await fileExists(filePath)) {
+      uniqueFilename = `${filename}-${counter}`
+      filePath = getFeatureFilePath(featuresDir, data.status, uniqueFilename)
+      counter++
+    }
+
     const feature: Feature = {
-      id: filename,
+      id: uniqueFilename,
       status: data.status,
       priority: data.priority,
       assignee: data.assignee,
@@ -586,7 +595,7 @@ export class KanbanPanel {
       labels: data.labels,
       order: newOrder,
       content: data.content,
-      filePath: getFeatureFilePath(featuresDir, data.status, filename)
+      filePath
     }
 
     await vscode.workspace.fs.createDirectory(vscode.Uri.file(path.dirname(feature.filePath)))

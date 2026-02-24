@@ -48,7 +48,7 @@ export function getStatusFromPath(filePath: string, featuresDir: string): string
   return null
 }
 
-async function fileExists(filePath: string): Promise<boolean> {
+export async function fileExists(filePath: string): Promise<boolean> {
   try {
     await vscode.workspace.fs.stat(vscode.Uri.file(filePath))
     return true
