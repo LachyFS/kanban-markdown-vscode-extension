@@ -26,8 +26,14 @@ export function getTitleFromContent(content: string): string {
   return firstLine || 'Untitled'
 }
 
+export type FilenamePattern = 'name-date' | 'date-name' | 'name-datetime' | 'datetime-name'
+
 // Generate a filename-safe slug from a title
-export function generateFeatureFilename(title: string): string {
+export function generateFeatureFilename(
+  title: string,
+  pattern: FilenamePattern = 'name-date',
+  date: Date = new Date()
+): string {
   const slug = title
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
@@ -36,9 +42,17 @@ export function generateFeatureFilename(title: string): string {
     .replace(/^-|-$/g, '') // Trim hyphens from start/end
     .slice(0, 50) // Limit length
 
-  const now = new Date()
-  const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-  return slug ? `${slug}-${date}` : `feature-${date}`
+  const safeSlug = slug || 'feature'
+  const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  const timeStr = `${String(date.getHours()).padStart(2, '0')}${String(date.getMinutes()).padStart(2, '0')}${String(date.getSeconds()).padStart(2, '0')}`
+
+  switch (pattern) {
+    case 'date-name':     return `${dateStr}-${safeSlug}`
+    case 'name-datetime': return `${safeSlug}-${dateStr}-${timeStr}`
+    case 'datetime-name': return `${dateStr}-${timeStr}-${safeSlug}`
+    case 'name-date':
+    default:              return `${safeSlug}-${dateStr}`
+  }
 }
 
 export interface KanbanColumn {

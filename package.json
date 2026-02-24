@@ -80,6 +80,23 @@
           "default": ".devtool/features",
           "description": "Directory path (relative to workspace root) where feature markdown files are stored."
         },
+        "kanban-markdown.filenamePattern": {
+          "type": "string",
+          "default": "name-date",
+          "enum": [
+            "name-date",
+            "date-name",
+            "name-datetime",
+            "datetime-name"
+          ],
+          "enumDescriptions": [
+            "Name then date — e.g. my-feature-2026-02-23",
+            "Date then name — e.g. 2026-02-23-my-feature",
+            "Name then date and time — e.g. my-feature-2026-02-23-143045",
+            "Date and time then name — e.g. 2026-02-23-143045-my-feature"
+          ],
+          "description": "Pattern used to generate filenames for new feature cards. Changing this setting will offer to rename all existing feature files to match."
+        },
         "kanban-markdown.defaultPriority": {
           "type": "string",
           "default": "medium",
