@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import * as path from 'path'
 import { generateKeyBetween, generateNKeysBetween } from 'fractional-indexing'
 import { getTitleFromContent, generateFeatureFilename } from '../shared/types'
-import type { Feature, FeatureStatus, Priority, KanbanColumn, FeatureFrontmatter, CardDisplaySettings, FilenamePattern } from '../shared/types'
+import type { Feature, FeatureStatus, Priority, KanbanColumn, FeatureFrontmatter, CardDisplaySettings, FilenamePattern, AIAgent, AIPermissionMode } from '../shared/types'
 import { ensureStatusSubfolders, moveFeatureFile, getFeatureFilePath, getStatusFromPath, fileExists } from './featureFileUtils'
 
 interface CreateFeatureData {
@@ -841,8 +841,8 @@ export class KanbanPanel {
   }
 
   private async _startWithAI(
-    agent?: 'claude' | 'codex' | 'opencode',
-    permissionMode?: 'default' | 'plan' | 'acceptEdits' | 'bypassPermissions'
+    agent?: AIAgent,
+    permissionMode?: AIPermissionMode
   ): Promise<void> {
     // Find the currently editing feature
     const feature = this._features.find(f => f.id === this._currentEditingFeatureId)
@@ -886,6 +886,10 @@ export class KanbanPanel {
         command = `codex --approval-mode ${approvalMode} "${escapedPrompt}"`
         break
       }
+      case 'copilot': {
+        command = `copilot -i "${escapedPrompt}"`
+        break
+      }
       case 'opencode': {
         command = `opencode "${escapedPrompt}"`
         break
@@ -897,6 +901,7 @@ export class KanbanPanel {
     const agentNames: Record<string, string> = {
       'claude': 'Claude Code',
       'codex': 'Codex',
+      'copilot': 'GitHub Copilot',
       'opencode': 'OpenCode'
     }
     const terminal = vscode.window.createTerminal({

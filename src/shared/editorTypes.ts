@@ -1,4 +1,4 @@
-import type { FeatureFrontmatter } from './types'
+import type { FeatureFrontmatter, AIAgent, AIPermissionMode } from './types'
 
 export type { FeatureFrontmatter }
 
@@ -11,4 +11,4 @@ export type EditorWebviewMessage =
   | { type: 'ready' }
   | { type: 'frontmatterUpdate'; frontmatter: FeatureFrontmatter }
   | { type: 'requestSave' }
-  | { type: 'startWithAI'; agent?: 'claude' | 'codex' | 'opencode'; permissionMode?: 'default' | 'plan' | 'acceptEdits' | 'bypassPermissions' }
+  | { type: 'startWithAI'; agent?: AIAgent; permissionMode?: AIPermissionMode }
