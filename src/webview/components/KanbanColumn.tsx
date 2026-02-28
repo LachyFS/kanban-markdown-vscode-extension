@@ -13,6 +13,7 @@ interface KanbanColumnProps {
   onAddFeature: (status: string) => void
   onCollapse: () => void
   onMoveAllCards: (targetColumnId: string) => void
+  onArchiveAllCards?: () => void
   onDragStart: (e: React.DragEvent, feature: Feature) => void
   onDragOver: (e: React.DragEvent) => void
   onDragOverCard: (e: React.DragEvent, columnId: string, cardIndex: number) => void
@@ -31,6 +32,7 @@ export function KanbanColumn({
   onAddFeature,
   onCollapse,
   onMoveAllCards,
+  onArchiveAllCards,
   onDragStart,
   onDragOver,
   onDragOverCard,
@@ -127,6 +129,14 @@ export function KanbanColumn({
                     </div>
                   )}
                 </div>
+                {onArchiveAllCards && (
+                  <button
+                    className={`w-full text-left px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 ${features.length === 0 ? 'opacity-40 pointer-events-none' : ''}`}
+                    onClick={() => { onArchiveAllCards(); setMenuOpen(false) }}
+                  >
+                    Archive all cards in this list
+                  </button>
+                )}
               </div>
             )}
           </div>

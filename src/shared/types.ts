@@ -116,3 +116,4 @@ export type WebviewMessage =
   | { type: 'openSettings' }
   | { type: 'toggleColumnCollapsed'; columnId: string }
   | { type: 'moveAllCards'; sourceColumnId: string; targetColumnId: string }
+  | { type: 'archiveAllCards'; sourceColumnId: string }

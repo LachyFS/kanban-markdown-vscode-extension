@@ -163,6 +163,9 @@ export class KanbanPanel {
           case 'moveAllCards':
             await this._moveAllCards(message.sourceColumnId, message.targetColumnId)
             break
+          case 'archiveAllCards':
+            await this._archiveAllCards(message.sourceColumnId)
+            break
           case 'startWithAI':
             await this._startWithAI(message.agent, message.permissionMode)
             break
@@ -695,6 +698,60 @@ export class KanbanPanel {
             // Will reconcile on next load
           }
         }
+      }
+    } finally {
+      this._migrating = false
+    }
+
+    this._sendFeaturesToWebview()
+  }
+
+  private async _archiveAllCards(sourceColumnId: string): Promise<void> {
+    const featuresDir = this._getWorkspaceFeaturesDir()
+    if (!featuresDir) return
+
+    const sourceFeatures = this._features
+      .filter(f => f.status === sourceColumnId)
+    if (sourceFeatures.length === 0) return
+
+    const count = sourceFeatures.length
+    const confirm = await vscode.window.showWarningMessage(
+      `Archive ${count} card${count === 1 ? '' : 's'} from this list? They will be moved to the "archived" folder.`,
+      { modal: true },
+      'Archive'
+    )
+    if (confirm !== 'Archive') return
+
+    const archivedDir = path.join(featuresDir, 'archived')
+    await vscode.workspace.fs.createDirectory(vscode.Uri.file(archivedDir))
+
+    this._migrating = true
+    try {
+      for (const feature of sourceFeatures) {
+        const filename = path.basename(feature.filePath)
+        let targetPath = path.join(archivedDir, filename)
+
+        // Handle filename collisions
+        const ext = path.extname(filename)
+        const base = path.basename(filename, ext)
+        let counter = 1
+        while (await fileExists(targetPath)) {
+          targetPath = path.join(archivedDir, `${base}-${counter}${ext}`)
+          counter++
+        }
+
+        try {
+          await vscode.workspace.fs.rename(
+            vscode.Uri.file(feature.filePath),
+            vscode.Uri.file(targetPath)
+          )
+        } catch {
+          // Skip files that fail to move
+          continue
+        }
+
+        // Remove the feature from the in-memory list
+        this._features = this._features.filter(f => f.id !== feature.id)
       }
     } finally {
       this._migrating = false
