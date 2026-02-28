@@ -103,11 +103,16 @@ export function Toolbar({ onOpenSettings }: { onOpenSettings: () => void }) {
         className={selectClassName}
       >
         <option value="all">All Labels</option>
-        {labels.map((l) => (
-          <option key={l} value={l}>
-            {l}
-          </option>
-        ))}
+        <option value="unlabeled">Unlabeled</option>
+        {labels.length > 0 && (
+          <optgroup label="Labels">
+            {labels.map((l) => (
+              <option key={l} value={`label:${l}`}>
+                {l}
+              </option>
+            ))}
+          </optgroup>
+        )}
       </select>
       )}
 

@@ -182,7 +182,11 @@ export const useStore = create<KanbanState>((set, get) => ({
         }
 
         // Label filter
-        if (labelFilter !== 'all' && !f.labels.includes(labelFilter)) return false
+        if (labelFilter === 'unlabeled') {
+          if (f.labels.length > 0) return false
+        } else if (labelFilter.startsWith('label:')) {
+          if (!f.labels.includes(labelFilter.slice(6))) return false
+        }
 
         // Due date filter
         if (dueDateFilter !== 'all') {
