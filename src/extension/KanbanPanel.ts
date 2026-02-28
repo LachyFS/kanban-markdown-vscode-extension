@@ -163,6 +163,9 @@ export class KanbanPanel {
           case 'moveAllCards':
             await this._moveAllCards(message.sourceColumnId, message.targetColumnId)
             break
+          case 'renameLabel':
+            await this._renameLabel(message.oldName, message.newName)
+            break
           case 'startWithAI':
             await this._startWithAI(message.agent, message.permissionMode)
             break
@@ -905,6 +908,36 @@ export class KanbanPanel {
     })
     terminal.show()
     terminal.sendText(command)
+  }
+
+  private async _renameLabel(oldName: string, newName: string): Promise<void> {
+    if (!oldName || !newName || oldName === newName) return
+
+    const trimmedNew = newName.trim()
+    if (!trimmedNew) return
+
+    let updatedCount = 0
+    for (const feature of this._features) {
+      const idx = feature.labels.indexOf(oldName)
+      if (idx === -1) continue
+
+      // Replace old label with new, avoiding duplicates
+      if (feature.labels.includes(trimmedNew)) {
+        // New name already exists on this feature — just remove the old one
+        feature.labels.splice(idx, 1)
+      } else {
+        feature.labels[idx] = trimmedNew
+      }
+      feature.modified = new Date().toISOString()
+
+      const content = this._serializeFeature(feature)
+      await vscode.workspace.fs.writeFile(vscode.Uri.file(feature.filePath), new TextEncoder().encode(content))
+      updatedCount++
+    }
+
+    if (updatedCount > 0) {
+      this._sendFeaturesToWebview()
+    }
   }
 
   private async _promptFilenamePatternMigration(): Promise<void> {
