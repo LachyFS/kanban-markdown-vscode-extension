@@ -5,129 +5,170 @@ All notable changes to the Kanban Markdown extension will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] - 2026-03-01
+
+### Added
+
+- Delete labels from the Manage Labels panel with confirmation dialog
+- Archive cards from column context menu ([#42](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/42))
+- Rename labels from the Manage Labels panel ([#40](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/40))
+- Copilot agent integration ([#38](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/38))
+- Filter by unlabeled features ([#36](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/36))
+
+### Thanks
+
+- [@luciopaiva](https://github.com/luciopaiva) for contributing archive cards ([#42](https://github.com/LachyFS/kanban-markdown-vscode-extension/pull/42)), rename labels ([#40](https://github.com/LachyFS/kanban-markdown-vscode-extension/pull/40)), Copilot integration ([#38](https://github.com/LachyFS/kanban-markdown-vscode-extension/pull/38)), and unlabeled filter ([#36](https://github.com/LachyFS/kanban-markdown-vscode-extension/pull/36))
+
 ## [1.10.0] - 2026-02-24
 
 ### Added
+
 - Configurable filename pattern setting with migration support ([#34](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/34))
 - Setting to insert new cards at the top of a column ([#32](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/32))
 - Column context menu with move all cards action ([#30](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/30))
 
 ### Changed
+
 - Feature file paths are now relative to workspace root in KanbanPanel
 - Removed unused featureId display in FeatureEditor component
 
 ### Fixed
+
 - Duplicate title names handling
 - Removed redundant configuration retrieval in KanbanPanel
 
 ### Thanks
+
 - [@luciopaiva](https://github.com/luciopaiva) for contributing configurable filename patterns ([#34](https://github.com/LachyFS/kanban-markdown-vscode-extension/pull/34)), insert new cards at top ([#32](https://github.com/LachyFS/kanban-markdown-vscode-extension/pull/32)), and move all cards action ([#30](https://github.com/LachyFS/kanban-markdown-vscode-extension/pull/30))
 
 ## [1.9.1] - 2026-02-21
 
 ### Fixed
+
 - Prevent submission of empty feature title and description in CreateFeatureDialog
 
 ## [1.9.0] - 2026-02-21
 
 ### Added
+
 - Column collapse functionality in Kanban board
 
 ## [1.8.1] - 2026-02-20
 
 ### Fixed
+
 - Removed unnecessary compact mode check for feature labels in FeatureCard component
 
 ## [1.8.0] - 2026-02-20
 
 ### Added
+
 - Fractional indexing for order metadata
 
 ## [1.7.0] - 2026-02-20
 
 ### Added
+
 - Settings button in the toolbar to quickly open extension settings
 - Markdown editor mode for opening features in the native VS Code editor
 - Kanban skill installation instructions to README
 
 ### Changed
+
 - Replaced PNG icons with SVG versions for better quality and smaller file size
 
 ## [1.6.4] - 2026-02-20
 
 ### Changed
+
 - Added new SVG icon and updated PNG icon
 
 ## [1.6.3] - 2026-02-19
 
 ### Added
+
 - Allow saving features without a title (falls back to description)
 
 ### Fixed
+
 - Activity bar incorrectly opening on ALT key press
 
 ## [1.6.2] - 2026-02-19
 
 ### Fixed
+
 - Removed incorrect `fontSize` configuration from KanbanPanel
 
 ## [1.6.1] - 2026-02-19
 
 ### Fixed
+
 - Focus must leave the webview before `focusMenuBar` works (VS Code limitation)
 
 ## [1.6.0] - 2026-02-14
 
 ### Added
+
 - Undo delete functionality with a stack-based history
 - Rich text editor in the CreateFeatureDialog
 
 ## [1.5.0] - 2026-02-14
 
 ### Added
+
 - Keyboard shortcut for saving and closing the CreateFeatureDialog
 
 ## [1.4.0] - 2026-02-14
 
 ### Added
+
 - File name display on cards with a toggle setting
 
 ## [1.3.0] - 2026-02-13
 
 ### Added
+
 - Automatic cleanup of empty old status folders during board updates
 - CONTRIBUTING.md guide for new contributors
 
 ## [1.2.0] - 2026-02-13
 
 ### Added
+
 - `completedAt` frontmatter field that records when a feature was marked as done, displayed as relative time on cards (e.g. "completed 2 days ago")
 
 ### Changed
+
 - Simplified status subfolders to use only a `done` folder instead of per-status folders
 
 ### Dependencies
+
 - Bumped `qs` from 6.14.1 to 6.14.2
 
 ## [1.1.0] - 2026-02-13
 
 ### Added
+
 - Open file button in editor to quickly jump to the underlying markdown file ([#19](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/19))
 - External change detection in editor — reloads content when the file is modified outside the extension ([#19](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/19))
 
 ### Fixed
+
 - CRLF line endings no longer break markdown frontmatter parsing ([#20](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/20))
 - Order collisions when deleting features in KanbanPanel ([0f11a00](https://github.com/LachyFS/kanban-markdown-vscode-extension/commit/0f11a00))
 
 ### Changed
+
 - Removed delete button from feature cards for a cleaner card layout ([086e738](https://github.com/LachyFS/kanban-markdown-vscode-extension/commit/086e738))
 
 ### Thanks
+
 - [@hodanli](https://github.com/hodanli) for requesting the open file button and external change detection ([#19](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/19)), and reporting the CRLF line ending bug ([#20](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/20))
 
 ## [1.0.0] - 2026-02-12
 
 ### Added
+
 - Sidebar view for Kanban board in the activity bar ([#9](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/9))
 - Drag-and-drop card reordering within columns ([#16](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/16))
 - Label management with suggestions in CreateFeatureDialog and FeatureEditor ([#4](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/4))
@@ -139,6 +180,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Auto-save functionality in FeatureEditor
 
 ### Fixed
+
 - Broken label selector in edit view
 - `n` hotkey no longer triggers when modifier keys are held ([#7](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/7))
 - Alt key no longer blocked from opening the menu bar ([#8](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/8))
@@ -148,55 +190,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Due date hidden on cards with "done" status ([#17](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/17))
 
 ### Changed
+
 - Removed QuickAdd functionality in favor of the full CreateFeatureDialog
 - Consistent card height across all columns
 - Replaced `Buffer` with `TextEncoder` for file writing (browser compatibility)
 - Replaced Node `fs` module with `vscode.workspace.fs` for file operations (virtual filesystem support)
 
 ### Thanks
+
 - [@ungive](https://github.com/ungive) for requesting the sidebar view ([#9](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/9)) and card reordering ([#16](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/16)), and reporting numerous bugs around hotkeys ([#7](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/7)), activation ([#14](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/14)), date rendering ([#10](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/10), [#17](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/17)), and the menu bar ([#8](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/8))
 - [@hodanli](https://github.com/hodanli) for requesting label management from the UI ([#4](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/4)) and status subfolders for done items ([#3](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/3))
 
 ## [0.1.6] - 2026-02-09
 
 ### Added
+
 - Live settings updates: webview now instantly reflects VS Code setting changes without reopening
 - Configuration change listener for KanbanPanel (columns, display settings, defaults)
 - Configuration change listener for FeatureHeaderProvider (features directory re-evaluation)
 
 ### Fixed
+
 - File watcher now properly disposes when features directory setting changes
 
 ## [0.1.5] - 2026-02-09
 
 ### Fixed
+
 - VS Code configuration settings (columns, priority badges, assignee, due date, compact mode, default priority/status) now correctly propagate to the webview ([#2](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/2))
 - Quick add input uses configured default priority instead of hardcoded value
 - Create feature dialog uses configured default priority and status
 
 ### Changed
+
 - Removed obsolete macOS entitlements and icon files from the build directory
 
 ### Thanks
+
 - [@hodanli](https://github.com/hodanli) for reporting the priority badges settings bug ([#2](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/2))
 
 ## [0.1.4] - 2026-01-29
 
 ### Added
+
 - Pressing `enter` in the title input field moves cursor to the description textarea, `shift-enter` creates a new line
 
 ### Fixed
+
 - Prevent opening new feature panel when editing an existing feature with `n` hotkey
 - Use `resourceLangId` instead of hardcoded path for kanban-markdown command ([#1](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/1))
 - Remove hardcoded devtool resource path for `editor/title/run` menu item ([#1](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/1))
 - Removed redundant tile heading in edit view UI, (title is already visible in markdown editor)
 
 ### Thanks
+
 - [@SuperbDotHub](https://github.com/SuperbDotHub) for reporting the features directory path bug ([#1](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/1))
 
 ## [0.1.1] - 2026-01-28
 
 ### Added
+
 - AI agent integration for starting feature creation with Claude, Codex, or OpenCode
 - Keyboard shortcuts for AI actions
 - Configurable kanban columns with custom colors
@@ -205,6 +258,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Marketplace publishing support (VS Code + Open VSX)
 
 ### Changed
+
 - Updated repository URLs to reflect new ownership
 - Replaced SVG icons with PNG formats for better compatibility
 - Enhanced README with installation instructions and images
@@ -212,6 +266,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2026-01-27
 
 ### Added
+
 - Initial release
 - Kanban board view for managing features as markdown files
 - Drag-and-drop between columns (Backlog, To Do, In Progress, Review, Done)
@@ -220,3 +275,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable features directory
 - Rich markdown editor with Tiptap
 - VS Code webview integration
+
