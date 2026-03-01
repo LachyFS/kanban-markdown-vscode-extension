@@ -187,6 +187,35 @@ pnpm typecheck     # Type checking
 pnpm lint          # Linting
 ```
 
+### Testing
+
+```bash
+# Unit + component tests (fast, no VS Code host required)
+pnpm test
+
+# Watch mode
+pnpm test:watch
+
+# Integration tests (launches a real VS Code instance)
+pnpm test:integration
+```
+
+Unit tests cover shared logic, extension utilities, and React components. Integration tests run inside a VS Code host using `@vscode/test-electron` and exercise the real file system and VS Code APIs.
+
+#### Running the CI pipeline locally with `act`
+
+[`act`](https://github.com/nektos/act) runs GitHub Actions workflows locally in Docker.
+
+```bash
+# Install (macOS)
+brew install act
+
+# Run the full CI test job
+act push -j test --container-architecture linux/amd64
+```
+
+The first run downloads a VS Code binary (~160 MB) into `.vscode-test/` which is cached for subsequent runs.
+
 ### Debugging
 
 1. Press `F5` in VS Code to launch the Extension Development Host
