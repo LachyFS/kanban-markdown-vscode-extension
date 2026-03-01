@@ -729,6 +729,8 @@ export class KanbanPanel {
     await vscode.workspace.fs.createDirectory(vscode.Uri.file(archivedDir))
 
     this._migrating = true
+    const archivedIds = new Set<string>()
+    let failedCount = 0
     try {
       for (const feature of sourceFeatures) {
         const filename = path.basename(feature.filePath)
@@ -748,16 +750,19 @@ export class KanbanPanel {
             vscode.Uri.file(feature.filePath),
             vscode.Uri.file(targetPath)
           )
+          archivedIds.add(feature.id)
         } catch {
-          // Skip files that fail to move
+          failedCount++
           continue
         }
-
-        // Remove the feature from the in-memory list
-        this._features = this._features.filter(f => f.id !== feature.id)
       }
+      this._features = this._features.filter(f => !archivedIds.has(f.id))
     } finally {
       this._migrating = false
+    }
+
+    if (failedCount > 0) {
+      vscode.window.showWarningMessage(`${failedCount} card${failedCount === 1 ? '' : 's'} could not be archived.`)
     }
 
     this._sendFeaturesToWebview()
@@ -947,7 +952,7 @@ export class KanbanPanel {
         break
       }
       case 'copilot': {
-        command = `copilot -i "${escapedPrompt}"`
+        command = `copilot "${escapedPrompt}"`
         break
       }
       case 'opencode': {
@@ -973,14 +978,13 @@ export class KanbanPanel {
   }
 
   private async _renameLabel(oldName: string, newName: string): Promise<void> {
-    if (!oldName || !newName || oldName === newName) return
-
+    const trimmedOld = oldName.trim()
     const trimmedNew = newName.trim()
-    if (!trimmedNew) return
+    if (!trimmedOld || !trimmedNew || trimmedOld === trimmedNew) return
 
     let updatedCount = 0
     for (const feature of this._features) {
-      const idx = feature.labels.indexOf(oldName)
+      const idx = feature.labels.indexOf(trimmedOld)
       if (idx === -1) continue
 
       // Replace old label with new, avoiding duplicates

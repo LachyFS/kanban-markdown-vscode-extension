@@ -81,8 +81,11 @@ export function LabelManager({ onClose }: Readonly<LabelManagerProps>) {
     setEditingLabel(null)
   }
 
+  useEffect(() => {
+    if (labels.length === 0) onClose()
+  }, [labels.length, onClose])
+
   if (labels.length === 0) {
-    onClose()
     return null
   }
 
@@ -171,13 +174,18 @@ export function LabelManager({ onClose }: Readonly<LabelManagerProps>) {
                   >
                     {label}
                   </span>
-                  <span
-                    className="text-xs shrink-0"
-                    style={{ color: 'var(--vscode-descriptionForeground)' }}
-                    title={`Used on ${getLabelCount(label)} card${getLabelCount(label) === 1 ? '' : 's'}`}
-                  >
-                    {getLabelCount(label)}
-                  </span>
+                  {(() => {
+                    const count = getLabelCount(label)
+                    return (
+                      <span
+                        className="text-xs shrink-0"
+                        style={{ color: 'var(--vscode-descriptionForeground)' }}
+                        title={`Used on ${count} card${count === 1 ? '' : 's'}`}
+                      >
+                        {count}
+                      </span>
+                    )
+                  })()}
                   <button
                     onClick={() => handleStartEdit(label)}
                     className="p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
