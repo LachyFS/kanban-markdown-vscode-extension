@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import * as path from 'path'
 import type { FeatureFrontmatter, EditorExtensionMessage, EditorWebviewMessage } from '../shared/editorTypes'
-import type { FeatureStatus, Priority } from '../shared/types'
+import type { FeatureStatus, Priority, AIAgent } from '../shared/types'
 
 /**
  * Provides a webview panel that shows feature metadata (frontmatter) as a header.
@@ -113,7 +113,7 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
 
           const prompt = `Implement this feature: "${title}" (${fm.priority} priority)${labels}. ${shortDesc} See full details in: ${this._currentDocument.uri.fsPath}`
 
-          const agent = message.agent || 'claude'
+          const agent: AIAgent = message.agent || 'claude'
           const permissionMode = message.permissionMode || 'default'
 
           let command: string
@@ -140,12 +140,17 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
               command = `opencode "${escapedPrompt}"`
               break
             }
+            case 'copilot': {
+              command = `copilot "${escapedPrompt}"`
+              break
+            }
             default:
               command = `claude "${escapedPrompt}"`
           }
 
           const agentNames: Record<string, string> = {
             'claude': 'Claude Code',
+            'copilot': 'GitHub Copilot',
             'codex': 'Codex',
             'opencode': 'OpenCode'
           }

@@ -4,7 +4,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Markdown } from 'tiptap-markdown'
 import { X, User, ChevronDown, Wand2, Tag, Plus, Check, CircleDot, Signal, Calendar, Trash2, FileText } from 'lucide-react'
-import type { FeatureFrontmatter, Priority, FeatureStatus } from '../../shared/types'
+import type { FeatureFrontmatter, Priority, FeatureStatus, AIAgent, AIPermissionMode } from '../../shared/types'
 import { cn } from '../lib/utils'
 import { useStore } from '../store'
 
@@ -16,9 +16,6 @@ function getMarkdown(editor: { storage: unknown }): string {
   return (editor.storage as MarkdownStorage).markdown.getMarkdown()
 }
 
-type AIAgent = 'claude' | 'codex' | 'opencode'
-type PermissionMode = 'default' | 'plan' | 'acceptEdits' | 'bypassPermissions'
-
 interface FeatureEditorProps {
   featureId: string
   content: string
@@ -28,7 +25,7 @@ interface FeatureEditorProps {
   onClose: () => void
   onDelete: () => void
   onOpenFile: () => void
-  onStartWithAI: (agent: AIAgent, permissionMode: PermissionMode) => void
+  onStartWithAI: (agent: AIAgent, permissionMode: AIPermissionMode) => void
 }
 
 const priorityLabels: Record<Priority, string> = {
@@ -67,6 +64,7 @@ const statusDots: Record<FeatureStatus, string> = {
 const aiAgentTabs: { agent: AIAgent; label: string; color: string; activeColor: string }[] = [
   { agent: 'claude', label: 'Claude', color: 'hover:bg-amber-100 dark:hover:bg-amber-900/30', activeColor: 'bg-amber-700 text-white' },
   { agent: 'codex', label: 'Codex', color: 'hover:bg-emerald-100 dark:hover:bg-emerald-900/30', activeColor: 'bg-emerald-500 text-white' },
+  { agent: 'copilot', label: 'Copilot', color: 'hover:bg-sky-100 dark:hover:bg-sky-900/30', activeColor: 'bg-sky-600 text-white' },
   { agent: 'opencode', label: 'OpenCode', color: 'hover:bg-slate-100 dark:hover:bg-slate-700/30', activeColor: 'bg-slate-500 text-white' },
 ]
 
@@ -83,6 +81,12 @@ const agentButtonColors: Record<AIAgent, { bg: string; hover: string; shadow: st
     shadow: 'shadow-sm',
     border: 'border border-emerald-700/50'
   },
+  copilot: {
+    bg: 'bg-sky-600',
+    hover: 'hover:bg-sky-700',
+    shadow: 'shadow-sm',
+    border: 'border border-sky-700/50'
+  },
   opencode: {
     bg: 'bg-slate-600',
     hover: 'hover:bg-slate-700',
@@ -91,7 +95,7 @@ const agentButtonColors: Record<AIAgent, { bg: string; hover: string; shadow: st
   },
 }
 
-const aiModesByAgent: Record<AIAgent, { permissionMode: PermissionMode; label: string; description: string }[]> = {
+const aiModesByAgent: Record<AIAgent, { permissionMode: AIPermissionMode; label: string; description: string }[]> = {
   claude: [
     { permissionMode: 'default', label: 'Default', description: 'With confirmations' },
     { permissionMode: 'plan', label: 'Plan', description: 'Creates a plan first' },
@@ -102,6 +106,9 @@ const aiModesByAgent: Record<AIAgent, { permissionMode: PermissionMode; label: s
     { permissionMode: 'default', label: 'Suggest', description: 'Suggests changes' },
     { permissionMode: 'acceptEdits', label: 'Auto-edit', description: 'Auto-accepts edits' },
     { permissionMode: 'bypassPermissions', label: 'Full Auto', description: 'Full automation' },
+  ],
+  copilot: [
+    { permissionMode: 'default', label: 'Default', description: 'Standard mode' },
   ],
   opencode: [
     { permissionMode: 'default', label: 'Default', description: 'Standard mode' },
@@ -188,7 +195,7 @@ function PropertyRow({ label, icon, children }: { label: string; icon: React.Rea
 }
 
 interface AIDropdownProps {
-  onSelect: (agent: AIAgent, permissionMode: PermissionMode) => void
+  onSelect: (agent: AIAgent, permissionMode: AIPermissionMode) => void
 }
 
 function AIDropdown({ onSelect }: AIDropdownProps) {

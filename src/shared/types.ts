@@ -3,6 +3,10 @@
 export type Priority = 'critical' | 'high' | 'medium' | 'low'
 export type FeatureStatus = 'backlog' | 'todo' | 'in-progress' | 'review' | 'done'
 
+// AI agent types
+export type AIAgent = 'claude' | 'codex' | 'opencode' | 'copilot'
+export type AIPermissionMode = 'default' | 'plan' | 'acceptEdits' | 'bypassPermissions'
+
 export interface Feature {
   id: string
   status: FeatureStatus

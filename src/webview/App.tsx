@@ -6,7 +6,7 @@ import { CreateFeatureDialog } from './components/CreateFeatureDialog'
 import { FeatureEditor } from './components/FeatureEditor'
 import { Toolbar } from './components/Toolbar'
 import { UndoToast } from './components/UndoToast'
-import type { Feature, FeatureStatus, Priority, ExtensionMessage, FeatureFrontmatter } from '../shared/types'
+import type { Feature, FeatureStatus, Priority, ExtensionMessage, FeatureFrontmatter, AIAgent, AIPermissionMode } from '../shared/types'
 import { getTitleFromContent } from '../shared/types'
 import { vscode } from './vscodeApi'
 
@@ -260,7 +260,7 @@ function App(): React.JSX.Element {
     vscode.postMessage({ type: 'openFile', featureId: editingFeature.id })
   }
 
-  const handleStartWithAI = (agent: 'claude' | 'codex' | 'opencode', permissionMode: 'default' | 'plan' | 'acceptEdits' | 'bypassPermissions'): void => {
+  const handleStartWithAI = (agent: AIAgent, permissionMode: AIPermissionMode): void => {
     vscode.postMessage({ type: 'startWithAI', agent, permissionMode })
   }
 

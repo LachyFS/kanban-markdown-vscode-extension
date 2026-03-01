@@ -192,11 +192,13 @@
           "enum": [
             "claude",
             "codex",
+            "copilot",
             "opencode"
           ],
           "enumDescriptions": [
             "Claude Code (Anthropic)",
             "Codex (OpenAI)",
+            "GitHub Copilot",
             "OpenCode"
           ],
           "description": "Default AI agent to use for the 'Start with AI' feature."
