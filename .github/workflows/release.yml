@@ -20,43 +20,46 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          cache: npm
 
       - name: Install dependencies
-        run: pnpm install
+        run: npm ci
 
       - name: Type check
-        run: pnpm typecheck
+        run: npm run typecheck
 
       - name: Lint
-        run: pnpm lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build extension (required for integration tests)
+        run: npm run build:extension
+
+      - name: Install VS Code headless dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            xvfb \
+            libnspr4 libnss3 \
+            libatk1.0-0 libatk-bridge2.0-0 \
+            libgtk-3-0 libglib2.0-0 \
+            libgbm1 libxkbcommon0 \
+            libasound2t64
+
+      - name: Integration tests
+        run: xvfb-run -a npm run test:integration
 
       - name: Build
-        run: pnpm build
+        run: npm run build
 
       - name: Get version from tag
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
       - name: Package extension
-        run: mkdir -p releases && pnpm vsce package --no-dependencies -o releases/kanban-markdown-${{ steps.version.outputs.VERSION }}.vsix
+        run: mkdir -p releases && npm run vsce -- package --no-dependencies -o releases/kanban-markdown-${{ steps.version.outputs.VERSION }}.vsix
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -65,11 +68,11 @@ jobs:
           generate_release_notes: true
 
       - name: Publish to VS Code Marketplace
-        run: pnpm vsce publish --no-dependencies
+        run: npx vsce publish --no-dependencies
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
       - name: Publish to Open VSX
-        run: pnpm ovsx publish releases/*.vsix
+        run: npx ovsx publish releases/*.vsix
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
