@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { X, Pencil, Check, Tag } from 'lucide-react'
+import { X, Pencil, Check, Tag, Trash2 } from 'lucide-react'
 import { useStore } from '../store'
 import { vscode } from '../vscodeApi'
 
@@ -75,6 +75,14 @@ export function LabelManager({ onClose }: Readonly<LabelManagerProps>) {
       }
     }
     setEditingLabel(null)
+  }
+
+  const handleDelete = (label: string) => {
+    vscode.postMessage({ type: 'deleteLabel', labelName: label })
+    // If filtering by the deleted label, reset to show all
+    if (labelFilter === label) {
+      setLabelFilter('all')
+    }
   }
 
   const handleCancelEdit = () => {
@@ -195,6 +203,16 @@ export function LabelManager({ onClose }: Readonly<LabelManagerProps>) {
                     onMouseLeave={e => e.currentTarget.style.color = 'var(--vscode-descriptionForeground)'}
                   >
                     <Pencil size={12} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(label)}
+                    className="p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                    title="Delete label"
+                    style={{ color: 'var(--vscode-descriptionForeground)' }}
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--vscode-errorForeground)'}
+                    onMouseLeave={e => e.currentTarget.style.color = 'var(--vscode-descriptionForeground)'}
+                  >
+                    <Trash2 size={12} />
                   </button>
                 </>
               )}

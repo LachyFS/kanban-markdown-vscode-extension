@@ -169,6 +169,9 @@ export class KanbanPanel {
           case 'renameLabel':
             await this._renameLabel(message.oldName, message.newName)
             break
+          case 'deleteLabel':
+            await this._deleteLabel(message.labelName)
+            break
           case 'startWithAI':
             await this._startWithAI(message.agent, message.permissionMode)
             break
@@ -975,6 +978,35 @@ export class KanbanPanel {
     })
     terminal.show()
     terminal.sendText(command)
+  }
+
+  private async _deleteLabel(labelName: string): Promise<void> {
+    const trimmed = labelName.trim()
+    if (!trimmed) return
+
+    const affectedFeatures = this._features.filter(f => f.labels.includes(trimmed))
+    if (affectedFeatures.length === 0) return
+
+    const count = affectedFeatures.length
+    const confirm = await vscode.window.showWarningMessage(
+      `Remove label "${trimmed}" from ${count} card${count === 1 ? '' : 's'}?`,
+      { modal: true },
+      'Remove'
+    )
+    if (confirm !== 'Remove') return
+
+    for (const feature of affectedFeatures) {
+      const idx = feature.labels.indexOf(trimmed)
+      if (idx !== -1) {
+        feature.labels.splice(idx, 1)
+        feature.modified = new Date().toISOString()
+
+        const content = this._serializeFeature(feature)
+        await vscode.workspace.fs.writeFile(vscode.Uri.file(feature.filePath), new TextEncoder().encode(content))
+      }
+    }
+
+    this._sendFeaturesToWebview()
   }
 
   private async _renameLabel(oldName: string, newName: string): Promise<void> {
