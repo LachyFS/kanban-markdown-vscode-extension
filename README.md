@@ -116,21 +116,21 @@ Available settings in VSCode/Cursor preferences:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `kanban-markdown.featuresDirectory` | `.devtool/features` | Directory for feature files |
-| `kanban-markdown.filenamePattern` | `name-date` | Filename pattern for new feature cards (`name-date`, `date-name`, `name-datetime`, `datetime-name`) |
+| `kanban-markdown.addNewCardsToTop` | `false` | Add new cards to the top of the column instead of the bottom |
+| `kanban-markdown.aiAgent` | `claude` | AI agent (`claude`, `codex`, `copilot`, or `opencode`) |
+| `kanban-markdown.columns` | *see below* | Customize column IDs, names, and colors |
+| `kanban-markdown.compactMode` | `false` | Enable compact card display |
 | `kanban-markdown.defaultPriority` | `medium` | Default priority for new features |
 | `kanban-markdown.defaultStatus` | `backlog` | Default status for new features |
-| `kanban-markdown.columns` | *see below* | Customize column IDs, names, and colors |
-| `kanban-markdown.aiAgent` | `claude` | AI agent (`claude`, `codex`, `copilot`, or `opencode`) |
-| `kanban-markdown.showPriorityBadges` | `true` | Show priority badges on cards |
-| `kanban-markdown.showAssignee` | `true` | Show assignee on cards |
-| `kanban-markdown.showDueDate` | `true` | Show due date on cards |
-| `kanban-markdown.showLabels` | `true` | Show labels on cards and in editors |
-| `kanban-markdown.showBuildWithAI` | `true` | Show "Build with AI" button on cards |
-| `kanban-markdown.showFileName` | `false` | Show the source markdown filename on feature cards |
-| `kanban-markdown.compactMode` | `false` | Enable compact card display |
-| `kanban-markdown.addNewCardsToTop` | `false` | Add new cards to the top of the column instead of the bottom |
+| `kanban-markdown.featuresDirectory` | `.devtool/features` | Directory for feature files |
+| `kanban-markdown.filenamePattern` | `name-date` | Filename pattern for new feature cards (`name-date`, `date-name`, `name-datetime`, `datetime-name`) |
 | `kanban-markdown.markdownEditorMode` | `false` | Open feature files in VS Code's native text editor instead of the inline rich-text editor |
+| `kanban-markdown.showAssignee` | `true` | Show assignee on cards |
+| `kanban-markdown.showBuildWithAI` | `true` | Show "Build with AI" button on cards |
+| `kanban-markdown.showDueDate` | `true` | Show due date on cards |
+| `kanban-markdown.showFileName` | `false` | Show the source markdown filename on feature cards |
+| `kanban-markdown.showLabels` | `true` | Show labels on cards and in editors |
+| `kanban-markdown.showPriorityBadges` | `true` | Show priority badges on cards |
 
 Default columns configuration:
 ```json
