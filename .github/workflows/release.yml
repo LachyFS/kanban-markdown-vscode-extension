@@ -66,15 +66,12 @@ jobs:
       - name: Integration tests
         run: xvfb-run -a npm run test:integration
 
-      - name: Build
-        run: npm run build
-
       - name: Get version from tag
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
       - name: Package extension
-        run: mkdir -p releases && npm run vsce -- package --no-dependencies -o releases/kanban-markdown-${{ steps.version.outputs.VERSION }}.vsix
+        run: npm run package
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

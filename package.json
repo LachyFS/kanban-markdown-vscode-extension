@@ -275,6 +275,7 @@
     "test:coverage": "vitest run --config vitest.config.mts --coverage",
     "build:integration": "tsc --project tsconfig.integration.json",
     "test:integration": "npm run build:integration && node out/tests/integration/runTests.js",
+    "prepackage": "node -e \"require('fs').mkdirSync('releases', {recursive: true})\"",
     "package": "vsce package --no-dependencies -o releases/",
     "release": "node scripts/release.js",
     "release:patch": "node scripts/release.js patch",
