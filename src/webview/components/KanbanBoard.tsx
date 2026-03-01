@@ -125,6 +125,10 @@ export function KanbanBoard({ onFeatureClick, onAddFeature, onMoveFeature }: Kan
     vscode.postMessage({ type: 'moveAllCards', sourceColumnId, targetColumnId })
   }, [])
 
+  const handleArchiveAllCards = useCallback((sourceColumnId: string) => {
+    vscode.postMessage({ type: 'archiveAllCards', sourceColumnId })
+  }, [])
+
   const isVertical = layout === 'vertical'
 
   return (
@@ -151,6 +155,7 @@ export function KanbanBoard({ onFeatureClick, onAddFeature, onMoveFeature }: Kan
               onAddFeature={onAddFeature}
               onCollapse={() => handleToggleCollapse(column.id)}
               onMoveAllCards={(targetColumnId) => handleMoveAllCards(column.id, targetColumnId)}
+              onArchiveAllCards={column.id === 'done' ? () => handleArchiveAllCards(column.id) : undefined}
               onDragStart={handleDragStart}
               onDragOver={handleDragOver}
               onDragOverCard={handleDragOverCard}
