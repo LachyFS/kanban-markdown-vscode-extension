@@ -42,7 +42,7 @@ npx skills add https://github.com/LachyFS/kanban-skill
 - **Assignees**: Assign team members to features
 - **Due dates**: Smart formatting (Overdue, Today, Tomorrow, "5d", etc.)
 - **Labels**: Tag features with multiple labels (shows up to 3 with "+X more")
-- **Auto-generated IDs**: Based on title and timestamp (e.g., `implement-dark-mode-2026-01-29`)
+- **Auto-generated IDs**: Based on title and timestamp, with a configurable filename pattern (e.g., `implement-dark-mode-2026-01-29`)
 - **Timestamps**: Created and modified dates tracked automatically
 
 ### Filtering & Search
@@ -68,6 +68,7 @@ npx skills add https://github.com/LachyFS/kanban-skill
 - **Claude Code**: Default, Plan, Auto-edit, and Full Auto modes
 - **Codex**: Suggest, Auto-edit, and Full Auto modes
 - **OpenCode**: Agent integration support
+- **GitHub Copilot**: Agent integration support
 - AI receives feature context (title, priority, labels, description) for informed assistance
 
 ## Installation
@@ -115,18 +116,21 @@ Available settings in VSCode/Cursor preferences:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `kanban-markdown.featuresDirectory` | `.devtool/features` | Directory for feature files |
+| `kanban-markdown.addNewCardsToTop` | `false` | Add new cards to the top of the column instead of the bottom |
+| `kanban-markdown.aiAgent` | `claude` | AI agent (`claude`, `codex`, `copilot`, or `opencode`) |
+| `kanban-markdown.columns` | *see below* | Customize column IDs, names, and colors |
+| `kanban-markdown.compactMode` | `false` | Enable compact card display |
 | `kanban-markdown.defaultPriority` | `medium` | Default priority for new features |
 | `kanban-markdown.defaultStatus` | `backlog` | Default status for new features |
-| `kanban-markdown.columns` | *see below* | Customize column IDs, names, and colors |
-| `kanban-markdown.aiAgent` | `claude` | AI agent (`claude`, `codex`, or `opencode`) |
-| `kanban-markdown.showPriorityBadges` | `true` | Show priority badges on cards |
+| `kanban-markdown.featuresDirectory` | `.devtool/features` | Directory for feature files |
+| `kanban-markdown.filenamePattern` | `name-date` | Filename pattern for new feature cards (`name-date`, `date-name`, `name-datetime`, `datetime-name`) |
+| `kanban-markdown.markdownEditorMode` | `false` | Open feature files in VS Code's native text editor instead of the inline rich-text editor |
 | `kanban-markdown.showAssignee` | `true` | Show assignee on cards |
-| `kanban-markdown.showDueDate` | `true` | Show due date on cards |
-| `kanban-markdown.showLabels` | `true` | Show labels on cards and in editors |
 | `kanban-markdown.showBuildWithAI` | `true` | Show "Build with AI" button on cards |
-| `kanban-markdown.compactMode` | `false` | Enable compact card display |
-| `kanban-markdown.addNewCardsToTop` | `false` | Add new cards to the top of the column instead of the bottom |
+| `kanban-markdown.showDueDate` | `true` | Show due date on cards |
+| `kanban-markdown.showFileName` | `false` | Show the source markdown filename on feature cards |
+| `kanban-markdown.showLabels` | `true` | Show labels on cards and in editors |
+| `kanban-markdown.showPriorityBadges` | `true` | Show priority badges on cards |
 
 Default columns configuration:
 ```json
@@ -163,6 +167,35 @@ pnpm typecheck
 # Linting
 pnpm lint
 ```
+
+### Testing
+
+```bash
+# Unit + component tests (fast, no VS Code host required)
+pnpm test
+
+# Watch mode
+pnpm test:watch
+
+# Integration tests (launches a real VS Code instance)
+pnpm test:integration
+```
+
+Unit tests cover shared logic, extension utilities, and React components. Integration tests run inside a VS Code host using `@vscode/test-electron` and exercise the real file system and VS Code APIs.
+
+#### Running the CI pipeline locally with `act`
+
+[`act`](https://github.com/nektos/act) runs GitHub Actions workflows locally in Docker.
+
+```bash
+# Install (macOS)
+brew install act
+
+# Run the full CI test job
+act push -j test --container-architecture linux/amd64
+```
+
+The first run downloads a VS Code binary (~160 MB) into `.vscode-test/` which is cached for subsequent runs.
 
 ### Debugging
 

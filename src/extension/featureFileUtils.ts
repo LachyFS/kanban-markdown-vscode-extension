@@ -1,6 +1,12 @@
 import * as path from 'path'
 import * as vscode from 'vscode'
 
+export interface FsAdapter {
+  stat(uri: vscode.Uri): Thenable<vscode.FileStat>
+  rename(source: vscode.Uri, target: vscode.Uri): Thenable<void>
+  createDirectory(uri: vscode.Uri): Thenable<void>
+}
+
 export function getFeatureFilePath(featuresDir: string, status: string, filename: string): string {
   if (status === 'done') {
     return path.join(featuresDir, 'done', `${filename}.md`)
@@ -8,14 +14,15 @@ export function getFeatureFilePath(featuresDir: string, status: string, filename
   return path.join(featuresDir, `${filename}.md`)
 }
 
-export async function ensureStatusSubfolders(featuresDir: string): Promise<void> {
-  await vscode.workspace.fs.createDirectory(vscode.Uri.file(path.join(featuresDir, 'done')))
+export async function ensureStatusSubfolders(featuresDir: string, fs: FsAdapter = vscode.workspace.fs): Promise<void> {
+  await fs.createDirectory(vscode.Uri.file(path.join(featuresDir, 'done')))
 }
 
 export async function moveFeatureFile(
   currentPath: string,
   featuresDir: string,
-  newStatus: string
+  newStatus: string,
+  fs: FsAdapter = vscode.workspace.fs
 ): Promise<string> {
   const filename = path.basename(currentPath)
   const targetDir = newStatus === 'done'
@@ -28,13 +35,13 @@ export async function moveFeatureFile(
   const ext = path.extname(filename)
   const base = path.basename(filename, ext)
   let counter = 1
-  while (await fileExists(targetPath)) {
+  while (await fileExists(targetPath, fs)) {
     targetPath = path.join(targetDir, `${base}-${counter}${ext}`)
     counter++
   }
 
-  await vscode.workspace.fs.createDirectory(vscode.Uri.file(targetDir))
-  await vscode.workspace.fs.rename(vscode.Uri.file(currentPath), vscode.Uri.file(targetPath))
+  await fs.createDirectory(vscode.Uri.file(targetDir))
+  await fs.rename(vscode.Uri.file(currentPath), vscode.Uri.file(targetPath))
 
   return targetPath
 }
@@ -48,9 +55,9 @@ export function getStatusFromPath(filePath: string, featuresDir: string): string
   return null
 }
 
-export async function fileExists(filePath: string): Promise<boolean> {
+export async function fileExists(filePath: string, fs: FsAdapter = vscode.workspace.fs): Promise<boolean> {
   try {
-    await vscode.workspace.fs.stat(vscode.Uri.file(filePath))
+    await fs.stat(vscode.Uri.file(filePath))
     return true
   } catch {
     return false
