@@ -41,16 +41,16 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Type check
-        run: npm run typecheck
+        run: pnpm run typecheck
 
       - name: Lint
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Unit tests
-        run: npm test
+        run: pnpm test
 
       - name: Build extension (required for integration tests)
-        run: npm run build:extension
+        run: pnpm run build:extension
 
       - name: Install VS Code headless dependencies
         run: |
@@ -64,14 +64,14 @@ jobs:
             libasound2t64
 
       - name: Integration tests
-        run: xvfb-run -a npm run test:integration
+        run: xvfb-run -a pnpm run test:integration
 
       - name: Get version from tag
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
       - name: Package extension
-        run: npm run package
+        run: pnpm run package
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

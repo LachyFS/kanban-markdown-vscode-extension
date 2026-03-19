@@ -4,6 +4,7 @@ import { generateKeyBetween } from 'fractional-indexing'
 import { KanbanPanel } from './KanbanPanel'
 import { SidebarViewProvider } from './SidebarViewProvider'
 import { generateFeatureFilename } from '../shared/types'
+import { serializeFeature } from '../shared/featureFrontmatter'
 import type { Feature, FeatureStatus, Priority } from '../shared/types'
 import { ensureStatusSubfolders, getFeatureFilePath } from './featureFileUtils'
 
@@ -99,26 +100,6 @@ async function createFeatureFromPrompts(): Promise<void> {
   await vscode.window.showTextDocument(document)
 
   vscode.window.showInformationMessage(`Created feature: ${title}`)
-}
-
-function serializeFeature(feature: Feature): string {
-  const frontmatter = [
-    '---',
-    `id: "${feature.id}"`,
-    `status: "${feature.status}"`,
-    `priority: "${feature.priority}"`,
-    `assignee: ${feature.assignee ? `"${feature.assignee}"` : 'null'}`,
-    `dueDate: ${feature.dueDate ? `"${feature.dueDate}"` : 'null'}`,
-    `created: "${feature.created}"`,
-    `modified: "${feature.modified}"`,
-    `completedAt: ${feature.completedAt ? `"${feature.completedAt}"` : 'null'}`,
-    `labels: [${feature.labels.map(l => `"${l}"`).join(', ')}]`,
-    `order: "${feature.order}"`,
-    '---',
-    ''
-  ].join('\n')
-
-  return frontmatter + feature.content
 }
 
 export function activate(context: vscode.ExtensionContext) {
