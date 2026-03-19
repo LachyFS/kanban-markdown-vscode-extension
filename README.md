@@ -1,12 +1,12 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/LachyFS/kanban-markdown-vscode-extension/main/resources/icon.png" alt="Kanban Markdown" width="128" />
+<img src="https://raw.githubusercontent.com/LachyFS/kanban-markdown-vscode-extension/main/resources/icon.png" alt="Kanban Markdown" width="60" />
 
 # Kanban Markdown
 
 *"Now your backlog can have merge conflicts too."*
 
-**A kanban board inside your editor. Features stored as markdown — version-controllable, human-readable, AI-ready.**
+**An agent native kanban board for VS Code, backed by markdown files.**
 
 [![VS Marketplace](https://img.shields.io/visual-studio-marketplace/v/LachyFS.kanban-markdown?label=VS%20Marketplace&logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=LachyFS.kanban-markdown)
 [![Open VSX](https://img.shields.io/open-vsx/v/LachyFS/kanban-markdown?label=Open%20VSX&logo=vscodium)](https://open-vsx.org/extension/LachyFS/kanban-markdown)
@@ -25,88 +25,82 @@
 
 </div>
 
+---
+
+Features are stored as markdown files with YAML frontmatter — version-controllable, diffable, and editable outside the extension. No accounts, no external services.
+
 ## Quick Start
 
 1. **Install** — search "Kanban Markdown" in the Extensions view ([VS Marketplace](https://marketplace.visualstudio.com/items?itemName=LachyFS.kanban-markdown) / [Open VSX](https://open-vsx.org/extension/LachyFS/kanban-markdown))
 2. **Open** — run `Open Kanban Board` from the command palette (`Cmd+Shift+P` / `Ctrl+Shift+P`)
 3. **Create** — press `N` to add your first feature card
 
-## Kanban Skill
-
-> [!TIP]
-> Give your AI agent read/write access to your board. Create, update, move, and query features straight from the terminal.
->
-> ```bash
-> npx skills add https://github.com/LachyFS/kanban-skill
-> ```
->
-> Works with Claude Code, Codex, OpenCode, and any [skills.sh](https://skills.sh)-compatible agent. See [kanban-skill](https://github.com/LachyFS/kanban-skill) for details.
-
-## Why Kanban Markdown?
-
-Your board lives next to your code as plain markdown files. `git diff` them, review them in PRs, edit them in any editor. No accounts, no subscriptions. And because they're just text with YAML frontmatter, AI agents can read and update them without any special tooling.
-
-## Built for AI Agents
-
-Hit "Build with AI" on any card and your agent gets the full context — title, priority, labels, description. Pair it with the [kanban-skill](#kanban-skill) and agents can pick cards off the board, implement them, and move them to Review on their own.
-
-### Supported Agents & Modes
-
-| Agent | Modes | What happens |
-|-------|-------|-------------|
-| **Claude Code** | Default, Plan, Auto-edit, Full Auto | Opens a terminal session with feature context |
-| **Codex** | Suggest, Auto-edit, Full Auto | Sends the feature as a prompt to Codex CLI |
-| **GitHub Copilot** | Default | Opens Copilot chat with feature context |
-| **OpenCode** | Default | Opens an OpenCode session with feature context |
-
 ## Features
 
 ### Board & Workflow
 
-- **5-column workflow** — Backlog, To Do, In Progress, Review, Done (fully customizable)
-- **Drag-and-drop** — move cards between columns and reorder within columns
-- **Sidebar view** — access the board from the activity bar
-- **Split-view editor** — board on left, inline editor on right
-- **Layout toggle** — horizontal and vertical layouts
-- **Compact mode** — condense cards to fit more on screen
-- **Keyboard shortcuts** — `N` new feature, `Esc` close dialogs, `Cmd/Ctrl+Enter` submit
+- 5-column workflow — Backlog, To Do, In Progress, Review, Done (customizable)
+- Drag-and-drop between columns and within columns
+- Sidebar view from the activity bar
+- Split-view editor — board on left, inline editor on right
+- Horizontal and vertical layouts
+- Compact mode for dense boards
+- Keyboard shortcuts — `N` new feature, `Esc` close dialogs, `Cmd/Ctrl+Enter` submit
 
-### Rich Feature Cards
+### Cards
 
-Each card is just a markdown file with YAML frontmatter.
+Each card is a markdown file with YAML frontmatter.
 
 <div align="center">
 <img src="https://raw.githubusercontent.com/LachyFS/kanban-markdown-vscode-extension/main/docs/images/board-overview.png" alt="Kanban Board Overview" width="800" />
 </div>
 
-- **Priority levels** — Critical, High, Medium, Low with color-coded badges
-- **Assignees** — assign team members to features
-- **Due dates** — smart formatting (Overdue, Today, Tomorrow, "5d", etc.)
-- **Labels** — multiple labels per card, shows up to 3 with "+X more"
-- **Timestamps** — created and modified dates tracked automatically
-- **Archive** — archive completed features to keep the board clean
+- Priority levels — Critical, High, Medium, Low with color-coded badges
+- Assignees
+- Due dates with smart formatting (Overdue, Today, Tomorrow, "5d", etc.)
+- Labels — multiple per card, shows up to 3 with "+X more"
+- Automatic created/modified timestamps
+- Archive completed features to keep the board clean
 
 ### Search & Filtering
 
-- **Full-text search** — searches content, IDs, assignees, and labels
-- **Priority filter** — show only critical, high, medium, or low items
-- **Assignee filter** — by team member, or show unassigned
-- **Label filter** — by label, or show unlabeled items
-- **Due date filters** — overdue, today, this week, or no date
-- **Clear all** — reset every filter at once
+- Full-text search across content, IDs, assignees, and labels
+- Filter by priority, assignee, label, or due date
+- Due date filters — overdue, today, this week, or no date
 
 ### Editor Integration
 
-- **Rich text editing** with Tiptap markdown editor
-- **Inline frontmatter editing** — dropdowns for status/priority, inputs for assignee/due date/labels
-- **Auto-save** — writes to disk on change
-- **Auto-refresh** — board updates when files change externally
-- **Native markdown mode** — open files in VS Code's built-in editor instead
-- **Theme integration** — follows your VS Code/Cursor theme (light & dark)
+- Rich text editing with Tiptap
+- Inline frontmatter editing — dropdowns for status/priority, inputs for assignee/due date/labels
+- Auto-save on change
+- Auto-refresh when files change externally
+- Native markdown mode — open files in VS Code's built-in editor instead
+- Follows your VS Code/Cursor theme (light & dark)
+
+## AI Agent Integration
+
+Cards include a "Build with AI" action that passes full feature context (title, priority, labels, description) to your preferred agent.
+
+| Agent | Modes |
+|-------|-------|
+| Claude Code | Default, Plan, Auto-edit, Full Auto |
+| Codex | Suggest, Auto-edit, Full Auto |
+| GitHub Copilot | Default |
+| OpenCode | Default |
+
+### Kanban Skill
+
+Give agents read/write access to your board from the terminal:
+
+```bash
+npx skills add https://github.com/LachyFS/kanban-skill
+```
+
+Compatible with Claude Code, Codex, OpenCode, and [skills.sh](https://skills.sh)-compatible agents. See [kanban-skill](https://github.com/LachyFS/kanban-skill) for details.
 
 ## File Format
 
-It's just markdown. Features live in `.devtool/features/` by default, organized into subfolders by status.
+Features live in `.devtool/features/` by default, organized into subfolders by status.
 
 ```markdown
 ---
@@ -170,7 +164,7 @@ Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/item
 
 Install from [Open VSX](https://open-vsx.org/extension/LachyFS/kanban-markdown) or search "Kanban Markdown" in the Extensions view.
 
-### From VSIX (Manual)
+### From VSIX
 
 1. Download the `.vsix` from [Releases](https://github.com/LachyFS/kanban-markdown-vscode-extension/releases)
 2. In VS Code: Extensions > `...` > Install from VSIX
