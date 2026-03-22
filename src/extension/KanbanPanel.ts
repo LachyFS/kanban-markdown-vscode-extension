@@ -5,6 +5,7 @@ import { getTitleFromContent, generateFeatureFilename } from '../shared/types'
 import type { Feature, FeatureStatus, Priority, KanbanColumn, FeatureFrontmatter, CardDisplaySettings, FilenamePattern, AIAgent, AIPermissionMode } from '../shared/types'
 import { ensureStatusSubfolders, moveFeatureFile, getFeatureFilePath, getStatusFromPath, fileExists } from './featureFileUtils'
 import { parseFeatureFile, serializeFeature } from '../shared/featureFrontmatter'
+import { t, getBundle, getEffectiveLocale, reloadBundle, getAllDefaultColumnNames, getDefaultColumnNamesForLocale } from './l10n'
 
 interface CreateFeatureData {
   status: FeatureStatus
@@ -44,7 +45,7 @@ export class KanbanPanel {
     // Otherwise, create a new panel
     const panel = vscode.window.createWebviewPanel(
       KanbanPanel.viewType,
-      'Kanban Board',
+      t('panel.title'),
       column || vscode.ViewColumn.One,
       {
         enableScripts: true,
@@ -188,6 +189,9 @@ export class KanbanPanel {
     // Listen for settings changes and push updates to webview
     vscode.workspace.onDidChangeConfiguration(e => {
       if (e.affectsConfiguration('kanban-markdown')) {
+        if (e.affectsConfiguration('kanban-markdown.language')) {
+          reloadBundle()
+        }
         if (e.affectsConfiguration('kanban-markdown.featuresDirectory')) {
           // Features directory changed - need to reload everything
           this._setupFileWatcher()
@@ -196,6 +200,9 @@ export class KanbanPanel {
           this._sendFeaturesToWebview()
           if (e.affectsConfiguration('kanban-markdown.filenamePattern')) {
             this._promptFilenamePatternMigration()
+          }
+          if (e.affectsConfiguration('kanban-markdown.language')) {
+            this._promptColumnLanguageMigration()
           }
         }
       } else if (e.affectsConfiguration('chat.disableAIFeatures')) {
@@ -518,7 +525,7 @@ export class KanbanPanel {
   private async _createFeature(data: CreateFeatureData): Promise<void> {
     const featuresDir = await this._ensureFeaturesDir()
     if (!featuresDir) {
-      vscode.window.showErrorMessage('No workspace folder open')
+      vscode.window.showErrorMessage(t('panel.noWorkspace'))
       return
     }
 
@@ -673,12 +680,16 @@ export class KanbanPanel {
     if (sourceFeatures.length === 0) return
 
     const count = sourceFeatures.length
+    const archiveMsg = count === 1
+      ? t('panel.archiveConfirmOne')
+      : t('panel.archiveConfirmOther', { count })
+    const archiveButton = t('panel.archiveButton')
     const confirm = await vscode.window.showWarningMessage(
-      `Archive ${count} card${count === 1 ? '' : 's'} from this list? They will be moved to the "archived" folder.`,
+      archiveMsg,
       { modal: true },
-      'Archive'
+      archiveButton
     )
-    if (confirm !== 'Archive') return
+    if (confirm !== archiveButton) return
 
     const archivedDir = path.join(featuresDir, 'archived')
     await vscode.workspace.fs.createDirectory(vscode.Uri.file(archivedDir))
@@ -717,7 +728,10 @@ export class KanbanPanel {
     }
 
     if (failedCount > 0) {
-      vscode.window.showWarningMessage(`${failedCount} card${failedCount === 1 ? '' : 's'} could not be archived.`)
+      const failMsg = failedCount === 1
+        ? t('panel.archiveFailedOne')
+        : t('panel.archiveFailedOther', { count: failedCount })
+      vscode.window.showWarningMessage(failMsg)
     }
 
     this._sendFeaturesToWebview()
@@ -732,7 +746,7 @@ export class KanbanPanel {
       this._features = this._features.filter(f => f.id !== featureId)
       this._sendFeaturesToWebview()
     } catch (err) {
-      vscode.window.showErrorMessage(`Failed to delete feature: ${err}`)
+      vscode.window.showErrorMessage(t('panel.deleteFailed', { error: String(err) }))
     }
   }
 
@@ -867,7 +881,7 @@ export class KanbanPanel {
     // Find the currently editing feature
     const feature = this._features.find(f => f.id === this._currentEditingFeatureId)
     if (!feature) {
-      vscode.window.showErrorMessage('No feature selected')
+      vscode.window.showErrorMessage(t('panel.noFeatureSelected'))
       return
     }
 
@@ -940,12 +954,16 @@ export class KanbanPanel {
     if (affectedFeatures.length === 0) return
 
     const count = affectedFeatures.length
+    const removeMsg = count === 1
+      ? t('panel.removeLabelOne', { label: trimmed })
+      : t('panel.removeLabelOther', { label: trimmed, count })
+    const removeButton = t('panel.removeButton')
     const confirm = await vscode.window.showWarningMessage(
-      `Remove label "${trimmed}" from ${count} card${count === 1 ? '' : 's'}?`,
+      removeMsg,
       { modal: true },
-      'Remove'
+      removeButton
     )
-    if (confirm !== 'Remove') return
+    if (confirm !== removeButton) return
 
     for (const feature of affectedFeatures) {
       const idx = feature.labels.indexOf(trimmed)
@@ -994,14 +1012,49 @@ export class KanbanPanel {
     const count = this._features.length
     if (count === 0) return
 
+    const filenameMsg = count === 1
+      ? t('panel.filenameChangedOne')
+      : t('panel.filenameChangedOther', { count })
+    const renameButton = t('panel.renameButton')
     const answer = await vscode.window.showInformationMessage(
-      `Kanban Markdown: filename pattern changed. Rename ${count} existing feature file${count === 1 ? '' : 's'} to match the new pattern?`,
-      'Rename',
-      'Keep existing'
+      filenameMsg,
+      renameButton,
+      t('panel.keepExisting')
     )
-    if (answer !== 'Rename') return
+    if (answer !== renameButton) return
 
     await this._migrateFilenames()
+  }
+
+  private async _promptColumnLanguageMigration(): Promise<void> {
+    const config = vscode.workspace.getConfiguration('kanban-markdown')
+    const columns = config.get<KanbanColumn[]>('columns')
+    if (!columns || columns.length === 0) return
+
+    // Check if all column names are known defaults (from any locale)
+    const knownDefaults = getAllDefaultColumnNames()
+    const allAreDefaults = columns.every(col => knownDefaults.has(col.name))
+    if (!allAreDefaults) return // User has custom column names, don't prompt
+
+    // Check if columns already match the new locale
+    const locale = getEffectiveLocale()
+    const newNames = getDefaultColumnNamesForLocale(locale)
+    const alreadyMatches = columns.every(col => col.name === newNames[col.id])
+    if (alreadyMatches) return
+
+    const updateButton = t('panel.updateColumns')
+    const answer = await vscode.window.showInformationMessage(
+      t('panel.languageChanged'),
+      updateButton,
+      t('panel.keepColumns')
+    )
+    if (answer !== updateButton) return
+
+    const updatedColumns = columns.map(col => ({
+      ...col,
+      name: newNames[col.id] ?? col.name
+    }))
+    await config.update('columns', updatedColumns, vscode.ConfigurationTarget.Workspace)
   }
 
   private async _migrateFilenames(): Promise<void> {
@@ -1052,8 +1105,8 @@ export class KanbanPanel {
     this._sendFeaturesToWebview()
 
     const msg = skipped > 0
-      ? `Renamed ${renamed} file${renamed === 1 ? '' : 's'}. Skipped ${skipped} due to naming conflicts.`
-      : `Renamed ${renamed} file${renamed === 1 ? '' : 's'}.`
+      ? t('panel.renameResultWithSkipped', { renamed, skipped })
+      : t('panel.renameResult', { renamed })
     vscode.window.showInformationMessage(`Kanban Markdown: ${msg}`)
   }
 
@@ -1094,7 +1147,9 @@ export class KanbanPanel {
       features,
       columns,
       settings,
-      collapsedColumns
+      collapsedColumns,
+      locale: getEffectiveLocale(),
+      translations: getBundle()
     })
   }
 }

@@ -8,6 +8,7 @@ interface KanbanState {
   features: Feature[]
   columns: KanbanColumn[]
   isDarkMode: boolean
+  locale: string
   searchQuery: string
   priorityFilter: Priority | 'all'
   assigneeFilter: string | 'all'
@@ -17,6 +18,7 @@ interface KanbanState {
   cardSettings: CardDisplaySettings
   collapsedColumns: Set<string>
 
+  setLocale: (locale: string) => void
   setFeatures: (features: Feature[]) => void
   setColumns: (columns: KanbanColumn[]) => void
   setIsDarkMode: (dark: boolean) => void
@@ -82,6 +84,7 @@ export const useStore = create<KanbanState>((set, get) => ({
   features: [],
   columns: [],
   isDarkMode: getInitialDarkMode(),
+  locale: 'en',
   searchQuery: '',
   priorityFilter: 'all',
   assigneeFilter: 'all',
@@ -102,6 +105,7 @@ export const useStore = create<KanbanState>((set, get) => ({
     defaultStatus: 'backlog'
   },
 
+  setLocale: (locale) => set({ locale }),
   setFeatures: (features) => set({ features }),
   setColumns: (columns) => set({ columns }),
   setIsDarkMode: (dark) => set({ isDarkMode: dark }),

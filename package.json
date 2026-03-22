@@ -37,12 +37,13 @@
     "onView:kanban-markdown.boardView"
   ],
   "main": "./dist/extension.js",
+  "l10n": "./l10n",
   "contributes": {
     "viewsContainers": {
       "activitybar": [
         {
           "id": "kanban-markdown",
-          "title": "Kanban Markdown",
+          "title": "%viewContainer.title%",
           "icon": "resources/kanban.svg"
         }
       ]
@@ -51,7 +52,7 @@
       "kanban-markdown": [
         {
           "id": "kanban-markdown.boardView",
-          "name": "Board",
+          "name": "%view.board.name%",
           "type": "webview"
         }
       ]
@@ -59,8 +60,8 @@
     "commands": [
       {
         "command": "kanban-markdown.open",
-        "title": "Open Kanban Board",
-        "category": "Kanban Markdown",
+        "title": "%command.open.title%",
+        "category": "%command.category%",
         "icon": {
           "light": "resources/kanban-light.svg",
           "dark": "resources/kanban-dark.svg"
@@ -68,17 +69,34 @@
       },
       {
         "command": "kanban-markdown.addFeature",
-        "title": "Add Feature",
-        "category": "Kanban Markdown"
+        "title": "%command.addFeature.title%",
+        "category": "%command.category%"
       }
     ],
     "configuration": {
-      "title": "Kanban Markdown",
+      "title": "%config.title%",
       "properties": {
+        "kanban-markdown.language": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "en",
+            "es",
+            "pt"
+          ],
+          "enumDescriptions": [
+            "%config.language.auto%",
+            "%config.language.en%",
+            "%config.language.es%",
+            "%config.language.pt%"
+          ],
+          "description": "%config.language.description%"
+        },
         "kanban-markdown.featuresDirectory": {
           "type": "string",
           "default": ".devtool/features",
-          "description": "Directory path (relative to workspace root) where feature markdown files are stored."
+          "description": "%config.featuresDirectory.description%"
         },
         "kanban-markdown.filenamePattern": {
           "type": "string",
@@ -90,12 +108,12 @@
             "datetime-name"
           ],
           "enumDescriptions": [
-            "Name then date — e.g. my-feature-2026-02-23",
-            "Date then name — e.g. 2026-02-23-my-feature",
-            "Name then date and time — e.g. my-feature-2026-02-23-143045",
-            "Date and time then name — e.g. 2026-02-23-143045-my-feature"
+            "%config.filenamePattern.nameDate%",
+            "%config.filenamePattern.dateName%",
+            "%config.filenamePattern.nameDatetime%",
+            "%config.filenamePattern.datetimeName%"
           ],
-          "description": "Pattern used to generate filenames for new feature cards. Changing this setting will offer to rename all existing feature files to match."
+          "description": "%config.filenamePattern.description%"
         },
         "kanban-markdown.defaultPriority": {
           "type": "string",
@@ -107,12 +125,12 @@
             "low"
           ],
           "enumDescriptions": [
-            "Critical priority - urgent issues",
-            "High priority - important tasks",
-            "Medium priority - normal tasks",
-            "Low priority - nice to have"
+            "%config.defaultPriority.critical%",
+            "%config.defaultPriority.high%",
+            "%config.defaultPriority.medium%",
+            "%config.defaultPriority.low%"
           ],
-          "description": "Default priority for new features."
+          "description": "%config.defaultPriority.description%"
         },
         "kanban-markdown.defaultStatus": {
           "type": "string",
@@ -125,13 +143,13 @@
             "done"
           ],
           "enumDescriptions": [
-            "Backlog - not yet planned",
-            "To Do - planned for work",
-            "In Progress - currently being worked on",
-            "Review - ready for review",
-            "Done - completed"
+            "%config.defaultStatus.backlog%",
+            "%config.defaultStatus.todo%",
+            "%config.defaultStatus.inProgress%",
+            "%config.defaultStatus.review%",
+            "%config.defaultStatus.done%"
           ],
-          "description": "Default status for new features."
+          "description": "%config.defaultStatus.description%"
         },
         "kanban-markdown.columns": {
           "type": "array",
@@ -162,21 +180,21 @@
               "color": "#22c55e"
             }
           ],
-          "description": "Customize the kanban board columns.",
+          "description": "%config.columns.description%",
           "items": {
             "type": "object",
             "properties": {
               "id": {
                 "type": "string",
-                "description": "Unique identifier for the column (used in frontmatter status)"
+                "description": "%config.columns.id.description%"
               },
               "name": {
                 "type": "string",
-                "description": "Display name for the column"
+                "description": "%config.columns.name.description%"
               },
               "color": {
                 "type": "string",
-                "description": "Color for the column header (hex format)"
+                "description": "%config.columns.color.description%"
               }
             },
             "required": [
@@ -196,57 +214,57 @@
             "opencode"
           ],
           "enumDescriptions": [
-            "Claude Code (Anthropic)",
-            "Codex (OpenAI)",
-            "GitHub Copilot",
-            "OpenCode"
+            "%config.aiAgent.claude%",
+            "%config.aiAgent.codex%",
+            "%config.aiAgent.copilot%",
+            "%config.aiAgent.opencode%"
           ],
-          "description": "Default AI agent to use for the 'Start with AI' feature."
+          "description": "%config.aiAgent.description%"
         },
         "kanban-markdown.showPriorityBadges": {
           "type": "boolean",
           "default": true,
-          "description": "Show priority badges on feature cards."
+          "description": "%config.showPriorityBadges.description%"
         },
         "kanban-markdown.showAssignee": {
           "type": "boolean",
           "default": true,
-          "description": "Show assignee on feature cards."
+          "description": "%config.showAssignee.description%"
         },
         "kanban-markdown.showDueDate": {
           "type": "boolean",
           "default": true,
-          "description": "Show due date on feature cards."
+          "description": "%config.showDueDate.description%"
         },
         "kanban-markdown.showLabels": {
           "type": "boolean",
           "default": true,
-          "description": "Show labels on feature cards and in editors."
+          "description": "%config.showLabels.description%"
         },
         "kanban-markdown.showBuildWithAI": {
           "type": "boolean",
           "default": true,
-          "description": "Show the 'Build with AI' button on feature cards."
+          "description": "%config.showBuildWithAI.description%"
         },
         "kanban-markdown.showFileName": {
           "type": "boolean",
           "default": false,
-          "description": "Show the source markdown filename on feature cards."
+          "description": "%config.showFileName.description%"
         },
         "kanban-markdown.compactMode": {
           "type": "boolean",
           "default": false,
-          "description": "Use compact card layout to show more features."
+          "description": "%config.compactMode.description%"
         },
         "kanban-markdown.addNewCardsToTop": {
           "type": "boolean",
           "default": false,
-          "description": "When enabled, new cards are added to the top of the column instead of the bottom."
+          "description": "%config.addNewCardsToTop.description%"
         },
         "kanban-markdown.markdownEditorMode": {
           "type": "boolean",
           "default": false,
-          "description": "Open feature files in VS Code's native text editor instead of the inline rich-text editor."
+          "description": "%config.markdownEditorMode.description%"
         }
       }
     },
@@ -277,13 +295,14 @@
     "test:integration": "npm run build:integration && node out/tests/integration/runTests.js",
     "prepackage": "node -e \"require('fs').mkdirSync('releases', {recursive: true})\"",
     "package": "vsce package --no-dependencies -o releases/",
+    "check-l10n": "npx tsx scripts/check-l10n.ts",
     "release": "node scripts/release.js",
     "release:patch": "node scripts/release.js patch",
     "release:minor": "node scripts/release.js minor",
     "release:major": "node scripts/release.js major"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
+    "@eslint/js": "^9.39.4",
     "@tailwindcss/typography": "^0.5.19",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -293,14 +312,14 @@
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@types/vscode": "^1.85.0",
-    "@vitejs/plugin-react": "^4.2.0",
-    "@vitest/coverage-v8": "^4.0.18",
+    "@vitejs/plugin-react": "^4.7.0",
+    "@vitest/coverage-v8": "~4.0.18",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.7.1",
     "autoprefixer": "^10.4.16",
     "concurrently": "^9.2.1",
     "esbuild": "^0.19.0",
-    "eslint": "^9.39.2",
+    "eslint": "^9.39.4",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "glob": "^13.0.6",
@@ -310,15 +329,16 @@
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.3.0",
-    "typescript-eslint": "^8.53.0",
-    "vite": "^5.0.0",
-    "vitest": "^4.0.18"
+    "typescript-eslint": "^8.57.1",
+    "vite": "^5.4.21",
+    "vitest": "~4.0.18"
   },
   "dependencies": {
     "@tiptap/extension-placeholder": "^3.15.3",
     "@tiptap/pm": "^3.15.3",
     "@tiptap/react": "^3.15.3",
     "@tiptap/starter-kit": "^3.15.3",
+    "@vscode/l10n": "^0.0.18",
     "clsx": "^2.1.1",
     "fractional-indexing": "^3.2.0",
     "lucide-react": "^0.562.0",

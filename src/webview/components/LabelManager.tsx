@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { X, Pencil, Check, Tag, Trash2 } from 'lucide-react'
 import { useStore } from '../store'
 import { vscode } from '../vscodeApi'
+import { t } from '../lib/i18n'
 
 interface LabelManagerProps {
   onClose: () => void
@@ -118,7 +119,7 @@ export function LabelManager({ onClose }: Readonly<LabelManagerProps>) {
           <div className="flex items-center gap-1.5">
             <Tag size={14} style={{ color: 'var(--vscode-descriptionForeground)' }} />
             <span className="text-sm font-medium" style={{ color: 'var(--vscode-foreground)' }}>
-              Manage Labels
+              {t('labels.manage')}
             </span>
           </div>
           <button
@@ -160,7 +161,7 @@ export function LabelManager({ onClose }: Readonly<LabelManagerProps>) {
                   <button
                     onClick={handleConfirmRename}
                     className="p-1 rounded transition-colors shrink-0"
-                    title="Confirm rename"
+                    title={t('labels.confirmRename')}
                     style={{ color: 'var(--vscode-testing-iconPassed, #22c55e)' }}
                   >
                     <Check size={14} />
@@ -168,7 +169,7 @@ export function LabelManager({ onClose }: Readonly<LabelManagerProps>) {
                   <button
                     onClick={handleCancelEdit}
                     className="p-1 rounded transition-colors shrink-0"
-                    title="Cancel"
+                    title={t('labels.cancel')}
                     style={{ color: 'var(--vscode-descriptionForeground)' }}
                   >
                     <X size={14} />
@@ -188,7 +189,7 @@ export function LabelManager({ onClose }: Readonly<LabelManagerProps>) {
                       <span
                         className="text-xs shrink-0"
                         style={{ color: 'var(--vscode-descriptionForeground)' }}
-                        title={`Used on ${count} card${count === 1 ? '' : 's'}`}
+                        title={count === 1 ? t('labels.usedOnOne') : t('labels.usedOnMany', { count })}
                       >
                         {count}
                       </span>
@@ -197,7 +198,7 @@ export function LabelManager({ onClose }: Readonly<LabelManagerProps>) {
                   <button
                     onClick={() => handleStartEdit(label)}
                     className="p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                    title="Rename label"
+                    title={t('labels.renameLabel')}
                     style={{ color: 'var(--vscode-descriptionForeground)' }}
                     onMouseEnter={e => e.currentTarget.style.color = 'var(--vscode-foreground)'}
                     onMouseLeave={e => e.currentTarget.style.color = 'var(--vscode-descriptionForeground)'}
@@ -207,7 +208,7 @@ export function LabelManager({ onClose }: Readonly<LabelManagerProps>) {
                   <button
                     onClick={() => handleDelete(label)}
                     className="p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                    title="Delete label"
+                    title={t('labels.deleteLabel')}
                     style={{ color: 'var(--vscode-descriptionForeground)' }}
                     onMouseEnter={e => e.currentTarget.style.color = 'var(--vscode-errorForeground)'}
                     onMouseLeave={e => e.currentTarget.style.color = 'var(--vscode-descriptionForeground)'}

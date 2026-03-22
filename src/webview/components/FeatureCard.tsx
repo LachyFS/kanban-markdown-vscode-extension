@@ -2,6 +2,7 @@ import { Calendar, Check, FileText } from 'lucide-react'
 import { getTitleFromContent } from '../../shared/types'
 import type { Feature, Priority } from '../../shared/types'
 import { useStore } from '../store'
+import { t } from '../lib/i18n'
 
 interface FeatureCardProps {
   feature: Feature
@@ -16,11 +17,13 @@ const priorityColors: Record<Priority, string> = {
   low: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
 }
 
-const priorityLabels: Record<Priority, string> = {
-  critical: 'Critical',
-  high: 'High',
-  medium: 'Med',
-  low: 'Low'
+function getPriorityLabels(): Record<Priority, string> {
+  return {
+    critical: t('priority.critical'),
+    high: t('priority.high'),
+    medium: t('priority.mediumShort'),
+    low: t('priority.low')
+  }
 }
 
 function getDescriptionFromContent(content: string): string {
@@ -36,7 +39,8 @@ function getDescriptionFromContent(content: string): string {
 }
 
 export function FeatureCard({ feature, onClick, isDragging }: FeatureCardProps) {
-  const { cardSettings } = useStore()
+  const { cardSettings, locale } = useStore()
+  const priorityLabels = getPriorityLabels()
   const title = getTitleFromContent(feature.content)
   const description = getDescriptionFromContent(feature.content)
   const fileName = feature.filePath ? feature.filePath.split(/[/\\]/).pop() || '' : ''
@@ -48,13 +52,13 @@ export function FeatureCard({ feature, onClick, isDragging }: FeatureCardProps) 
     const diff = date.getTime() - now.getTime()
     const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
 
-    if (days < 0) return { text: 'Overdue', className: 'text-red-500' }
-    if (days === 0) return { text: 'Today', className: 'text-orange-500' }
-    if (days === 1) return { text: 'Tomorrow', className: 'text-yellow-600 dark:text-yellow-400' }
-    if (days <= 7) return { text: `${days}d`, className: 'text-zinc-500 dark:text-zinc-400' }
+    if (days < 0) return { text: t('card.overdue'), className: 'text-red-500' }
+    if (days === 0) return { text: t('card.today'), className: 'text-orange-500' }
+    if (days === 1) return { text: t('card.tomorrow'), className: 'text-yellow-600 dark:text-yellow-400' }
+    if (days <= 7) return { text: t('card.daysShort', { days }), className: 'text-zinc-500 dark:text-zinc-400' }
 
     return {
-      text: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      text: date.toLocaleDateString(locale, { month: 'short', day: 'numeric' }),
       className: 'text-zinc-500 dark:text-zinc-400'
     }
   }
@@ -70,13 +74,13 @@ export function FeatureCard({ feature, onClick, isDragging }: FeatureCardProps) 
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
 
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    if (diffDays === 1) return '1d ago'
-    if (diffDays < 30) return `${diffDays}d ago`
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`
-    return `${Math.floor(diffDays / 365)}y ago`
+    if (diffMins < 1) return t('card.justNow')
+    if (diffMins < 60) return t('card.minutesAgo', { count: diffMins })
+    if (diffHours < 24) return t('card.hoursAgo', { count: diffHours })
+    if (diffDays === 1) return t('card.oneDayAgo')
+    if (diffDays < 30) return t('card.daysAgo', { count: diffDays })
+    if (diffDays < 365) return t('card.monthsAgo', { count: Math.floor(diffDays / 30) })
+    return t('card.yearsAgo', { count: Math.floor(diffDays / 365) })
   }
 
   const completedText = feature.status === 'done' ? formatCompletedAt(feature.completedAt) : null

@@ -6,6 +6,7 @@ import { Markdown } from 'tiptap-markdown'
 import { X, User, ChevronDown, Wand2, Tag, Plus, Check, CircleDot, Signal, Calendar, Trash2, FileText } from 'lucide-react'
 import type { FeatureFrontmatter, Priority, FeatureStatus, AIAgent, AIPermissionMode } from '../../shared/types'
 import { cn } from '../lib/utils'
+import { t } from '../lib/i18n'
 import { useStore } from '../store'
 
 interface MarkdownStorage {
@@ -28,19 +29,23 @@ interface FeatureEditorProps {
   onStartWithAI: (agent: AIAgent, permissionMode: AIPermissionMode) => void
 }
 
-const priorityLabels: Record<Priority, string> = {
-  critical: 'Critical',
-  high: 'High',
-  medium: 'Medium',
-  low: 'Low'
+function getPriorityLabels(): Record<Priority, string> {
+  return {
+    critical: t('priority.critical'),
+    high: t('priority.high'),
+    medium: t('priority.medium'),
+    low: t('priority.low')
+  }
 }
 
-const statusLabels: Record<FeatureStatus, string> = {
-  backlog: 'Backlog',
-  todo: 'To Do',
-  'in-progress': 'In Progress',
-  review: 'Review',
-  done: 'Done'
+function getStatusLabels(): Record<FeatureStatus, string> {
+  return {
+    backlog: t('status.backlog'),
+    todo: t('status.todo'),
+    'in-progress': t('status.inProgress'),
+    review: t('status.review'),
+    done: t('status.done')
+  }
 }
 
 const priorities: Priority[] = ['critical', 'high', 'medium', 'low']
@@ -61,12 +66,14 @@ const statusDots: Record<FeatureStatus, string> = {
   done: 'bg-emerald-400',
 }
 
-const aiAgentTabs: { agent: AIAgent; label: string; color: string; activeColor: string }[] = [
-  { agent: 'claude', label: 'Claude', color: 'hover:bg-amber-100 dark:hover:bg-amber-900/30', activeColor: 'bg-amber-700 text-white' },
-  { agent: 'codex', label: 'Codex', color: 'hover:bg-emerald-100 dark:hover:bg-emerald-900/30', activeColor: 'bg-emerald-500 text-white' },
-  { agent: 'copilot', label: 'Copilot', color: 'hover:bg-sky-100 dark:hover:bg-sky-900/30', activeColor: 'bg-sky-600 text-white' },
-  { agent: 'opencode', label: 'OpenCode', color: 'hover:bg-slate-100 dark:hover:bg-slate-700/30', activeColor: 'bg-slate-500 text-white' },
-]
+function getAiAgentTabs(): { agent: AIAgent; label: string; color: string; activeColor: string }[] {
+  return [
+    { agent: 'claude', label: t('ai.claude'), color: 'hover:bg-amber-100 dark:hover:bg-amber-900/30', activeColor: 'bg-amber-700 text-white' },
+    { agent: 'codex', label: t('ai.codex'), color: 'hover:bg-emerald-100 dark:hover:bg-emerald-900/30', activeColor: 'bg-emerald-500 text-white' },
+    { agent: 'copilot', label: t('ai.copilot'), color: 'hover:bg-sky-100 dark:hover:bg-sky-900/30', activeColor: 'bg-sky-600 text-white' },
+    { agent: 'opencode', label: t('ai.opencode'), color: 'hover:bg-slate-100 dark:hover:bg-slate-700/30', activeColor: 'bg-slate-500 text-white' },
+  ]
+}
 
 const agentButtonColors: Record<AIAgent, { bg: string; hover: string; shadow: string; border: string }> = {
   claude: {
@@ -95,24 +102,26 @@ const agentButtonColors: Record<AIAgent, { bg: string; hover: string; shadow: st
   },
 }
 
-const aiModesByAgent: Record<AIAgent, { permissionMode: AIPermissionMode; label: string; description: string }[]> = {
-  claude: [
-    { permissionMode: 'default', label: 'Default', description: 'With confirmations' },
-    { permissionMode: 'plan', label: 'Plan', description: 'Creates a plan first' },
-    { permissionMode: 'acceptEdits', label: 'Auto-edit', description: 'Auto-accepts file edits' },
-    { permissionMode: 'bypassPermissions', label: 'Full Auto', description: 'Bypasses all prompts' },
-  ],
-  codex: [
-    { permissionMode: 'default', label: 'Suggest', description: 'Suggests changes' },
-    { permissionMode: 'acceptEdits', label: 'Auto-edit', description: 'Auto-accepts edits' },
-    { permissionMode: 'bypassPermissions', label: 'Full Auto', description: 'Full automation' },
-  ],
-  copilot: [
-    { permissionMode: 'default', label: 'Default', description: 'Standard mode' },
-  ],
-  opencode: [
-    { permissionMode: 'default', label: 'Default', description: 'Standard mode' },
-  ],
+function getAiModesByAgent(): Record<AIAgent, { permissionMode: AIPermissionMode; label: string; description: string }[]> {
+  return {
+    claude: [
+      { permissionMode: 'default', label: t('ai.mode.default'), description: t('ai.mode.claude.default.description') },
+      { permissionMode: 'plan', label: t('ai.mode.plan'), description: t('ai.mode.claude.plan.description') },
+      { permissionMode: 'acceptEdits', label: t('ai.mode.autoEdit'), description: t('ai.mode.claude.autoEdit.description') },
+      { permissionMode: 'bypassPermissions', label: t('ai.mode.fullAuto'), description: t('ai.mode.claude.fullAuto.description') },
+    ],
+    codex: [
+      { permissionMode: 'default', label: t('ai.mode.suggest'), description: t('ai.mode.codex.suggest.description') },
+      { permissionMode: 'acceptEdits', label: t('ai.mode.autoEdit'), description: t('ai.mode.codex.autoEdit.description') },
+      { permissionMode: 'bypassPermissions', label: t('ai.mode.fullAuto'), description: t('ai.mode.codex.fullAuto.description') },
+    ],
+    copilot: [
+      { permissionMode: 'default', label: t('ai.mode.default'), description: t('ai.mode.copilot.default.description') },
+    ],
+    opencode: [
+      { permissionMode: 'default', label: t('ai.mode.default'), description: t('ai.mode.opencode.default.description') },
+    ],
+  }
 }
 
 interface DropdownProps {
@@ -202,6 +211,8 @@ function AIDropdown({ onSelect }: AIDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [selectedTab, setSelectedTab] = useState<AIAgent>('claude')
 
+  const aiAgentTabs = getAiAgentTabs()
+  const aiModesByAgent = getAiModesByAgent()
   const modes = aiModesByAgent[selectedTab]
   const buttonColors = agentButtonColors[selectedTab]
 
@@ -218,7 +229,7 @@ function AIDropdown({ onSelect }: AIDropdownProps) {
         )}
       >
         <Wand2 size={13} />
-        <span>Build with AI</span>
+        <span>{t('editor.buildWithAI')}</span>
         <kbd className="ml-0.5 text-[9px] opacity-60 font-mono">⌘B</kbd>
         <ChevronDown size={11} className={cn('ml-0.5 opacity-60 transition-transform', isOpen && 'rotate-180')} />
       </button>
@@ -339,7 +350,7 @@ function LabelEditor({ labels, onChange }: { labels: string[]; onChange: (labels
           }
           if (e.key === 'Escape') { setNewLabel(''); inputRef.current?.blur() }
         }}
-        placeholder={labels.length === 0 ? 'Add labels...' : ''}
+        placeholder={labels.length === 0 ? t('editor.addLabels') : ''}
         className="flex-1 min-w-[60px] bg-transparent border-none outline-none text-xs"
         style={{ color: 'var(--vscode-foreground)', display: isFocused || newLabel ? 'block' : 'none' }}
       />
@@ -380,6 +391,8 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
   const { cardSettings } = useStore()
   const [currentFrontmatter, setCurrentFrontmatter] = useState(frontmatter)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const priorityLabels = getPriorityLabels()
+  const statusLabels = getStatusLabels()
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isInitialLoad = useRef(true)
   const currentFrontmatterRef = useRef(currentFrontmatter)
@@ -388,7 +401,7 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Placeholder.configure({ placeholder: 'Start writing...' }),
+      Placeholder.configure({ placeholder: t('editor.startWriting') }),
       Markdown.configure({ html: false, transformPastedText: true })
     ],
     content: '',
@@ -492,19 +505,19 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
         <div className="flex items-center gap-3">
           {confirmingDelete ? (
             <div className="flex items-center gap-1.5">
-              <span className="text-xs" style={{ color: 'var(--vscode-errorForeground)' }}>Delete?</span>
+              <span className="text-xs" style={{ color: 'var(--vscode-errorForeground)' }}>{t('editor.deleteConfirm')}</span>
               <button
                 onClick={() => { setConfirmingDelete(false); onDelete() }}
                 className="px-2 py-1 text-xs font-medium rounded transition-colors text-white bg-red-600 hover:bg-red-700"
               >
-                Yes
+                {t('editor.deleteYes')}
               </button>
               <button
                 onClick={() => setConfirmingDelete(false)}
                 className="px-2 py-1 text-xs font-medium rounded transition-colors vscode-hover-bg"
                 style={{ color: 'var(--vscode-foreground)' }}
               >
-                No
+                {t('editor.deleteNo')}
               </button>
             </div>
           ) : (
@@ -513,19 +526,19 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
                 onClick={() => { onOpenFile(); onClose(); }}
                 className="p-1.5 px-2 rounded border transition-colors vscode-hover-bg flex items-center gap-1"
                 style={{ color: 'var(--vscode-descriptionForeground)', borderColor: 'var(--vscode-widget-border, var(--vscode-contrastBorder, rgba(128,128,128,0.35)))' }}
-                title="Open .md file"
+                title={t('editor.openMdFile')}
               >
                 <FileText size={16} />
-                <span className="text-xs">OPEN</span>
+                <span className="text-xs">{t('editor.open')}</span>
               </button>
               <button
                 onClick={() => setConfirmingDelete(true)}
                 className="p-1.5 px-2 rounded border transition-colors vscode-hover-bg flex items-center gap-1"
                 style={{ color: 'var(--vscode-descriptionForeground)', borderColor: 'var(--vscode-widget-border, var(--vscode-contrastBorder, rgba(128,128,128,0.35)))' }}
-                title="Delete ticket"
+                title={t('editor.deleteTicket')}
               >
                 <Trash2 size={16} />
-                <span className="text-xs">DELETE</span>
+                <span className="text-xs">{t('editor.delete')}</span>
               </button>
             </>
           )}
@@ -547,7 +560,7 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
         className="flex flex-col py-0.5"
         style={{ borderBottom: '1px solid var(--vscode-panel-border)' }}
       >
-        <PropertyRow label="Status" icon={<CircleDot size={13} />}>
+        <PropertyRow label={t('property.status')} icon={<CircleDot size={13} />}>
           <Dropdown
             value={currentFrontmatter.status}
             options={statuses.map(s => ({ value: s, label: statusLabels[s], dot: statusDots[s] }))}
@@ -555,7 +568,7 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
           />
         </PropertyRow>
         {cardSettings.showPriorityBadges && (
-          <PropertyRow label="Priority" icon={<Signal size={13} />}>
+          <PropertyRow label={t('property.priority')} icon={<Signal size={13} />}>
             <Dropdown
               value={currentFrontmatter.priority}
               options={priorities.map(p => ({ value: p, label: priorityLabels[p], dot: priorityDots[p] }))}
@@ -564,7 +577,7 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
           </PropertyRow>
         )}
         {cardSettings.showAssignee && (
-          <PropertyRow label="Assignee" icon={<User size={13} />}>
+          <PropertyRow label={t('property.assignee')} icon={<User size={13} />}>
             <div className="flex items-center gap-2">
               {currentFrontmatter.assignee && (
                 <span
@@ -579,7 +592,7 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
                 type="text"
                 value={currentFrontmatter.assignee || ''}
                 onChange={(e) => handleFrontmatterUpdate({ assignee: e.target.value || null })}
-                placeholder="No assignee"
+                placeholder={t('editor.noAssignee')}
                 className="bg-transparent border-none outline-none text-xs w-32"
                 style={{ color: currentFrontmatter.assignee ? 'var(--vscode-foreground)' : 'var(--vscode-descriptionForeground)' }}
               />
@@ -587,7 +600,7 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
           </PropertyRow>
         )}
         {cardSettings.showDueDate && (
-          <PropertyRow label="Due date" icon={<Calendar size={13} />}>
+          <PropertyRow label={t('property.dueDate')} icon={<Calendar size={13} />}>
             <input
               type="date"
               value={currentFrontmatter.dueDate || ''}
@@ -598,7 +611,7 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
           </PropertyRow>
         )}
         {cardSettings.showLabels && (
-        <PropertyRow label="Labels" icon={<Tag size={13} />}>
+        <PropertyRow label={t('property.labels')} icon={<Tag size={13} />}>
           <LabelEditor
             labels={currentFrontmatter.labels}
             onChange={(labels) => handleFrontmatterUpdate({ labels })}

@@ -1,5 +1,6 @@
 import { ChevronDown } from 'lucide-react'
 import type { Priority } from '../../shared/types'
+import { t } from '../lib/i18n'
 
 interface PrioritySelectProps {
   value: Priority
@@ -7,14 +8,17 @@ interface PrioritySelectProps {
   className?: string
 }
 
-const priorities: { value: Priority; label: string; color: string }[] = [
-  { value: 'critical', label: 'Critical', color: 'bg-red-500' },
-  { value: 'high', label: 'High', color: 'bg-orange-500' },
-  { value: 'medium', label: 'Medium', color: 'bg-yellow-500' },
-  { value: 'low', label: 'Low', color: 'bg-green-500' }
-]
+function getPriorities(): { value: Priority; label: string; color: string }[] {
+  return [
+    { value: 'critical', label: t('priority.critical'), color: 'bg-red-500' },
+    { value: 'high', label: t('priority.high'), color: 'bg-orange-500' },
+    { value: 'medium', label: t('priority.medium'), color: 'bg-yellow-500' },
+    { value: 'low', label: t('priority.low'), color: 'bg-green-500' }
+  ]
+}
 
 export function PrioritySelect({ value, onChange, className = '' }: PrioritySelectProps) {
+  const priorities = getPriorities()
   const current = priorities.find((p) => p.value === value) || priorities[2]
 
   return (

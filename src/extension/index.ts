@@ -7,61 +7,63 @@ import { generateFeatureFilename } from '../shared/types'
 import { serializeFeature } from '../shared/featureFrontmatter'
 import type { Feature, FeatureStatus, Priority } from '../shared/types'
 import { ensureStatusSubfolders, getFeatureFilePath } from './featureFileUtils'
+import { t, loadBundle } from './l10n'
+
+interface StatusQuickPickItem extends vscode.QuickPickItem {
+  statusValue: FeatureStatus
+}
+
+interface PriorityQuickPickItem extends vscode.QuickPickItem {
+  priorityValue: Priority
+}
 
 async function createFeatureFromPrompts(): Promise<void> {
   const workspaceFolders = vscode.workspace.workspaceFolders
   if (!workspaceFolders || workspaceFolders.length === 0) {
-    vscode.window.showErrorMessage('No workspace folder open')
+    vscode.window.showErrorMessage(t('ext.noWorkspace'))
     return
   }
 
   // Ask for title
   const title = await vscode.window.showInputBox({
-    prompt: 'Feature title',
-    placeHolder: 'Enter a title for the new feature'
+    prompt: t('ext.featureTitle'),
+    placeHolder: t('ext.featureTitlePlaceholder')
   })
   if (!title) return
 
   // Ask for status
-  const statusItems: vscode.QuickPickItem[] = [
-    { label: 'Backlog', description: 'Not yet planned' },
-    { label: 'To Do', description: 'Planned for development' },
-    { label: 'In Progress', description: 'Currently being worked on' },
-    { label: 'Review', description: 'Ready for review' },
-    { label: 'Done', description: 'Completed' }
+  const statusItems: StatusQuickPickItem[] = [
+    { label: t('status.backlog'), description: t('status.backlog.description'), statusValue: 'backlog' },
+    { label: t('status.todo'), description: t('status.todo.description'), statusValue: 'todo' },
+    { label: t('status.inProgress'), description: t('status.inProgress.description'), statusValue: 'in-progress' },
+    { label: t('status.review'), description: t('status.review.description'), statusValue: 'review' },
+    { label: t('status.done'), description: t('status.done.description'), statusValue: 'done' }
   ]
   const statusPick = await vscode.window.showQuickPick(statusItems, {
-    placeHolder: 'Select initial status'
+    placeHolder: t('ext.selectStatus')
   })
   if (!statusPick) return
 
-  const statusMap: Record<string, FeatureStatus> = {
-    'Backlog': 'backlog',
-    'To Do': 'todo',
-    'In Progress': 'in-progress',
-    'Review': 'review',
-    'Done': 'done'
-  }
-  const status = statusMap[statusPick.label]
+  const status = statusPick.statusValue
 
   // Ask for priority
-  const priorityItems: vscode.QuickPickItem[] = [
-    { label: 'Critical', description: 'Urgent, needs immediate attention' },
-    { label: 'High', description: 'Important, should be done soon' },
-    { label: 'Medium', description: 'Normal priority' },
-    { label: 'Low', description: 'Nice to have, can wait' }
+  const priorityItems: PriorityQuickPickItem[] = [
+    { label: t('priority.critical'), description: t('priority.critical.description'), priorityValue: 'critical' },
+    { label: t('priority.high'), description: t('priority.high.description'), priorityValue: 'high' },
+    { label: t('priority.medium'), description: t('priority.medium.description'), priorityValue: 'medium' },
+    { label: t('priority.low'), description: t('priority.low.description'), priorityValue: 'low' }
   ]
   const priorityPick = await vscode.window.showQuickPick(priorityItems, {
-    placeHolder: 'Select priority'
+    placeHolder: t('ext.selectPriority')
   })
   if (!priorityPick) return
 
-  const priority = priorityPick.label.toLowerCase() as Priority
+  const priority = priorityPick.priorityValue
 
   // Ask for description (optional)
   const description = await vscode.window.showInputBox({
-    prompt: 'Description (optional)',
-    placeHolder: 'Enter a description for the feature'
+    prompt: t('ext.descriptionOptional'),
+    placeHolder: t('ext.descriptionPlaceholder')
   })
 
   // Create the feature file
@@ -99,10 +101,11 @@ async function createFeatureFromPrompts(): Promise<void> {
   const document = await vscode.workspace.openTextDocument(feature.filePath)
   await vscode.window.showTextDocument(document)
 
-  vscode.window.showInformationMessage(`Created feature: ${title}`)
+  vscode.window.showInformationMessage(t('ext.createdFeature', { title }))
 }
 
 export function activate(context: vscode.ExtensionContext) {
+  loadBundle(context.extensionPath)
   // Sidebar webview in the activity bar
   const sidebarProvider = new SidebarViewProvider(context.extensionUri, context)
   context.subscriptions.push(

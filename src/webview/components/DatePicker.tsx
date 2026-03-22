@@ -1,9 +1,15 @@
 import { useState } from 'react'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '../lib/utils'
+import { t } from '../lib/i18n'
+import { useStore } from '../store'
 
-const DAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+function getDAYS(): string[] {
+  return [t('date.day.mo'), t('date.day.tu'), t('date.day.we'), t('date.day.th'), t('date.day.fr'), t('date.day.sa'), t('date.day.su')]
+}
+function getMONTHS(): string[] {
+  return [t('date.month.january'), t('date.month.february'), t('date.month.march'), t('date.month.april'), t('date.month.may'), t('date.month.june'), t('date.month.july'), t('date.month.august'), t('date.month.september'), t('date.month.october'), t('date.month.november'), t('date.month.december')]
+}
 
 interface DatePickerProps {
   value: string
@@ -11,7 +17,10 @@ interface DatePickerProps {
   placeholder?: string
 }
 
-export function DatePicker({ value, onChange, placeholder = 'Due date' }: DatePickerProps) {
+export function DatePicker({ value, onChange, placeholder }: DatePickerProps) {
+  const { locale } = useStore()
+  const DAYS = getDAYS()
+  const MONTHS = getMONTHS()
   const [isOpen, setIsOpen] = useState(false)
   const today = new Date()
   const selected = value ? new Date(value + 'T00:00:00') : null
@@ -47,7 +56,7 @@ export function DatePicker({ value, onChange, placeholder = 'Due date' }: DatePi
 
   const formatDisplay = (dateStr: string) => {
     const d = new Date(dateStr + 'T00:00:00')
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    return d.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' })
   }
 
   return (
@@ -62,7 +71,7 @@ export function DatePicker({ value, onChange, placeholder = 'Due date' }: DatePi
         onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'}
         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
       >
-        <span>{value ? formatDisplay(value) : placeholder}</span>
+        <span>{value ? formatDisplay(value) : (placeholder ?? t('date.dueDate'))}</span>
         {value && (
           <span
             role="button"
@@ -174,7 +183,7 @@ export function DatePicker({ value, onChange, placeholder = 'Due date' }: DatePi
                 onMouseEnter={e => e.currentTarget.style.color = 'var(--vscode-textLink-activeForeground)'}
                 onMouseLeave={e => e.currentTarget.style.color = 'var(--vscode-textLink-foreground)'}
               >
-                Today
+                {t('date.today')}
               </button>
             </div>
           </div>

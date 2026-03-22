@@ -4,6 +4,7 @@ import { FeatureCard } from './FeatureCard'
 import type { Feature, KanbanColumn as KanbanColumnType } from '../../shared/types'
 import type { LayoutMode } from '../store'
 import type { DropTarget } from './KanbanBoard'
+import { t } from '../lib/i18n'
 
 interface KanbanColumnProps {
   column: KanbanColumnType
@@ -82,14 +83,14 @@ export function KanbanColumn({
           <button
             onClick={onCollapse}
             className="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
-            title={`Collapse ${column.name}`}
+            title={t('column.collapse', { name: column.name })}
           >
             <ChevronLeft size={16} className="text-zinc-500" />
           </button>
           <button
             onClick={() => onAddFeature(column.id)}
             className="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
-            title={`Add to ${column.name}`}
+            title={t('column.addTo', { name: column.name })}
           >
             <Plus size={16} className="text-zinc-500" />
           </button>
@@ -97,7 +98,7 @@ export function KanbanColumn({
             <button
               onClick={() => setMenuOpen((o) => !o)}
               className="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
-              title="Column options"
+              title={t('column.options')}
             >
               <MoreVertical size={16} className="text-zinc-500" />
             </button>
@@ -111,7 +112,7 @@ export function KanbanColumn({
                   <button
                     className="w-full text-left px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center justify-between gap-2"
                   >
-                    <span>Move all cards in this list</span>
+                    <span>{t('column.moveAllCards')}</span>
                     <ChevronRight size={14} className="text-zinc-400 flex-shrink-0" />
                   </button>
                   {submenuOpen && (
@@ -134,7 +135,7 @@ export function KanbanColumn({
                     className={`w-full text-left px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 ${features.length === 0 ? 'opacity-40 pointer-events-none' : ''}`}
                     onClick={() => { onArchiveAllCards(); setMenuOpen(false) }}
                   >
-                    Archive all cards in this list
+                    {t('column.archiveAllCards')}
                   </button>
                 )}
               </div>
@@ -178,7 +179,7 @@ export function KanbanColumn({
 
         {features.length === 0 && (
           <div className={isVertical ? "text-sm text-zinc-400 dark:text-zinc-500 py-4" : "text-center py-8 text-sm text-zinc-400 dark:text-zinc-500"}>
-            No features
+            {t('column.noFeatures')}
           </div>
         )}
       </div>

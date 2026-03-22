@@ -9,6 +9,7 @@ import { UndoToast } from './components/UndoToast'
 import type { Feature, FeatureStatus, Priority, ExtensionMessage, FeatureFrontmatter, AIAgent, AIPermissionMode } from '../shared/types'
 import { getTitleFromContent } from '../shared/types'
 import { vscode } from './vscodeApi'
+import { initLocale, t } from './lib/i18n'
 
 function App(): React.JSX.Element {
 
@@ -18,7 +19,8 @@ function App(): React.JSX.Element {
     setColumns,
     setIsDarkMode,
     setCardSettings,
-    setCollapsedColumns
+    setCollapsedColumns,
+    setLocale
   } = useStore()
 
   const [createFeatureOpen, setCreateFeatureOpen] = useState(false)
@@ -187,6 +189,12 @@ function App(): React.JSX.Element {
 
       switch (message.type) {
         case 'init':
+          if (message.translations) {
+            initLocale(message.translations)
+          }
+          if (message.locale) {
+            setLocale(message.locale)
+          }
           setFeatures(message.features)
           setColumns(message.columns)
           setCollapsedColumns(message.collapsedColumns ?? [])
@@ -225,7 +233,7 @@ function App(): React.JSX.Element {
     vscode.postMessage({ type: 'ready' })
 
     return () => window.removeEventListener('message', handleMessage)
-  }, [setFeatures, setColumns, setCardSettings, setCollapsedColumns])
+  }, [setFeatures, setColumns, setCardSettings, setCollapsedColumns, setLocale])
 
   const handleFeatureClick = (feature: Feature): void => {
     // Request feature content for inline editing
@@ -320,7 +328,7 @@ function App(): React.JSX.Element {
   if (columns.length === 0) {
     return (
       <div className="h-full w-full flex items-center justify-center bg-[var(--vscode-editor-background)]">
-        <div className="text-[var(--vscode-foreground)] opacity-60">Loading...</div>
+        <div className="text-[var(--vscode-foreground)] opacity-60">{t('app.loading')}</div>
       </div>
     )
   }
@@ -363,7 +371,7 @@ function App(): React.JSX.Element {
       {pendingDeletes.map((entry, i) => (
         <UndoToast
           key={entry.id}
-          message={`Deleted "${getTitleFromContent(entry.feature.content)}"`}
+          message={t('app.deleted', { title: getTitleFromContent(entry.feature.content) })}
           onUndo={() => handleUndoDelete(entry.id)}
           onExpire={() => commitDelete(entry.id)}
           duration={5000}

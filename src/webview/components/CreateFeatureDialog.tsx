@@ -8,6 +8,7 @@ import type { FeatureStatus, Priority } from '../../shared/types'
 import { useStore } from '../store'
 import { cn } from '../lib/utils'
 import { DatePicker } from './DatePicker'
+import { t } from '../lib/i18n'
 
 interface MarkdownStorage {
   markdown: { getMarkdown: () => string }
@@ -24,20 +25,24 @@ interface CreateFeatureDialogProps {
   initialStatus?: FeatureStatus
 }
 
-const priorityConfig: { value: Priority; label: string; dot: string }[] = [
-  { value: 'critical', label: 'Critical', dot: 'bg-red-500' },
-  { value: 'high', label: 'High', dot: 'bg-orange-500' },
-  { value: 'medium', label: 'Medium', dot: 'bg-yellow-500' },
-  { value: 'low', label: 'Low', dot: 'bg-green-500' }
-]
+function getPriorityConfig(): { value: Priority; label: string; dot: string }[] {
+  return [
+    { value: 'critical', label: t('priority.critical'), dot: 'bg-red-500' },
+    { value: 'high', label: t('priority.high'), dot: 'bg-orange-500' },
+    { value: 'medium', label: t('priority.medium'), dot: 'bg-yellow-500' },
+    { value: 'low', label: t('priority.low'), dot: 'bg-green-500' }
+  ]
+}
 
-const statusConfig: { value: FeatureStatus; label: string; dot: string }[] = [
-  { value: 'backlog', label: 'Backlog', dot: 'bg-zinc-400' },
-  { value: 'todo', label: 'To Do', dot: 'bg-blue-400' },
-  { value: 'in-progress', label: 'In Progress', dot: 'bg-amber-400' },
-  { value: 'review', label: 'Review', dot: 'bg-purple-400' },
-  { value: 'done', label: 'Done', dot: 'bg-emerald-400' }
-]
+function getStatusConfig(): { value: FeatureStatus; label: string; dot: string }[] {
+  return [
+    { value: 'backlog', label: t('status.backlog'), dot: 'bg-zinc-400' },
+    { value: 'todo', label: t('status.todo'), dot: 'bg-blue-400' },
+    { value: 'in-progress', label: t('status.inProgress'), dot: 'bg-amber-400' },
+    { value: 'review', label: t('status.review'), dot: 'bg-purple-400' },
+    { value: 'done', label: t('status.done'), dot: 'bg-emerald-400' }
+  ]
+}
 
 interface DropdownProps {
   value: string
@@ -153,7 +158,7 @@ function AssigneeInput({ value, onChange }: { value: string; onChange: (value: s
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setTimeout(() => setIsFocused(false), 150)}
-          placeholder="No assignee"
+          placeholder={t('editor.noAssignee')}
           className="flex-1 bg-transparent border-none outline-none text-xs"
           style={{ color: value ? 'var(--vscode-foreground)' : 'var(--vscode-descriptionForeground)' }}
         />
@@ -258,7 +263,7 @@ function LabelInput({ labels, onChange }: { labels: string[]; onChange: (labels:
             }
             if (e.key === 'Escape') { setNewLabel(''); inputRef.current?.blur() }
           }}
-          placeholder={labels.length === 0 ? 'Add labels...' : ''}
+          placeholder={labels.length === 0 ? t('editor.addLabels') : ''}
           className="flex-1 min-w-[60px] bg-transparent border-none outline-none text-xs"
           style={{ color: 'var(--vscode-foreground)' }}
         />
@@ -327,6 +332,8 @@ function CreateFeatureDialogContent({
   initialStatus
 }: CreateFeatureDialogProps) {
   const { cardSettings } = useStore()
+  const priorityConfig = getPriorityConfig()
+  const statusConfig = getStatusConfig()
   const [title, setTitle] = useState('')
   const [status, setStatus] = useState<FeatureStatus>(initialStatus ?? cardSettings.defaultStatus)
   const [priority, setPriority] = useState<Priority>(cardSettings.defaultPriority)
@@ -338,7 +345,7 @@ function CreateFeatureDialogContent({
   const descriptionEditor = useEditor({
     extensions: [
       StarterKit,
-      Placeholder.configure({ placeholder: 'Add a description...' }),
+      Placeholder.configure({ placeholder: t('create.addDescription') }),
       Markdown.configure({ html: false, transformPastedText: true })
     ],
     content: '',
@@ -408,7 +415,7 @@ function CreateFeatureDialogContent({
         >
           <div className="flex items-center gap-3">
             <h2 className="font-medium" style={{ color: 'var(--vscode-foreground)' }}>
-              Create Feature
+              {t('create.title')}
             </h2>
           </div>
           <button
@@ -429,7 +436,7 @@ function CreateFeatureDialogContent({
             borderBottom: '1px solid var(--vscode-panel-border)',
           }}
         >
-          <PropertyRow label="Status" icon={<CircleDot size={13} />}>
+          <PropertyRow label={t('property.status')} icon={<CircleDot size={13} />}>
             <Dropdown
               value={status}
               options={statusConfig.map(s => ({ value: s.value, label: s.label, dot: s.dot }))}
@@ -437,7 +444,7 @@ function CreateFeatureDialogContent({
             />
           </PropertyRow>
           {cardSettings.showPriorityBadges && (
-            <PropertyRow label="Priority" icon={<Signal size={13} />}>
+            <PropertyRow label={t('property.priority')} icon={<Signal size={13} />}>
               <Dropdown
                 value={priority}
                 options={priorityConfig.map(p => ({ value: p.value, label: p.label, dot: p.dot }))}
@@ -446,17 +453,17 @@ function CreateFeatureDialogContent({
             </PropertyRow>
           )}
           {cardSettings.showAssignee && (
-            <PropertyRow label="Assignee" icon={<User size={13} />}>
+            <PropertyRow label={t('property.assignee')} icon={<User size={13} />}>
               <AssigneeInput value={assignee} onChange={setAssignee} />
             </PropertyRow>
           )}
           {cardSettings.showDueDate && (
-            <PropertyRow label="Due date" icon={<Calendar size={13} />}>
+            <PropertyRow label={t('property.dueDate')} icon={<Calendar size={13} />}>
               <DatePicker value={dueDate} onChange={setDueDate} />
             </PropertyRow>
           )}
           {cardSettings.showLabels && (
-          <PropertyRow label="Labels" icon={<Tag size={13} />}>
+          <PropertyRow label={t('property.labels')} icon={<Tag size={13} />}>
             <LabelInput labels={labels} onChange={setLabels} />
           </PropertyRow>
           )}
@@ -468,7 +475,7 @@ function CreateFeatureDialogContent({
             ref={inputRef}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Feature title..."
+            placeholder={t('create.featureTitle')}
             className="w-full text-lg font-medium bg-transparent border-none outline-none resize-none mb-4"
             style={{
               color: 'var(--vscode-foreground)',
@@ -498,7 +505,7 @@ function CreateFeatureDialogContent({
           }}
         >
           <p className="text-xs" style={{ color: 'var(--vscode-descriptionForeground)' }}>
-            Auto-saves on close ·{' '}
+            {t('create.autoSaves')} ·{' '}
             <kbd
               className="px-1.5 py-0.5 rounded text-[10px] font-mono"
               style={{ background: 'var(--vscode-keybindingLabel-background, var(--vscode-badge-background))', color: 'var(--vscode-keybindingLabel-foreground, var(--vscode-foreground))', border: '1px solid var(--vscode-keybindingLabel-border, var(--vscode-panel-border))' }}
@@ -510,7 +517,7 @@ function CreateFeatureDialogContent({
             <kbd
               className="px-1.5 py-0.5 rounded text-[10px] font-mono"
               style={{ background: 'var(--vscode-keybindingLabel-background, var(--vscode-badge-background))', color: 'var(--vscode-keybindingLabel-foreground, var(--vscode-foreground))', border: '1px solid var(--vscode-keybindingLabel-border, var(--vscode-panel-border))' }}
-            >⌘ Enter</kbd>{' '}to save &amp; close
+            >⌘ Enter</kbd>{' '}{t('create.saveAndClose')}
           </p>
         </div>
       </div>

@@ -3,22 +3,27 @@ import { useStore, type DueDateFilter } from '../store'
 import type { Priority } from '../../shared/types'
 import { useState } from 'react'
 import { LabelManager } from './LabelManager'
+import { t } from '../lib/i18n'
 
-const priorities: { value: Priority | 'all'; label: string }[] = [
-  { value: 'all', label: 'All Priorities' },
-  { value: 'critical', label: 'Critical' },
-  { value: 'high', label: 'High' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'low', label: 'Low' }
-]
+function getPriorities(): { value: Priority | 'all'; label: string }[] {
+  return [
+    { value: 'all', label: t('toolbar.allPriorities') },
+    { value: 'critical', label: t('priority.critical') },
+    { value: 'high', label: t('priority.high') },
+    { value: 'medium', label: t('priority.medium') },
+    { value: 'low', label: t('priority.low') }
+  ]
+}
 
-const dueDateOptions: { value: DueDateFilter; label: string }[] = [
-  { value: 'all', label: 'All Dates' },
-  { value: 'overdue', label: 'Overdue' },
-  { value: 'today', label: 'Due Today' },
-  { value: 'this-week', label: 'Due This Week' },
-  { value: 'no-date', label: 'No Due Date' }
-]
+function getDueDateOptions(): { value: DueDateFilter; label: string }[] {
+  return [
+    { value: 'all', label: t('toolbar.allDates') },
+    { value: 'overdue', label: t('toolbar.overdue') },
+    { value: 'today', label: t('toolbar.dueToday') },
+    { value: 'this-week', label: t('toolbar.dueThisWeek') },
+    { value: 'no-date', label: t('toolbar.noDueDate') }
+  ]
+}
 
 const selectClassName =
   'text-sm bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-600 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100'
@@ -44,6 +49,8 @@ export function Toolbar({ onOpenSettings }: { onOpenSettings: () => void }) {
     cardSettings
   } = useStore()
 
+  const priorities = getPriorities()
+  const dueDateOptions = getDueDateOptions()
   const assignees = getUniqueAssignees()
   const labels = getUniqueLabels()
   const filtersActive = hasActiveFilters()
@@ -62,7 +69,7 @@ export function Toolbar({ onOpenSettings }: { onOpenSettings: () => void }) {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search features..."
+          placeholder={t('toolbar.search')}
           className="w-full pl-8 pr-3 py-1.5 text-sm bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400"
         />
       </div>
@@ -89,8 +96,8 @@ export function Toolbar({ onOpenSettings }: { onOpenSettings: () => void }) {
           onChange={(e) => setAssigneeFilter(e.target.value)}
           className={selectClassName}
         >
-          <option value="all">All Assignees</option>
-          <option value="unassigned">Unassigned</option>
+          <option value="all">{t('toolbar.allAssignees')}</option>
+          <option value="unassigned">{t('toolbar.unassigned')}</option>
           {assignees.map((a) => (
             <option key={a} value={a}>
               {a}
@@ -106,10 +113,10 @@ export function Toolbar({ onOpenSettings }: { onOpenSettings: () => void }) {
         onChange={(e) => setLabelFilter(e.target.value)}
         className={selectClassName}
       >
-        <option value="all">All Labels</option>
-        <option value="unlabeled">Unlabeled</option>
+        <option value="all">{t('toolbar.allLabels')}</option>
+        <option value="unlabeled">{t('toolbar.unlabeled')}</option>
         {labels.length > 0 && (
-          <optgroup label="Labels">
+          <optgroup label={t('toolbar.labelsGroup')}>
             {labels.map((l) => (
               <option key={l} value={`label:${l}`}>
                 {l}
@@ -140,10 +147,10 @@ export function Toolbar({ onOpenSettings }: { onOpenSettings: () => void }) {
         <button
           onClick={clearAllFilters}
           className="flex items-center gap-1 px-2 py-1.5 text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
-          title="Clear all filters"
+          title={t('toolbar.clearAllFilters')}
         >
           <X size={14} />
-          <span>Clear</span>
+          <span>{t('toolbar.clear')}</span>
         </button>
       )}
 
@@ -151,7 +158,7 @@ export function Toolbar({ onOpenSettings }: { onOpenSettings: () => void }) {
       <button
         onClick={toggleLayout}
         className="flex items-center gap-1 px-2 py-1.5 text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
-        title={layout === 'horizontal' ? 'Switch to vertical layout' : 'Switch to horizontal layout'}
+        title={layout === 'horizontal' ? t('toolbar.switchToVertical') : t('toolbar.switchToHorizontal')}
       >
         {layout === 'horizontal' ? <Rows size={16} /> : <Columns size={16} />}
       </button>
@@ -163,7 +170,7 @@ export function Toolbar({ onOpenSettings }: { onOpenSettings: () => void }) {
           <button
             onClick={() => setLabelManagerOpen(!labelManagerOpen)}
             className="flex items-center gap-1 px-2 py-1.5 text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
-            title="Manage labels"
+            title={t('toolbar.manageLabels')}
           >
             <Tags size={14} />
           </button>
@@ -177,14 +184,14 @@ export function Toolbar({ onOpenSettings }: { onOpenSettings: () => void }) {
       <button
         onClick={onOpenSettings}
         className="flex items-center gap-1 px-2 py-1.5 text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
-        title="Open settings"
+        title={t('toolbar.openSettings')}
       >
         <Settings size={16} />
       </button>
 
       {/* Keyboard hint */}
       <div className="ml-auto text-xs text-zinc-400">
-        Press <kbd className="px-1.5 py-0.5 bg-zinc-200 dark:bg-zinc-700 rounded">n</kbd> to add
+        {t('toolbar.pressKeyToAdd').split('{key}')[0]}<kbd className="px-1.5 py-0.5 bg-zinc-200 dark:bg-zinc-700 rounded">n</kbd>{t('toolbar.pressKeyToAdd').split('{key}')[1]}
       </div>
     </div>
   )

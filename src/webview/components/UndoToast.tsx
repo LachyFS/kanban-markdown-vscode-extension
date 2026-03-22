@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { t } from '../lib/i18n'
 
 interface UndoToastProps {
   message: string
@@ -56,7 +57,7 @@ export function UndoToast({ message, onUndo, onExpire, duration, index }: UndoTo
           onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-button-hoverBackground)'}
           onMouseLeave={e => e.currentTarget.style.background = 'var(--vscode-button-background)'}
         >
-          Undo
+          {t('undo.undo')}
         </button>
       </div>
       <div className="h-[2px] w-full" style={{ background: 'var(--vscode-widget-border)' }}>
