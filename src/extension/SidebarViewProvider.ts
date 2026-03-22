@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import * as crypto from 'crypto'
 import * as path from 'path'
 import { getTitleFromContent } from '../shared/types'
 import type { FeatureStatus, Priority, KanbanColumn } from '../shared/types'
@@ -452,8 +453,8 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
           row.className = 'stat-row';
           row.innerHTML =
             '<span class="stat-label">' +
-              '<span class="dot" style="background:' + col.color + '"></span>' +
-              col.name +
+              '<span class="dot" style="background:' + escapeHtml(col.color) + '"></span>' +
+              escapeHtml(col.name) +
             '</span>' +
             '<span class="stat-count">' + count + '</span>';
           statRows.appendChild(row);
@@ -474,7 +475,7 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
             li.className = 'feature-item';
             li.title = f.title;
             li.innerHTML =
-              '<span class="feature-dot" style="background:' + inProgressColor + '"></span>' +
+              '<span class="feature-dot" style="background:' + escapeHtml(inProgressColor) + '"></span>' +
               '<span class="feature-title">' + escapeHtml(f.title) + '</span>';
             li.addEventListener('click', () => {
               vscode.postMessage({ type: 'openFeature', featureId: f.id });
@@ -500,11 +501,6 @@ export class SidebarViewProvider implements vscode.WebviewViewProvider {
   }
 
   private _getNonce(): string {
-    let text = ''
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-    for (let i = 0; i < 32; i++) {
-      text += possible.charAt(Math.floor(Math.random() * possible.length))
-    }
-    return text
+    return crypto.randomBytes(24).toString('base64url')
   }
 }

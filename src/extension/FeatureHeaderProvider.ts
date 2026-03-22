@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import * as crypto from 'crypto'
 import * as path from 'path'
 import type { FeatureFrontmatter, EditorExtensionMessage, EditorWebviewMessage } from '../shared/editorTypes'
 import type { FeatureStatus, Priority, AIAgent } from '../shared/types'
@@ -116,13 +117,15 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
           const agent: AIAgent = message.agent || 'claude'
           const permissionMode = message.permissionMode || 'default'
 
-          let command: string
-          const escapedPrompt = prompt.replace(/"/g, '\\"')
+          let args: string[]
 
           switch (agent) {
             case 'claude': {
-              const permissionFlag = permissionMode !== 'default' ? ` --permission-mode ${permissionMode}` : ''
-              command = `claude${permissionFlag} "${escapedPrompt}"`
+              args = []
+              if (permissionMode !== 'default') {
+                args.push('--permission-mode', permissionMode)
+              }
+              args.push(prompt)
               break
             }
             case 'codex': {
@@ -133,19 +136,19 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
                 'bypassPermissions': 'full-auto'
               }
               const approvalMode = approvalMap[permissionMode] || 'suggest'
-              command = `codex --approval-mode ${approvalMode} "${escapedPrompt}"`
+              args = ['--approval-mode', approvalMode, prompt]
               break
             }
             case 'opencode': {
-              command = `opencode "${escapedPrompt}"`
+              args = [prompt]
               break
             }
             case 'copilot': {
-              command = `copilot "${escapedPrompt}"`
+              args = [prompt]
               break
             }
             default:
-              command = `claude "${escapedPrompt}"`
+              args = [prompt]
           }
 
           const agentNames: Record<string, string> = {
@@ -159,7 +162,7 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
             cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
           })
           terminal.show()
-          terminal.sendText(command)
+          terminal.sendText([this._shellQuote(agent), ...args.map(a => this._shellQuote(a))].join(' '))
           break
         }
       }
@@ -330,12 +333,11 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
   }
 
   private _getNonce(): string {
-    let text = ''
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-    for (let i = 0; i < 32; i++) {
-      text += possible.charAt(Math.floor(Math.random() * possible.length))
-    }
-    return text
+    return crypto.randomBytes(24).toString('base64url')
+  }
+
+  private _shellQuote(arg: string): string {
+    return "'" + arg.replace(/'/g, "'\\''") + "'"
   }
 
   private _getHtmlForWebview(webview: vscode.Webview): string {
@@ -353,7 +355,7 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
   <link href="${styleUri}" rel="stylesheet">
   <title>Feature Header</title>
 </head>

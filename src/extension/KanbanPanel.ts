@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import * as crypto from 'crypto'
 import * as path from 'path'
 import { generateKeyBetween, generateNKeysBetween } from 'fractional-indexing'
 import { getTitleFromContent, generateFeatureFilename } from '../shared/types'
@@ -296,7 +297,7 @@ export class KanbanPanel {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'nonce-${nonce}';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src ${webview.cspSource} 'nonce-${nonce}';">
   <link href="${styleUri}" rel="stylesheet">
   <title>Kanban Board</title>
 </head>
@@ -308,12 +309,11 @@ export class KanbanPanel {
   }
 
   private _getNonce(): string {
-    let text = ''
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-    for (let i = 0; i < 32; i++) {
-      text += possible.charAt(Math.floor(Math.random() * possible.length))
-    }
-    return text
+    return crypto.randomBytes(24).toString('base64url')
+  }
+
+  private _shellQuote(arg: string): string {
+    return "'" + arg.replace(/'/g, "'\\''") + "'"
   }
 
   private _getWorkspaceFeaturesDir(): string | null {
@@ -900,13 +900,15 @@ export class KanbanPanel {
     const selectedAgent = agent || config.get<string>('aiAgent') || 'claude'
     const selectedPermissionMode = permissionMode || 'default'
 
-    let command: string
-    const escapedPrompt = prompt.replace(/"/g, '\\"')
+    let args: string[]
 
     switch (selectedAgent) {
       case 'claude': {
-        const permissionFlag = selectedPermissionMode !== 'default' ? ` --permission-mode ${selectedPermissionMode}` : ''
-        command = `claude${permissionFlag} "${escapedPrompt}"`
+        args = []
+        if (selectedPermissionMode !== 'default') {
+          args.push('--permission-mode', selectedPermissionMode)
+        }
+        args.push(prompt)
         break
       }
       case 'codex': {
@@ -917,19 +919,19 @@ export class KanbanPanel {
           'bypassPermissions': 'full-auto'
         }
         const approvalMode = approvalMap[selectedPermissionMode] || 'suggest'
-        command = `codex --approval-mode ${approvalMode} "${escapedPrompt}"`
+        args = ['--approval-mode', approvalMode, prompt]
         break
       }
       case 'copilot': {
-        command = `copilot "${escapedPrompt}"`
+        args = [prompt]
         break
       }
       case 'opencode': {
-        command = `opencode "${escapedPrompt}"`
+        args = [prompt]
         break
       }
       default:
-        command = `claude "${escapedPrompt}"`
+        args = [prompt]
     }
 
     const agentNames: Record<string, string> = {
@@ -943,7 +945,7 @@ export class KanbanPanel {
       cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
     })
     terminal.show()
-    terminal.sendText(command)
+    terminal.sendText([this._shellQuote(selectedAgent), ...args.map(a => this._shellQuote(a))].join(' '))
   }
 
   private async _deleteLabel(labelName: string): Promise<void> {
