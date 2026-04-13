@@ -14,6 +14,7 @@ function makeFeature(overrides: Partial<Feature> = {}): Feature {
     status: 'in-progress',
     priority: 'high',
     assignee: 'foo',
+    epic: null,
     dueDate: '2026-03-01',
     created: '2026-02-23T10:00:00.000Z',
     modified: '2026-02-24T12:00:00.000Z',
@@ -32,6 +33,7 @@ function makeFrontmatter(overrides: Record<string, string> = {}): string {
     status: '"in-progress"',
     priority: '"high"',
     assignee: '"foo"',
+    epic: 'null',
     dueDate: '"2026-03-01"',
     created: '"2026-02-23T10:00:00.000Z"',
     modified: '"2026-02-24T12:00:00.000Z"',
@@ -58,6 +60,7 @@ describe('parseFeatureFile', () => {
     expect(feature!.status).toBe('in-progress')
     expect(feature!.priority).toBe('high')
     expect(feature!.assignee).toBe('foo')
+    expect(feature!.epic).toBeNull()
     expect(feature!.dueDate).toBe('2026-03-01')
     expect(feature!.completedAt).toBeNull()
     expect(feature!.labels).toEqual(['frontend', 'bug'])
@@ -123,6 +126,13 @@ describe('parseFeatureFile', () => {
     })
   })
 
+  describe('epic', () => {
+    it('parses a non-null epic string', () => {
+      const content = makeFrontmatter({ epic: '"Payments rollout"' }) + ''
+      expect(parseFeatureFile(content, FIXTURE_PATH)!.epic).toBe('Payments rollout')
+    })
+  })
+
   describe('labels array', () => {
     it('parses multiple labels', () => {
       const content = makeFrontmatter({ labels: '["alpha", "beta", "gamma"]' }) + ''
@@ -165,6 +175,7 @@ describe('serializeFeature', () => {
   it('writes null fields as literal null (not quoted "null")', () => {
     const output = serializeFeature(makeFeature({ assignee: null, dueDate: null, completedAt: null }))
     expect(output).toContain('assignee: null')
+    expect(output).toContain('epic: null')
     expect(output).toContain('dueDate: null')
     expect(output).toContain('completedAt: null')
     expect(output).not.toContain('"null"')
@@ -209,6 +220,7 @@ describe('round-trip: serializeFeature → parseFeatureFile', () => {
     expect(recovered!.status).toBe(original.status)
     expect(recovered!.priority).toBe(original.priority)
     expect(recovered!.assignee).toBe(original.assignee)
+    expect(recovered!.epic).toBe(original.epic)
     expect(recovered!.dueDate).toBe(original.dueDate)
     expect(recovered!.created).toBe(original.created)
     expect(recovered!.modified).toBe(original.modified)

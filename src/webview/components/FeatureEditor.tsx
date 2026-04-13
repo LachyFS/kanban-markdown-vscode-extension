@@ -3,11 +3,12 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Markdown } from 'tiptap-markdown'
-import { X, User, ChevronDown, Wand2, Tag, Plus, Check, CircleDot, Signal, Calendar, Trash2, FileText } from 'lucide-react'
+import { X, User, ChevronDown, Wand2, Tag, Plus, Check, CircleDot, Signal, Calendar, Trash2, FileText, Layers } from 'lucide-react'
 import type { FeatureFrontmatter, Priority, FeatureStatus, AIAgent, AIPermissionMode } from '../../shared/types'
 import { cn } from '../lib/utils'
 import { t } from '../lib/i18n'
 import { useStore } from '../store'
+import { EpicInput } from './EpicInput'
 
 interface MarkdownStorage {
   markdown: { getMarkdown: () => string }
@@ -597,6 +598,14 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
                 style={{ color: currentFrontmatter.assignee ? 'var(--vscode-foreground)' : 'var(--vscode-descriptionForeground)' }}
               />
             </div>
+          </PropertyRow>
+        )}
+        {cardSettings.showEpic && (
+          <PropertyRow label={t('property.epic')} icon={<Layers size={13} />}>
+            <EpicInput
+              value={currentFrontmatter.epic || ''}
+              onChange={(v) => handleFrontmatterUpdate({ epic: v.trim() ? v.trim() : null })}
+            />
           </PropertyRow>
         )}
         {cardSettings.showDueDate && (

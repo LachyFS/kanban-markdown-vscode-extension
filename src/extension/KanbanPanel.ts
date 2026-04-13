@@ -3,16 +3,23 @@ import * as crypto from 'crypto'
 import * as path from 'path'
 import { generateKeyBetween, generateNKeysBetween } from 'fractional-indexing'
 import { getTitleFromContent, generateFeatureFilename } from '../shared/types'
-import type { Feature, FeatureStatus, Priority, KanbanColumn, FeatureFrontmatter, CardDisplaySettings, FilenamePattern, AIAgent, AIPermissionMode } from '../shared/types'
+import type { Feature, FeatureStatus, Priority, KanbanColumn, FeatureFrontmatter, CardDisplaySettings, FilenamePattern, AIAgent, AIPermissionMode, BoardViewMode } from '../shared/types'
 import { ensureStatusSubfolders, moveFeatureFile, getFeatureFilePath, getStatusFromPath, fileExists } from './featureFileUtils'
 import { parseFeatureFile, serializeFeature } from '../shared/featureFrontmatter'
+import { featureMatchesEpicLane } from '../shared/epicLane'
 import { t, getBundle, getEffectiveLocale, reloadBundle, getAllDefaultColumnNames, getDefaultColumnNamesForLocale } from './l10n'
+
+function normalizeEpic(value: string | null | undefined): string | null {
+  const t = value?.trim()
+  return t ? t : null
+}
 
 interface CreateFeatureData {
   status: FeatureStatus
   priority: Priority
   content: string
   assignee: string | null
+  epic: string | null
   dueDate: string | null
   labels: string[]
 }
@@ -163,8 +170,23 @@ export class KanbanPanel {
             await this._context.workspaceState.update('kanban-markdown.collapsedColumns', collapsed)
             break
           }
+          case 'setBoardViewMode': {
+            await this._context.workspaceState.update('kanban-markdown.boardViewMode', message.mode)
+            break
+          }
+          case 'toggleEpicCollapsed': {
+            const collapsedEpics: string[] = this._context.workspaceState.get('kanban-markdown.collapsedEpics', [])
+            const idx = collapsedEpics.indexOf(message.epicKey)
+            if (idx >= 0) {
+              collapsedEpics.splice(idx, 1)
+            } else {
+              collapsedEpics.push(message.epicKey)
+            }
+            await this._context.workspaceState.update('kanban-markdown.collapsedEpics', collapsedEpics)
+            break
+          }
           case 'moveAllCards':
-            await this._moveAllCards(message.sourceColumnId, message.targetColumnId)
+            await this._moveAllCards(message.sourceColumnId, message.targetColumnId, message.epicLane)
             break
           case 'archiveAllCards':
             await this._archiveAllCards(message.sourceColumnId)
@@ -556,6 +578,7 @@ export class KanbanPanel {
       status: data.status,
       priority: data.priority,
       assignee: data.assignee,
+      epic: normalizeEpic(data.epic),
       dueDate: data.dueDate,
       created: now,
       modified: now,
@@ -623,12 +646,16 @@ export class KanbanPanel {
     this._sendFeaturesToWebview()
   }
 
-  private async _moveAllCards(sourceColumnId: string, targetColumnId: string): Promise<void> {
+  private async _moveAllCards(
+    sourceColumnId: string,
+    targetColumnId: string,
+    epicLane?: string | null
+  ): Promise<void> {
     const featuresDir = this._getWorkspaceFeaturesDir()
     if (!featuresDir) return
 
     const sourceFeatures = this._features
-      .filter(f => f.status === sourceColumnId)
+      .filter(f => f.status === sourceColumnId && featureMatchesEpicLane(f, epicLane))
       .sort((a, b) => (a.order < b.order ? -1 : a.order > b.order ? 1 : 0))
     if (sourceFeatures.length === 0) return
 
@@ -810,6 +837,7 @@ export class KanbanPanel {
       status: feature.status,
       priority: feature.priority,
       assignee: feature.assignee,
+      epic: feature.epic,
       dueDate: feature.dueDate,
       created: feature.created,
       modified: feature.modified,
@@ -844,6 +872,7 @@ export class KanbanPanel {
     feature.status = frontmatter.status
     feature.priority = frontmatter.priority
     feature.assignee = frontmatter.assignee
+    feature.epic = normalizeEpic(frontmatter.epic)
     feature.dueDate = frontmatter.dueDate
     feature.labels = frontmatter.labels
     feature.modified = new Date().toISOString()
@@ -1128,6 +1157,7 @@ export class KanbanPanel {
       showAssignee: config.get<boolean>('showAssignee', true),
       showDueDate: config.get<boolean>('showDueDate', true),
       showLabels: config.get<boolean>('showLabels', true),
+      showEpic: config.get<boolean>('showEpic', true),
       showBuildWithAI: config.get<boolean>('showBuildWithAI', true) && !vscode.workspace.getConfiguration('chat').get<boolean>('disableAIFeatures', false),
       showFileName: config.get<boolean>('showFileName', false),
       compactMode: config.get<boolean>('compactMode', false),
@@ -1137,6 +1167,8 @@ export class KanbanPanel {
     }
 
     const collapsedColumns: string[] = this._context.workspaceState.get('kanban-markdown.collapsedColumns', [])
+    const boardViewMode: BoardViewMode = this._context.workspaceState.get('kanban-markdown.boardViewMode', 'standard')
+    const collapsedEpics: string[] = this._context.workspaceState.get('kanban-markdown.collapsedEpics', [])
 
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
     const features = this._features.map(f => ({
@@ -1150,6 +1182,8 @@ export class KanbanPanel {
       columns,
       settings,
       collapsedColumns,
+      boardViewMode,
+      collapsedEpics,
       locale: getEffectiveLocale(),
       translations: getBundle()
     })

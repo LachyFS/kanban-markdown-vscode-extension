@@ -27,6 +27,7 @@
   "property.assignee": "Assignee",
   "property.dueDate": "Due date",
   "property.labels": "Labels",
+  "property.epic": "Epic",
 
   "editor.buildWithAI": "Build with AI",
   "editor.delete": "DELETE",
@@ -39,6 +40,7 @@
   "editor.startWriting": "Start writing...",
   "editor.addLabels": "Add labels...",
   "editor.noAssignee": "No assignee",
+  "editor.noEpic": "No epic",
 
   "create.title": "Create Feature",
   "create.featureTitle": "Feature title...",
@@ -62,6 +64,8 @@
   "toolbar.clear": "Clear",
   "toolbar.switchToVertical": "Switch to vertical layout",
   "toolbar.switchToHorizontal": "Switch to horizontal layout",
+  "toolbar.epicBoardView": "Epic swim lanes — group cards by epic",
+  "toolbar.standardBoardView": "Standard board — all cards in columns",
   "toolbar.manageLabels": "Manage labels",
   "toolbar.openSettings": "Open settings",
   "toolbar.pressKeyToAdd": "Press {key} to add",
@@ -106,6 +110,9 @@
   "column.moveAllCards": "Move all cards in this list",
   "column.archiveAllCards": "Archive all cards in this list",
   "column.noFeatures": "No features",
+
+  "epic.noEpic": "No epic",
+  "epic.emptyHint": "Assign an epic on a ticket to see swim lanes here.",
 
   "labels.manage": "Manage Labels",
   "labels.confirmRename": "Confirm rename",

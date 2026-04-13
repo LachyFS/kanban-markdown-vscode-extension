@@ -35,6 +35,7 @@
   "config.showAssignee.description": "Mostrar responsável nos cartões de funcionalidades.",
   "config.showDueDate.description": "Mostrar data limite nos cartões de funcionalidades.",
   "config.showLabels.description": "Mostrar etiquetas nos cartões de funcionalidades e nos editores.",
+  "config.showEpic.description": "Mostrar o épico (agrupamento principal) nos cartões e nos editores.",
   "config.showBuildWithAI.description": "Mostrar o botão 'Construir com IA' nos cartões de funcionalidades.",
   "config.showFileName.description": "Mostrar o nome do ficheiro markdown de origem nos cartões de funcionalidades.",
   "config.compactMode.description": "Usar disposição compacta de cartões para mostrar mais funcionalidades.",

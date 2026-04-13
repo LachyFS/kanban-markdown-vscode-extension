@@ -35,6 +35,7 @@
   "config.showAssignee.description": "Mostrar asignado en las tarjetas de funciones.",
   "config.showDueDate.description": "Mostrar fecha límite en las tarjetas de funciones.",
   "config.showLabels.description": "Mostrar etiquetas en las tarjetas de funciones y en los editores.",
+  "config.showEpic.description": "Mostrar la épica (agrupación principal) en las tarjetas y en los editores.",
   "config.showBuildWithAI.description": "Mostrar el botón 'Construir con IA' en las tarjetas de funciones.",
   "config.showFileName.description": "Mostrar el nombre del archivo markdown de origen en las tarjetas de funciones.",
   "config.compactMode.description": "Usar diseño compacto de tarjetas para mostrar más funciones.",

@@ -14,9 +14,11 @@ interface KanbanBoardProps {
   onFeatureClick: (feature: Feature) => void
   onAddFeature: (status: string) => void
   onMoveFeature: (featureId: string, newStatus: string, newOrder: number) => void
+  /** When set (including `null` for “no epic”), limits the board to that epic swim lane. */
+  epicFilter?: string | null
 }
 
-export function KanbanBoard({ onFeatureClick, onAddFeature, onMoveFeature }: KanbanBoardProps) {
+export function KanbanBoard({ onFeatureClick, onAddFeature, onMoveFeature, epicFilter }: KanbanBoardProps) {
   const columns = useStore((s) => s.columns)
   const getFilteredFeaturesByStatus = useStore((s) => s.getFilteredFeaturesByStatus)
   const getFeaturesByStatus = useStore((s) => s.getFeaturesByStatus)
@@ -59,7 +61,7 @@ export function KanbanBoard({ onFeatureClick, onAddFeature, onMoveFeature }: Kan
       e.preventDefault()
       if (!draggedFeature) return
 
-      const filteredFeatures = getFilteredFeaturesByStatus(columnId as FeatureStatus)
+      const filteredFeatures = getFilteredFeaturesByStatus(columnId as FeatureStatus, epicFilter)
       let filteredInsertIndex: number
 
       if (dropTarget && dropTarget.columnId === columnId) {
@@ -84,7 +86,7 @@ export function KanbanBoard({ onFeatureClick, onAddFeature, onMoveFeature }: Kan
       }
 
       // Translate filtered index to unfiltered index
-      const allFeatures = getFeaturesByStatus(columnId as FeatureStatus)
+      const allFeatures = getFeaturesByStatus(columnId as FeatureStatus, epicFilter)
         .filter((f) => f.id !== draggedFeature.id)
       const filteredWithoutDragged = filteredFeatures.filter((f) => f.id !== draggedFeature.id)
 
@@ -108,7 +110,7 @@ export function KanbanBoard({ onFeatureClick, onAddFeature, onMoveFeature }: Kan
       setDraggedFeature(null)
       setDropTarget(null)
     },
-    [draggedFeature, dropTarget, getFilteredFeaturesByStatus, getFeaturesByStatus, onMoveFeature]
+    [draggedFeature, dropTarget, getFilteredFeaturesByStatus, getFeaturesByStatus, onMoveFeature, epicFilter]
   )
 
   const handleDragEnd = useCallback(() => {
@@ -121,9 +123,21 @@ export function KanbanBoard({ onFeatureClick, onAddFeature, onMoveFeature }: Kan
     vscode.postMessage({ type: 'toggleColumnCollapsed', columnId })
   }, [toggleColumnCollapsed])
 
-  const handleMoveAllCards = useCallback((sourceColumnId: string, targetColumnId: string) => {
-    vscode.postMessage({ type: 'moveAllCards', sourceColumnId, targetColumnId })
-  }, [])
+  const handleMoveAllCards = useCallback(
+    (sourceColumnId: string, targetColumnId: string) => {
+      if (epicFilter !== undefined) {
+        vscode.postMessage({
+          type: 'moveAllCards',
+          sourceColumnId,
+          targetColumnId,
+          epicLane: epicFilter
+        })
+      } else {
+        vscode.postMessage({ type: 'moveAllCards', sourceColumnId, targetColumnId })
+      }
+    },
+    [epicFilter]
+  )
 
   const handleArchiveAllCards = useCallback((sourceColumnId: string) => {
     vscode.postMessage({ type: 'archiveAllCards', sourceColumnId })
@@ -139,7 +153,7 @@ export function KanbanBoard({ onFeatureClick, onAddFeature, onMoveFeature }: Kan
             <CollapsedColumn
               key={column.id}
               column={column}
-              featureCount={getFeaturesByStatus(column.id as FeatureStatus).length}
+              featureCount={getFeaturesByStatus(column.id as FeatureStatus, epicFilter).length}
               onExpand={() => handleToggleCollapse(column.id)}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
@@ -149,7 +163,7 @@ export function KanbanBoard({ onFeatureClick, onAddFeature, onMoveFeature }: Kan
             <KanbanColumn
               key={column.id}
               column={column}
-              features={getFilteredFeaturesByStatus(column.id as FeatureStatus)}
+              features={getFilteredFeaturesByStatus(column.id as FeatureStatus, epicFilter)}
               otherColumns={columns.filter((c) => c.id !== column.id)}
               onFeatureClick={onFeatureClick}
               onAddFeature={onAddFeature}

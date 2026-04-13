@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { EpicInput } from './EpicInput'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Markdown } from 'tiptap-markdown'
-import { X, ChevronDown, User, Tag, Check, CircleDot, Signal, Calendar } from 'lucide-react'
+import { X, ChevronDown, User, Tag, Check, CircleDot, Signal, Calendar, Layers } from 'lucide-react'
 import type { FeatureStatus, Priority } from '../../shared/types'
 import { useStore } from '../store'
 import { cn } from '../lib/utils'
@@ -21,7 +22,7 @@ function getMarkdown(editor: { storage: unknown }): string {
 interface CreateFeatureDialogProps {
   isOpen: boolean
   onClose: () => void
-  onCreate: (data: { status: FeatureStatus; priority: Priority; content: string; assignee: string | null; dueDate: string | null; labels: string[] }) => void
+  onCreate: (data: { status: FeatureStatus; priority: Priority; content: string; assignee: string | null; epic: string | null; dueDate: string | null; labels: string[] }) => void
   initialStatus?: FeatureStatus
 }
 
@@ -340,6 +341,7 @@ function CreateFeatureDialogContent({
   const [assignee, setAssignee] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [labels, setLabels] = useState<string[]>([])
+  const [epic, setEpic] = useState('')
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   const descriptionEditor = useEditor({
@@ -369,7 +371,15 @@ function CreateFeatureDialogContent({
     const content = heading
       ? `# ${heading}${description ? '\n\n' + description : ''}`
       : description
-    onCreate({ status, priority, content, assignee: assignee.trim() || null, dueDate: dueDate || null, labels })
+    onCreate({
+      status,
+      priority,
+      content,
+      assignee: assignee.trim() || null,
+      epic: epic.trim() || null,
+      dueDate: dueDate || null,
+      labels
+    })
   }
 
   // Save and close: creates the feature if there's a title, then closes
@@ -455,6 +465,11 @@ function CreateFeatureDialogContent({
           {cardSettings.showAssignee && (
             <PropertyRow label={t('property.assignee')} icon={<User size={13} />}>
               <AssigneeInput value={assignee} onChange={setAssignee} />
+            </PropertyRow>
+          )}
+          {cardSettings.showEpic && (
+            <PropertyRow label={t('property.epic')} icon={<Layers size={13} />}>
+              <EpicInput value={epic} onChange={setEpic} />
             </PropertyRow>
           )}
           {cardSettings.showDueDate && (

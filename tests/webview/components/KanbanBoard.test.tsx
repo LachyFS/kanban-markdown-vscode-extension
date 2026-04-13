@@ -43,6 +43,7 @@ function makeFeature(overrides: Partial<Feature> = {}): Feature {
     status: 'backlog',
     priority: 'medium',
     assignee: null,
+    epic: null,
     dueDate: null,
     created: '2026-01-01T00:00:00.000Z',
     modified: '2026-01-01T00:00:00.000Z',
@@ -59,6 +60,7 @@ function setup(overrides: {
   onFeatureClick?: (feature: Feature) => void
   onAddFeature?: (status: string) => void
   onMoveFeature?: (featureId: string, newStatus: string, newOrder: number) => void
+  epicFilter?: string | null
 } = {}) {
   const onFeatureClick: (feature: Feature) => void = overrides.onFeatureClick ?? vi.fn()
   const onAddFeature: (status: string) => void     = overrides.onAddFeature   ?? vi.fn()
@@ -69,6 +71,7 @@ function setup(overrides: {
       onFeatureClick={onFeatureClick}
       onAddFeature={onAddFeature}
       onMoveFeature={onMoveFeature}
+      {...(overrides.epicFilter !== undefined ? { epicFilter: overrides.epicFilter } : {})}
     />
   )
   return { user, onFeatureClick, onAddFeature, onMoveFeature }
@@ -252,6 +255,30 @@ describe('KanbanBoard — moveAllCards', () => {
       type: 'moveAllCards',
       sourceColumnId: 'backlog',
       targetColumnId: 'todo'
+    })
+  })
+
+  it('includes epicLane when the board is scoped to an epic swim lane', async () => {
+    useStore.setState({
+      columns: DEFAULT_COLUMNS,
+      features: [makeFeature({ status: 'backlog', epic: 'Payments' })]
+    })
+    const { user } = setup({ epicFilter: 'Payments' })
+
+    const backlogSection = screen.getByTitle('Collapse Backlog').closest('[class*="rounded-lg"]') as HTMLElement
+    const menuBtn = within(backlogSection).getByTitle('Column options')
+    await user.click(menuBtn)
+
+    const moveAllWrapper = screen.getByText('Move all cards in this list').closest('div')!
+    fireEvent.mouseEnter(moveAllWrapper)
+
+    await user.click(within(backlogSection).getByRole('button', { name: 'To Do' }))
+
+    expect(mockPostMessage).toHaveBeenCalledWith({
+      type: 'moveAllCards',
+      sourceColumnId: 'backlog',
+      targetColumnId: 'todo',
+      epicLane: 'Payments'
     })
   })
 })

@@ -27,6 +27,7 @@
   "property.assignee": "Asignado",
   "property.dueDate": "Fecha límite",
   "property.labels": "Etiquetas",
+  "property.epic": "Épica",
 
   "editor.buildWithAI": "Construir con IA",
   "editor.delete": "ELIMINAR",
@@ -39,6 +40,7 @@
   "editor.startWriting": "Empieza a escribir...",
   "editor.addLabels": "Añadir etiquetas...",
   "editor.noAssignee": "Sin asignar",
+  "editor.noEpic": "Sin épica",
 
   "create.title": "Crear función",
   "create.featureTitle": "Título de la función...",
@@ -62,6 +64,8 @@
   "toolbar.clear": "Borrar",
   "toolbar.switchToVertical": "Cambiar a diseño vertical",
   "toolbar.switchToHorizontal": "Cambiar a diseño horizontal",
+  "toolbar.epicBoardView": "Carriles por épica — agrupa tarjetas por épica",
+  "toolbar.standardBoardView": "Tablero estándar — todas las tarjetas en columnas",
   "toolbar.manageLabels": "Gestionar etiquetas",
   "toolbar.openSettings": "Abrir ajustes",
   "toolbar.pressKeyToAdd": "Pulsa {key} para añadir",
@@ -106,6 +110,9 @@
   "column.moveAllCards": "Mover todas las tarjetas de esta lista",
   "column.archiveAllCards": "Archivar todas las tarjetas de esta lista",
   "column.noFeatures": "Sin funciones",
+
+  "epic.noEpic": "Sin épica",
+  "epic.emptyHint": "Asigna una épica a una tarjeta para ver carriles aquí.",
 
   "labels.manage": "Gestionar etiquetas",
   "labels.confirmRename": "Confirmar renombrado",

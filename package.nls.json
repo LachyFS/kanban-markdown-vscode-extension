@@ -35,6 +35,7 @@
   "config.showAssignee.description": "Show assignee on feature cards.",
   "config.showDueDate.description": "Show due date on feature cards.",
   "config.showLabels.description": "Show labels on feature cards and in editors.",
+  "config.showEpic.description": "Show epic (parent grouping) on feature cards and in editors.",
   "config.showBuildWithAI.description": "Show the 'Build with AI' button on feature cards.",
   "config.showFileName.description": "Show the source markdown filename on feature cards.",
   "config.compactMode.description": "Use compact card layout to show more features.",

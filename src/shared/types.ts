@@ -12,6 +12,7 @@ export interface Feature {
   status: FeatureStatus
   priority: Priority
   assignee: string | null
+  epic: string | null
   dueDate: string | null
   created: string
   modified: string
@@ -78,6 +79,7 @@ export interface CardDisplaySettings {
   showAssignee: boolean
   showDueDate: boolean
   showLabels: boolean
+  showEpic: boolean
   showBuildWithAI: boolean
   showFileName: boolean
   compactMode: boolean
@@ -87,8 +89,18 @@ export interface CardDisplaySettings {
 }
 
 // Messages between extension and webview
+export type BoardViewMode = 'standard' | 'epic'
+
+/** Stable id for the "no epic" swim lane (persisted collapse state). */
+export const NO_EPIC_LANE_ID = '__no_epic__'
+
+export function epicLaneId(epic: string | null | undefined): string {
+  const t = epic?.trim()
+  return t ? t : NO_EPIC_LANE_ID
+}
+
 export type ExtensionMessage =
-  | { type: 'init'; features: Feature[]; columns: KanbanColumn[]; settings: CardDisplaySettings; collapsedColumns: string[]; locale: string; translations: Record<string, string> }
+  | { type: 'init'; features: Feature[]; columns: KanbanColumn[]; settings: CardDisplaySettings; collapsedColumns: string[]; boardViewMode: BoardViewMode; collapsedEpics: string[]; locale: string; translations: Record<string, string> }
   | { type: 'featuresUpdated'; features: Feature[] }
   | { type: 'triggerCreateDialog' }
   | { type: 'featureContent'; featureId: string; content: string; frontmatter: FeatureFrontmatter }
@@ -99,6 +111,7 @@ export interface FeatureFrontmatter {
   status: FeatureStatus
   priority: Priority
   assignee: string | null
+  epic: string | null
   dueDate: string | null
   created: string
   modified: string
@@ -109,7 +122,7 @@ export interface FeatureFrontmatter {
 
 export type WebviewMessage =
   | { type: 'ready' }
-  | { type: 'createFeature'; data: { status: FeatureStatus; priority: Priority; content: string; assignee: string | null; dueDate: string | null; labels: string[] } }
+  | { type: 'createFeature'; data: { status: FeatureStatus; priority: Priority; content: string; assignee: string | null; epic: string | null; dueDate: string | null; labels: string[] } }
   | { type: 'moveFeature'; featureId: string; newStatus: string; newOrder: number }
   | { type: 'deleteFeature'; featureId: string }
   | { type: 'updateFeature'; featureId: string; updates: Partial<Feature> }
@@ -119,7 +132,9 @@ export type WebviewMessage =
   | { type: 'openFile'; featureId: string }
   | { type: 'openSettings' }
   | { type: 'toggleColumnCollapsed'; columnId: string }
-  | { type: 'moveAllCards'; sourceColumnId: string; targetColumnId: string }
+  | { type: 'setBoardViewMode'; mode: BoardViewMode }
+  | { type: 'toggleEpicCollapsed'; epicKey: string }
+  | { type: 'moveAllCards'; sourceColumnId: string; targetColumnId: string; epicLane?: string | null }
   | { type: 'archiveAllCards'; sourceColumnId: string }
   | { type: 'renameLabel'; oldName: string; newName: string }
   | { type: 'deleteLabel'; labelName: string }
