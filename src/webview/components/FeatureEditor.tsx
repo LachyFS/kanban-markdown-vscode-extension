@@ -8,6 +8,7 @@ import type { FeatureFrontmatter, Priority, FeatureStatus, AIAgent, AIPermission
 import { cn } from '../lib/utils'
 import { t } from '../lib/i18n'
 import { useStore } from '../store'
+import { AssigneeInput } from './AssigneeInput'
 
 interface MarkdownStorage {
   markdown: { getMarkdown: () => string }
@@ -578,25 +579,10 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
         )}
         {cardSettings.showAssignee && (
           <PropertyRow label={t('property.assignee')} icon={<User size={13} />}>
-            <div className="flex items-center gap-2">
-              {currentFrontmatter.assignee && (
-                <span
-                  className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold"
-                  style={{
-                    background: 'var(--vscode-badge-background)',
-                    color: 'var(--vscode-badge-foreground)',
-                  }}
-                >{currentFrontmatter.assignee.split(/\s+/).filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0, 2)}</span>
-              )}
-              <input
-                type="text"
-                value={currentFrontmatter.assignee || ''}
-                onChange={(e) => handleFrontmatterUpdate({ assignee: e.target.value || null })}
-                placeholder={t('editor.noAssignee')}
-                className="bg-transparent border-none outline-none text-xs w-32"
-                style={{ color: currentFrontmatter.assignee ? 'var(--vscode-foreground)' : 'var(--vscode-descriptionForeground)' }}
-              />
-            </div>
+            <AssigneeInput
+              value={currentFrontmatter.assignee || ''}
+              onChange={(v) => handleFrontmatterUpdate({ assignee: v || null })}
+            />
           </PropertyRow>
         )}
         {cardSettings.showDueDate && (
