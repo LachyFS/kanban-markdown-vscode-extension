@@ -38,6 +38,10 @@ function App(): React.JSX.Element {
     frontmatter: FeatureFrontmatter
     contentVersion: number
   } | null>(null)
+  const editingFeatureRef = useRef(editingFeature)
+  useEffect(() => {
+    editingFeatureRef.current = editingFeature
+  }, [editingFeature])
 
   // Undo delete stack
   const [pendingDeletes, setPendingDeletes] = useState<{ id: string; feature: Feature }[]>([])
@@ -205,7 +209,7 @@ function App(): React.JSX.Element {
           setCollapsedEpics(message.collapsedEpics ?? [])
           setBoardViewMode((message.boardViewMode ?? 'standard') as BoardViewMode)
           if (message.settings) {
-            if (message.settings.markdownEditorMode && editingFeature) {
+            if (message.settings.markdownEditorMode && editingFeatureRef.current) {
               setEditingFeature(null)
             }
             setCardSettings(message.settings)

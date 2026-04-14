@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { AssigneeInput } from './AssigneeInput'
 import { EpicInput } from './EpicInput'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -22,7 +23,15 @@ function getMarkdown(editor: { storage: unknown }): string {
 interface CreateFeatureDialogProps {
   isOpen: boolean
   onClose: () => void
-  onCreate: (data: { status: FeatureStatus; priority: Priority; content: string; assignee: string | null; epic: string | null; dueDate: string | null; labels: string[] }) => void
+  onCreate: (data: {
+    status: FeatureStatus
+    priority: Priority
+    content: string
+    assignee: string | null
+    epic: string | null
+    dueDate: string | null
+    labels: string[]
+  }) => void
   initialStatus?: FeatureStatus
 }
 
@@ -54,7 +63,7 @@ interface DropdownProps {
 
 function Dropdown({ value, options, onChange, className }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const current = options.find(o => o.value === value)
+  const current = options.find((o) => o.value === value)
 
   return (
     <div className={cn('relative', className)}>
@@ -63,14 +72,20 @@ function Dropdown({ value, options, onChange, className }: DropdownProps) {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-2 py-1 text-xs font-medium rounded transition-colors"
         style={{
-          color: 'var(--vscode-foreground)',
+          color: 'var(--vscode-foreground)'
         }}
-        onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'}
-        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)')
+        }
+        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
       >
         {current?.dot && <span className={cn('w-2 h-2 rounded-full shrink-0', current.dot)} />}
         <span>{current?.label}</span>
-        <ChevronDown size={12} style={{ color: 'var(--vscode-descriptionForeground)' }} className="ml-0.5" />
+        <ChevronDown
+          size={12}
+          style={{ color: 'var(--vscode-descriptionForeground)' }}
+          className="ml-0.5"
+        />
       </button>
       {isOpen && (
         <>
@@ -79,10 +94,10 @@ function Dropdown({ value, options, onChange, className }: DropdownProps) {
             className="absolute top-full left-0 mt-1 z-20 rounded-lg shadow-lg py-1 min-w-[140px]"
             style={{
               background: 'var(--vscode-dropdown-background)',
-              border: '1px solid var(--vscode-dropdown-border, var(--vscode-panel-border))',
+              border: '1px solid var(--vscode-dropdown-border, var(--vscode-panel-border))'
             }}
           >
-            {options.map(option => (
+            {options.map((option) => (
               <button
                 key={option.value}
                 type="button"
@@ -93,18 +108,28 @@ function Dropdown({ value, options, onChange, className }: DropdownProps) {
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors"
                 style={{
                   color: 'var(--vscode-dropdown-foreground)',
-                  background: option.value === value ? 'var(--vscode-list-activeSelectionBackground)' : undefined,
+                  background:
+                    option.value === value
+                      ? 'var(--vscode-list-activeSelectionBackground)'
+                      : undefined
                 }}
-                onMouseEnter={e => {
-                  if (option.value !== value) e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'
+                onMouseEnter={(e) => {
+                  if (option.value !== value)
+                    e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'
                 }}
-                onMouseLeave={e => {
+                onMouseLeave={(e) => {
                   if (option.value !== value) e.currentTarget.style.background = 'transparent'
                 }}
               >
                 {option.dot && <span className={cn('w-2 h-2 rounded-full shrink-0', option.dot)} />}
                 <span className="flex-1 text-left">{option.label}</span>
-                {option.value === value && <Check size={12} style={{ color: 'var(--vscode-focusBorder)' }} className="shrink-0" />}
+                {option.value === value && (
+                  <Check
+                    size={12}
+                    style={{ color: 'var(--vscode-focusBorder)' }}
+                    className="shrink-0"
+                  />
+                )}
               </button>
             ))}
           </div>
@@ -114,106 +139,28 @@ function Dropdown({ value, options, onChange, className }: DropdownProps) {
   )
 }
 
-function AssigneeInput({ value, onChange }: { value: string; onChange: (value: string) => void }) {
-  const [isFocused, setIsFocused] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const features = useStore(s => s.features)
-
-  const existingAssignees = useMemo(() => {
-    const assignees = new Set<string>()
-    features.forEach(f => { if (f.assignee) assignees.add(f.assignee) })
-    return Array.from(assignees).sort()
-  }, [features])
-
-  const suggestions = useMemo(() => {
-    if (!value.trim()) return existingAssignees
-    return existingAssignees.filter(a => a.toLowerCase().includes(value.toLowerCase()) && a !== value)
-  }, [value, existingAssignees])
-
-  const showSuggestions = isFocused && suggestions.length > 0
-
-  const initials = value.trim()
-    ? value.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2)
-    : null
-
-  return (
-    <div ref={containerRef} className="relative flex-1">
-      <div
-        className="flex items-center gap-2 cursor-text"
-        onClick={() => inputRef.current?.focus()}
-      >
-        {initials && (
-          <span
-            className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold"
-            style={{
-              background: 'var(--vscode-badge-background)',
-              color: 'var(--vscode-badge-foreground)',
-            }}
-          >{initials}</span>
-        )}
-        <input
-          ref={inputRef}
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setTimeout(() => setIsFocused(false), 150)}
-          placeholder={t('editor.noAssignee')}
-          className="flex-1 bg-transparent border-none outline-none text-xs"
-          style={{ color: value ? 'var(--vscode-foreground)' : 'var(--vscode-descriptionForeground)' }}
-        />
-      </div>
-      {showSuggestions && (
-        <div
-          className="absolute top-full left-0 mt-1 z-20 rounded-lg shadow-lg py-1 max-h-[160px] overflow-auto min-w-[180px]"
-          style={{
-            background: 'var(--vscode-dropdown-background)',
-            border: '1px solid var(--vscode-dropdown-border, var(--vscode-panel-border))',
-          }}
-        >
-          {suggestions.map(assignee => (
-            <button
-              key={assignee}
-              type="button"
-              onMouseDown={(e) => { e.preventDefault(); onChange(assignee) }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors"
-              style={{ color: 'var(--vscode-dropdown-foreground)' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-            >
-              <span
-                className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold"
-                style={{
-                  background: 'var(--vscode-badge-background)',
-                  color: 'var(--vscode-badge-foreground)',
-                }}
-              >{assignee.split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2)}</span>
-              <span>{assignee}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function LabelInput({ labels, onChange }: { labels: string[]; onChange: (labels: string[]) => void }) {
+function LabelInput({
+  labels,
+  onChange
+}: {
+  labels: string[]
+  onChange: (labels: string[]) => void
+}) {
   const [newLabel, setNewLabel] = useState('')
   const [isFocused, setIsFocused] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const features = useStore(s => s.features)
+  const features = useStore((s) => s.features)
 
   const existingLabels = useMemo(() => {
     const labelSet = new Set<string>()
-    features.forEach(f => f.labels.forEach(l => labelSet.add(l)))
+    features.forEach((f) => f.labels.forEach((l) => labelSet.add(l)))
     return Array.from(labelSet).sort()
   }, [features])
 
   const suggestions = useMemo(() => {
-    const available = existingLabels.filter(l => !labels.includes(l))
+    const available = existingLabels.filter((l) => !labels.includes(l))
     if (!newLabel.trim()) return available
-    return available.filter(l => l.toLowerCase().includes(newLabel.toLowerCase()))
+    return available.filter((l) => l.toLowerCase().includes(newLabel.toLowerCase()))
   }, [newLabel, existingLabels, labels])
 
   const showSuggestions = isFocused && suggestions.length > 0
@@ -232,18 +179,21 @@ function LabelInput({ labels, onChange }: { labels: string[]; onChange: (labels:
         className="flex items-center gap-1.5 flex-wrap cursor-text"
         onClick={() => inputRef.current?.focus()}
       >
-        {labels.map(label => (
+        {labels.map((label) => (
           <span
             key={label}
             className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded"
             style={{
               background: 'var(--vscode-badge-background)',
-              color: 'var(--vscode-badge-foreground)',
+              color: 'var(--vscode-badge-foreground)'
             }}
           >
             {label}
             <button
-              onClick={(e) => { e.stopPropagation(); onChange(labels.filter(l => l !== label)) }}
+              onClick={(e) => {
+                e.stopPropagation()
+                onChange(labels.filter((l) => l !== label))
+              }}
               className="hover:text-red-500 transition-colors"
             >
               <X size={9} />
@@ -258,11 +208,17 @@ function LabelInput({ labels, onChange }: { labels: string[]; onChange: (labels:
           onFocus={() => setIsFocused(true)}
           onBlur={() => setTimeout(() => setIsFocused(false), 150)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') { e.preventDefault(); addLabel() }
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              addLabel()
+            }
             if (e.key === 'Backspace' && !newLabel && labels.length > 0) {
               onChange(labels.slice(0, -1))
             }
-            if (e.key === 'Escape') { setNewLabel(''); inputRef.current?.blur() }
+            if (e.key === 'Escape') {
+              setNewLabel('')
+              inputRef.current?.blur()
+            }
           }}
           placeholder={labels.length === 0 ? t('editor.addLabels') : ''}
           className="flex-1 min-w-[60px] bg-transparent border-none outline-none text-xs"
@@ -274,26 +230,33 @@ function LabelInput({ labels, onChange }: { labels: string[]; onChange: (labels:
           className="absolute top-full left-0 mt-1 z-20 rounded-lg shadow-lg py-1 max-h-[160px] overflow-auto min-w-[180px]"
           style={{
             background: 'var(--vscode-dropdown-background)',
-            border: '1px solid var(--vscode-dropdown-border, var(--vscode-panel-border))',
+            border: '1px solid var(--vscode-dropdown-border, var(--vscode-panel-border))'
           }}
         >
-          {suggestions.map(label => (
+          {suggestions.map((label) => (
             <button
               key={label}
               type="button"
-              onMouseDown={(e) => { e.preventDefault(); addLabel(label) }}
+              onMouseDown={(e) => {
+                e.preventDefault()
+                addLabel(label)
+              }}
               className="w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors"
               style={{ color: 'var(--vscode-dropdown-foreground)' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)')
+              }
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
               <span
                 className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded"
                 style={{
                   background: 'var(--vscode-badge-background)',
-                  color: 'var(--vscode-badge-foreground)',
+                  color: 'var(--vscode-badge-foreground)'
                 }}
-              >{label}</span>
+              >
+                {label}
+              </span>
             </button>
           ))}
         </div>
@@ -302,20 +265,30 @@ function LabelInput({ labels, onChange }: { labels: string[]; onChange: (labels:
   )
 }
 
-function PropertyRow({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
+function PropertyRow({
+  label,
+  icon,
+  children
+}: {
+  label: string
+  icon: React.ReactNode
+  children: React.ReactNode
+}) {
   return (
     <div
       className="flex items-center gap-3 px-4 py-[5px] transition-colors"
-      onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'}
-      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+      onMouseEnter={(e) =>
+        (e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)')
+      }
+      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
     >
       <div className="flex items-center gap-2 w-[90px] shrink-0">
         <span style={{ color: 'var(--vscode-descriptionForeground)' }}>{icon}</span>
-        <span className="text-[11px]" style={{ color: 'var(--vscode-descriptionForeground)' }}>{label}</span>
+        <span className="text-[11px]" style={{ color: 'var(--vscode-descriptionForeground)' }}>
+          {label}
+        </span>
       </div>
-      <div className="flex-1 min-w-0">
-        {children}
-      </div>
+      <div className="flex-1 min-w-0">{children}</div>
     </div>
   )
 }
@@ -368,9 +341,7 @@ function CreateFeatureDialogContent({
     const description = descriptionEditor ? getMarkdown(descriptionEditor).trim() : ''
     const heading = title.trim()
     if (!heading && !description) return
-    const content = heading
-      ? `# ${heading}${description ? '\n\n' + description : ''}`
-      : description
+    const content = heading ? `# ${heading}${description ? '\n\n' + description : ''}` : description
     onCreate({
       status,
       priority,
@@ -415,7 +386,7 @@ function CreateFeatureDialogContent({
         className="relative h-full w-1/2 shadow-xl flex flex-col animate-in slide-in-from-right duration-200"
         style={{
           background: 'var(--vscode-editor-background)',
-          borderLeft: '1px solid var(--vscode-panel-border)',
+          borderLeft: '1px solid var(--vscode-panel-border)'
         }}
       >
         {/* Header */}
@@ -432,8 +403,10 @@ function CreateFeatureDialogContent({
             onClick={handleClose}
             className="p-1.5 rounded transition-colors"
             style={{ color: 'var(--vscode-descriptionForeground)' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)')
+            }
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
           >
             <X size={18} />
           </button>
@@ -443,13 +416,13 @@ function CreateFeatureDialogContent({
         <div
           className="flex flex-col py-0.5"
           style={{
-            borderBottom: '1px solid var(--vscode-panel-border)',
+            borderBottom: '1px solid var(--vscode-panel-border)'
           }}
         >
           <PropertyRow label={t('property.status')} icon={<CircleDot size={13} />}>
             <Dropdown
               value={status}
-              options={statusConfig.map(s => ({ value: s.value, label: s.label, dot: s.dot }))}
+              options={statusConfig.map((s) => ({ value: s.value, label: s.label, dot: s.dot }))}
               onChange={(v) => setStatus(v as FeatureStatus)}
             />
           </PropertyRow>
@@ -457,7 +430,11 @@ function CreateFeatureDialogContent({
             <PropertyRow label={t('property.priority')} icon={<Signal size={13} />}>
               <Dropdown
                 value={priority}
-                options={priorityConfig.map(p => ({ value: p.value, label: p.label, dot: p.dot }))}
+                options={priorityConfig.map((p) => ({
+                  value: p.value,
+                  label: p.label,
+                  dot: p.dot
+                }))}
                 onChange={(v) => setPriority(v as Priority)}
               />
             </PropertyRow>
@@ -478,9 +455,9 @@ function CreateFeatureDialogContent({
             </PropertyRow>
           )}
           {cardSettings.showLabels && (
-          <PropertyRow label={t('property.labels')} icon={<Tag size={13} />}>
-            <LabelInput labels={labels} onChange={setLabels} />
-          </PropertyRow>
+            <PropertyRow label={t('property.labels')} icon={<Tag size={13} />}>
+              <LabelInput labels={labels} onChange={setLabels} />
+            </PropertyRow>
           )}
         </div>
 
@@ -493,7 +470,7 @@ function CreateFeatureDialogContent({
             placeholder={t('create.featureTitle')}
             className="w-full text-lg font-medium bg-transparent border-none outline-none resize-none mb-4"
             style={{
-              color: 'var(--vscode-foreground)',
+              color: 'var(--vscode-foreground)'
             }}
             rows={1}
             onInput={(e) => {
@@ -516,23 +493,45 @@ function CreateFeatureDialogContent({
           className="px-4 py-2"
           style={{
             borderTop: '1px solid var(--vscode-panel-border)',
-            background: 'var(--vscode-sideBar-background, var(--vscode-editor-background))',
+            background: 'var(--vscode-sideBar-background, var(--vscode-editor-background))'
           }}
         >
           <p className="text-xs" style={{ color: 'var(--vscode-descriptionForeground)' }}>
             {t('create.autoSaves')} ·{' '}
             <kbd
               className="px-1.5 py-0.5 rounded text-[10px] font-mono"
-              style={{ background: 'var(--vscode-keybindingLabel-background, var(--vscode-badge-background))', color: 'var(--vscode-keybindingLabel-foreground, var(--vscode-foreground))', border: '1px solid var(--vscode-keybindingLabel-border, var(--vscode-panel-border))' }}
-            >Esc</kbd>{' '}
+              style={{
+                background:
+                  'var(--vscode-keybindingLabel-background, var(--vscode-badge-background))',
+                color: 'var(--vscode-keybindingLabel-foreground, var(--vscode-foreground))',
+                border: '1px solid var(--vscode-keybindingLabel-border, var(--vscode-panel-border))'
+              }}
+            >
+              Esc
+            </kbd>{' '}
             <kbd
               className="px-1.5 py-0.5 rounded text-[10px] font-mono"
-              style={{ background: 'var(--vscode-keybindingLabel-background, var(--vscode-badge-background))', color: 'var(--vscode-keybindingLabel-foreground, var(--vscode-foreground))', border: '1px solid var(--vscode-keybindingLabel-border, var(--vscode-panel-border))' }}
-            >⌘S</kbd>{' '}
+              style={{
+                background:
+                  'var(--vscode-keybindingLabel-background, var(--vscode-badge-background))',
+                color: 'var(--vscode-keybindingLabel-foreground, var(--vscode-foreground))',
+                border: '1px solid var(--vscode-keybindingLabel-border, var(--vscode-panel-border))'
+              }}
+            >
+              ⌘S
+            </kbd>{' '}
             <kbd
               className="px-1.5 py-0.5 rounded text-[10px] font-mono"
-              style={{ background: 'var(--vscode-keybindingLabel-background, var(--vscode-badge-background))', color: 'var(--vscode-keybindingLabel-foreground, var(--vscode-foreground))', border: '1px solid var(--vscode-keybindingLabel-border, var(--vscode-panel-border))' }}
-            >⌘ Enter</kbd>{' '}{t('create.saveAndClose')}
+              style={{
+                background:
+                  'var(--vscode-keybindingLabel-background, var(--vscode-badge-background))',
+                color: 'var(--vscode-keybindingLabel-foreground, var(--vscode-foreground))',
+                border: '1px solid var(--vscode-keybindingLabel-border, var(--vscode-panel-border))'
+              }}
+            >
+              ⌘ Enter
+            </kbd>{' '}
+            {t('create.saveAndClose')}
           </p>
         </div>
       </div>
