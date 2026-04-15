@@ -80,11 +80,11 @@ jobs:
           generate_release_notes: true
 
       - name: Publish to VS Code Marketplace
-        run: npx vsce publish --no-dependencies
+        run: pnpm exec vsce publish --no-dependencies
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
       - name: Publish to Open VSX
-        run: npx ovsx publish releases/*.vsix
+        run: pnpm exec ovsx publish releases/*.vsix
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}

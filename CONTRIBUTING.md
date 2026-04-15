@@ -8,7 +8,7 @@ Thanks for your interest in contributing to Kanban Markdown! This guide will hel
 
 - [Node.js](https://nodejs.org/) (v18+)
 - [VS Code](https://code.visualstudio.com/) (v1.85.0+)
-- npm
+- pnpm
 
 ### Setup
 
@@ -22,13 +22,13 @@ Thanks for your interest in contributing to Kanban Markdown! This guide will hel
 2. Install dependencies:
 
    ```sh
-   npm install
+   pnpm install
    ```
 
 3. Start the development watcher:
 
    ```sh
-   npm run dev
+   pnpm dev
    ```
 
 4. Press `F5` in VS Code to launch the Extension Development Host.
@@ -49,8 +49,8 @@ src/
     └── ...
 ```
 
-- **Extension** is bundled with esbuild (`npm run build:extension`)
-- **Webview** is bundled with Vite (`npm run build:webview`)
+- **Extension** is bundled with esbuild (`pnpm run build:extension`)
+- **Webview** is bundled with Vite (`pnpm run build:webview`)
 
 ## Development
 
@@ -58,17 +58,17 @@ src/
 
 | Command | Description |
 |---|---|
-| `npm run dev` | Watch mode for both extension and webview |
-| `npm run build` | Production build |
-| `npm run lint` | Run ESLint |
-| `npm run typecheck` | Run TypeScript type checking |
-| `npm run package` | Package the extension as a `.vsix` |
+| `pnpm dev` | Watch mode for both extension and webview |
+| `pnpm build` | Production build |
+| `pnpm lint` | Run ESLint |
+| `pnpm typecheck` | Run TypeScript type checking |
+| `pnpm package` | Package the extension as a `.vsix` |
 
 ### Code Style
 
 - **Prettier** is configured — single quotes, no semicolons, 100 char line width
 - **2-space indentation**, UTF-8, LF line endings
-- Run `npm run lint` before submitting a PR
+- Run `pnpm lint` before submitting a PR
 
 ## Submitting Changes
 
@@ -81,9 +81,9 @@ src/
 2. Make your changes and verify they work:
 
    ```sh
-   npm run lint
-   npm run typecheck
-   npm run build
+   pnpm lint
+   pnpm typecheck
+   pnpm build
    ```
 
 3. Commit your changes with a clear message:
