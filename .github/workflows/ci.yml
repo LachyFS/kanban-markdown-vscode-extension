@@ -7,7 +7,18 @@ on:
     branches: [main]
 
 jobs:
+  package-manager-guard:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify pnpm-only lockfiles
+        uses: ./.github/actions/package-manager-guard
+
   test:
+    needs: package-manager-guard
     runs-on: ubuntu-latest
 
     steps:
@@ -22,7 +33,6 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
           run_install: false
 
       - name: Get pnpm store directory
@@ -80,7 +90,6 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
           run_install: false
 
       - name: Get pnpm store directory

@@ -1,8 +1,8 @@
-#!/usr/bin/env npx tsx
+#!/usr/bin/env -S pnpm exec tsx
 
 /**
  * Verifies that all locale bundle files have the same keys as the English bundle.
- * Usage: npx tsx scripts/check-l10n.ts
+ * Usage: pnpm exec tsx scripts/check-l10n.ts
  */
 
 import fs from 'fs'
