@@ -913,13 +913,13 @@ export class KanbanPanel {
       }
       case 'codex': {
         const approvalMap: Record<string, string> = {
-          'default': 'suggest',
-          'plan': 'suggest',
-          'acceptEdits': 'auto-edit',
+          'default': 'ask',
+          'plan': 'ask',
+          'acceptEdits': 'auto',
           'bypassPermissions': 'full-auto'
         }
         const approvalMode = approvalMap[selectedPermissionMode] || 'suggest'
-        args = ['--approval-mode', approvalMode, prompt]
+        args = ['--ask-for-approval', approvalMode, prompt]
         break
       }
       case 'copilot': {
