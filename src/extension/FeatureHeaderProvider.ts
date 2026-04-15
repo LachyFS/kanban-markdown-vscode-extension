@@ -130,13 +130,13 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
             }
             case 'codex': {
               const approvalMap: Record<string, string> = {
-                'default': 'suggest',
-                'plan': 'suggest',
-                'acceptEdits': 'auto-edit',
+                'default': 'ask',
+                'plan': 'ask',
+                'acceptEdits': 'auto',
                 'bypassPermissions': 'full-auto'
               }
               const approvalMode = approvalMap[permissionMode] || 'suggest'
-              args = ['--approval-mode', approvalMode, prompt]
+              args = ['--ask-for-approval', approvalMode, prompt]
               break
             }
             case 'opencode': {
