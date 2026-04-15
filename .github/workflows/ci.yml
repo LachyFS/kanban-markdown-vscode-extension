@@ -7,7 +7,18 @@ on:
     branches: [main]
 
 jobs:
+  package-manager-guard:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify pnpm-only lockfiles
+        uses: ./.github/actions/package-manager-guard
+
   test:
+    needs: package-manager-guard
     runs-on: ubuntu-latest
 
     steps:

@@ -1,0 +1,16 @@
+name: Package Manager Guard
+description: Fails if non-pnpm lockfiles are committed to the repository
+
+runs:
+  using: composite
+  steps:
+    - name: Verify pnpm-only lockfiles
+      shell: bash
+      run: |
+        forbidden_lockfiles="$(git ls-files | grep -E '(^|/)(package-lock\.json|npm-shrinkwrap\.json|yarn\.lock|bun\.lockb?)$' || true)"
+
+        if [[ -n "$forbidden_lockfiles" ]]; then
+          echo "The repository must use pnpm only. Remove these lockfiles:"
+          echo "$forbidden_lockfiles"
+          exit 1
+        fi
