@@ -18,6 +18,7 @@ function makeFeature(overrides: Partial<Feature> = {}): Feature {
     status: 'todo',
     priority: 'medium',
     assignee: null,
+    epic: null,
     dueDate: null,
     created: '2026-01-01T00:00:00.000Z',
     modified: '2026-01-01T00:00:00.000Z',
@@ -250,5 +251,31 @@ describe('getUniqueLabels', () => {
     useStore.getState().addFeature(makeFeature({ id: '1', labels: ['bug', 'frontend'] }))
     useStore.getState().addFeature(makeFeature({ id: '2', labels: ['frontend', 'ux'] }))
     expect(useStore.getState().getUniqueLabels()).toEqual(['bug', 'frontend', 'ux'])
+  })
+})
+
+describe('getUniqueEpics', () => {
+  it('returns sorted unique epics, ignoring null and empty', () => {
+    useStore.getState().addFeature(makeFeature({ id: '1', epic: 'Beta' }))
+    useStore.getState().addFeature(makeFeature({ id: '2', epic: 'Alpha' }))
+    useStore.getState().addFeature(makeFeature({ id: '3', epic: 'Alpha' }))
+    useStore.getState().addFeature(makeFeature({ id: '4', epic: null }))
+    expect(useStore.getState().getUniqueEpics()).toEqual(['Alpha', 'Beta'])
+  })
+})
+
+describe('epic lane filtering', () => {
+  it('getFilteredFeaturesByStatus respects named epic lane', () => {
+    useStore.getState().addFeature(makeFeature({ id: 'a', status: 'todo', epic: 'One' }))
+    useStore.getState().addFeature(makeFeature({ id: 'b', status: 'todo', epic: 'Two' }))
+    const lane = useStore.getState().getFilteredFeaturesByStatus('todo', 'One')
+    expect(lane.map(f => f.id)).toEqual(['a'])
+  })
+
+  it('getFilteredFeaturesByStatus with null lane matches tickets without epic', () => {
+    useStore.getState().addFeature(makeFeature({ id: 'a', status: 'todo', epic: 'One' }))
+    useStore.getState().addFeature(makeFeature({ id: 'b', status: 'todo', epic: null }))
+    const lane = useStore.getState().getFilteredFeaturesByStatus('todo', null)
+    expect(lane.map(f => f.id)).toEqual(['b'])
   })
 })

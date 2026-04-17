@@ -2,11 +2,12 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { generateKeyBetween } from 'fractional-indexing'
 import { useStore } from './store'
 import { KanbanBoard } from './components/KanbanBoard'
+import { KanbanEpicBoard } from './components/KanbanEpicBoard'
 import { CreateFeatureDialog } from './components/CreateFeatureDialog'
 import { FeatureEditor } from './components/FeatureEditor'
 import { Toolbar } from './components/Toolbar'
 import { UndoToast } from './components/UndoToast'
-import type { Feature, FeatureStatus, Priority, ExtensionMessage, FeatureFrontmatter, AIAgent, AIPermissionMode } from '../shared/types'
+import type { Feature, FeatureStatus, Priority, ExtensionMessage, FeatureFrontmatter, AIAgent, AIPermissionMode, BoardViewMode } from '../shared/types'
 import { getTitleFromContent } from '../shared/types'
 import { vscode } from './vscodeApi'
 import { initLocale, t } from './lib/i18n'
@@ -20,6 +21,9 @@ function App(): React.JSX.Element {
     setIsDarkMode,
     setCardSettings,
     setCollapsedColumns,
+    setCollapsedEpics,
+    boardViewMode,
+    setBoardViewMode,
     setLocale
   } = useStore()
 
@@ -202,6 +206,8 @@ function App(): React.JSX.Element {
           setFeatures(message.features)
           setColumns(message.columns)
           setCollapsedColumns(message.collapsedColumns ?? [])
+          setCollapsedEpics(message.collapsedEpics ?? [])
+          setBoardViewMode((message.boardViewMode ?? 'standard') as BoardViewMode)
           if (message.settings) {
             if (message.settings.markdownEditorMode && editingFeatureRef.current) {
               setEditingFeature(null)
@@ -237,7 +243,7 @@ function App(): React.JSX.Element {
     vscode.postMessage({ type: 'ready' })
 
     return () => window.removeEventListener('message', handleMessage)
-  }, [setFeatures, setColumns, setCardSettings, setCollapsedColumns, setLocale])
+  }, [setFeatures, setColumns, setCardSettings, setCollapsedColumns, setCollapsedEpics, setBoardViewMode, setLocale])
 
   const handleFeatureClick = (feature: Feature): void => {
     // Request feature content for inline editing
@@ -285,6 +291,10 @@ function App(): React.JSX.Element {
     status: FeatureStatus
     priority: Priority
     content: string
+    assignee: string | null
+    epic: string | null
+    dueDate: string | null
+    labels: string[]
   }): void => {
     vscode.postMessage({
       type: 'createFeature',
@@ -339,14 +349,29 @@ function App(): React.JSX.Element {
 
   return (
     <div className="h-full w-full flex flex-col bg-[var(--vscode-editor-background)]">
-      <Toolbar onOpenSettings={() => vscode.postMessage({ type: 'openSettings' })} />
+      <Toolbar
+        onOpenSettings={() => vscode.postMessage({ type: 'openSettings' })}
+        boardViewMode={boardViewMode}
+        onBoardViewModeChange={(mode) => {
+          setBoardViewMode(mode)
+          vscode.postMessage({ type: 'setBoardViewMode', mode })
+        }}
+      />
       <div className="flex-1 flex overflow-hidden">
         <div className={editingFeature ? 'w-1/2' : 'w-full'}>
-          <KanbanBoard
-            onFeatureClick={handleFeatureClick}
-            onAddFeature={handleAddFeatureInColumn}
-            onMoveFeature={handleMoveFeature}
-          />
+          {boardViewMode === 'epic' ? (
+            <KanbanEpicBoard
+              onFeatureClick={handleFeatureClick}
+              onAddFeature={handleAddFeatureInColumn}
+              onMoveFeature={handleMoveFeature}
+            />
+          ) : (
+            <KanbanBoard
+              onFeatureClick={handleFeatureClick}
+              onAddFeature={handleAddFeatureInColumn}
+              onMoveFeature={handleMoveFeature}
+            />
+          )}
         </div>
         {editingFeature && (
           <div className="w-1/2">

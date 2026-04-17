@@ -1,6 +1,6 @@
-import { Search, X, Columns, Rows, Settings, Tags } from 'lucide-react'
+import { Search, X, Columns, Rows, Settings, Tags, Layers } from 'lucide-react'
 import { useStore, type DueDateFilter } from '../store'
-import type { Priority } from '../../shared/types'
+import type { BoardViewMode, Priority } from '../../shared/types'
 import { useState } from 'react'
 import { LabelManager } from './LabelManager'
 import { t } from '../lib/i18n'
@@ -28,7 +28,15 @@ function getDueDateOptions(): { value: DueDateFilter; label: string }[] {
 const selectClassName =
   'text-sm bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-600 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100'
 
-export function Toolbar({ onOpenSettings }: { onOpenSettings: () => void }) {
+export function Toolbar({
+  onOpenSettings,
+  boardViewMode,
+  onBoardViewModeChange
+}: {
+  onOpenSettings: () => void
+  boardViewMode: BoardViewMode
+  onBoardViewModeChange: (mode: BoardViewMode) => void
+}) {
   const {
     searchQuery,
     setSearchQuery,
@@ -163,6 +171,19 @@ export function Toolbar({ onOpenSettings }: { onOpenSettings: () => void }) {
         {layout === 'horizontal' ? <Rows size={16} /> : <Columns size={16} />}
       </button>
 
+      {/* Board: standard columns vs epic swim lanes */}
+      <button
+        type="button"
+        onClick={() => onBoardViewModeChange(boardViewMode === 'standard' ? 'epic' : 'standard')}
+        className={`flex items-center gap-1 px-2 py-1.5 text-sm rounded-md transition-colors ${
+          boardViewMode === 'epic'
+            ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40'
+            : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+        }`}
+        title={boardViewMode === 'standard' ? t('toolbar.epicBoardView') : t('toolbar.standardBoardView')}
+      >
+        <Layers size={16} />
+      </button>
 
       {/* Manage Labels */}
       {cardSettings.showLabels && labels.length > 0 && (

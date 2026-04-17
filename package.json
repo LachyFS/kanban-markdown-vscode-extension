@@ -242,6 +242,11 @@
           "default": true,
           "description": "%config.showLabels.description%"
         },
+        "kanban-markdown.showEpic": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.showEpic.description%"
+        },
         "kanban-markdown.showBuildWithAI": {
           "type": "boolean",
           "default": true,

@@ -66,6 +66,7 @@ function makeFeature(overrides: Partial<Feature> = {}): Feature {
     status: 'todo',
     priority: 'high',
     assignee: 'alice',
+    epic: null,
     dueDate: '2026-06-01',
     created: '2026-01-15T10:00:00.000Z',
     modified: '2026-01-15T10:00:00.000Z',

@@ -84,6 +84,7 @@ async function createFeatureFromPrompts(): Promise<void> {
     status,
     priority,
     assignee: null,
+    epic: null,
     dueDate: null,
     created: now,
     modified: now,

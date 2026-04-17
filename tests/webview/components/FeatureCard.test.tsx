@@ -24,6 +24,7 @@ const defaultSettings: CardDisplaySettings = {
   showAssignee: true,
   showDueDate: true,
   showLabels: true,
+  showEpic: true,
   showBuildWithAI: true,
   showFileName: false,
   compactMode: false,
@@ -42,6 +43,7 @@ function makeFeature(overrides: Partial<Feature> = {}): Feature {
     status: 'todo',
     priority: 'high',
     assignee: 'lucio',
+    epic: null,
     dueDate: null,
     created: '2026-01-01T00:00:00.000Z',
     modified: '2026-01-01T00:00:00.000Z',
@@ -132,6 +134,24 @@ describe('FeatureCard — labels', () => {
     expect(screen.getByText('c')).toBeInTheDocument()
     expect(screen.queryByText('d')).not.toBeInTheDocument()
     expect(screen.getByText('+1')).toBeInTheDocument()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Epic
+// ---------------------------------------------------------------------------
+
+describe('FeatureCard — epic', () => {
+  it('shows epic name when showEpic is true', () => {
+    setSettings({ showEpic: true })
+    render(<FeatureCard feature={makeFeature({ epic: 'Payments' })} onClick={() => {}} />)
+    expect(screen.getByText('Payments')).toBeInTheDocument()
+  })
+
+  it('hides epic when showEpic is false', () => {
+    setSettings({ showEpic: false })
+    render(<FeatureCard feature={makeFeature({ epic: 'Payments' })} onClick={() => {}} />)
+    expect(screen.queryByText('Payments')).not.toBeInTheDocument()
   })
 })
 

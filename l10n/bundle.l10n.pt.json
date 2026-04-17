@@ -27,6 +27,7 @@
   "property.assignee": "Responsável",
   "property.dueDate": "Data limite",
   "property.labels": "Etiquetas",
+  "property.epic": "Épico",
 
   "editor.buildWithAI": "Construir com IA",
   "editor.delete": "ELIMINAR",
@@ -39,6 +40,7 @@
   "editor.startWriting": "Comece a escrever...",
   "editor.addLabels": "Adicionar etiquetas...",
   "editor.noAssignee": "Sem responsável",
+  "editor.noEpic": "Sem épico",
 
   "create.title": "Criar funcionalidade",
   "create.featureTitle": "Título da funcionalidade...",
@@ -62,6 +64,8 @@
   "toolbar.clear": "Limpar",
   "toolbar.switchToVertical": "Mudar para disposição vertical",
   "toolbar.switchToHorizontal": "Mudar para disposição horizontal",
+  "toolbar.epicBoardView": "Faixas por épico — agrupar cartões por épico",
+  "toolbar.standardBoardView": "Quadro padrão — todos os cartões em colunas",
   "toolbar.manageLabels": "Gerir etiquetas",
   "toolbar.openSettings": "Abrir definições",
   "toolbar.pressKeyToAdd": "Prima {key} para adicionar",
@@ -106,6 +110,9 @@
   "column.moveAllCards": "Mover todos os cartões desta lista",
   "column.archiveAllCards": "Arquivar todos os cartões desta lista",
   "column.noFeatures": "Sem funcionalidades",
+
+  "epic.noEpic": "Sem épico",
+  "epic.emptyHint": "Atribua um épico a um cartão para ver faixas aqui.",
 
   "labels.manage": "Gerir etiquetas",
   "labels.confirmRename": "Confirmar renomeação",

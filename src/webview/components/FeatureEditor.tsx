@@ -3,12 +3,33 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Markdown } from 'tiptap-markdown'
-import { X, User, ChevronDown, Wand2, Tag, Plus, Check, CircleDot, Signal, Calendar, Trash2, FileText } from 'lucide-react'
-import type { FeatureFrontmatter, Priority, FeatureStatus, AIAgent, AIPermissionMode } from '../../shared/types'
+import {
+  X,
+  User,
+  ChevronDown,
+  Wand2,
+  Tag,
+  Plus,
+  Check,
+  CircleDot,
+  Signal,
+  Calendar,
+  Trash2,
+  FileText,
+  Layers
+} from 'lucide-react'
+import type {
+  FeatureFrontmatter,
+  Priority,
+  FeatureStatus,
+  AIAgent,
+  AIPermissionMode
+} from '../../shared/types'
 import { cn } from '../lib/utils'
 import { t } from '../lib/i18n'
 import { useStore } from '../store'
 import { AssigneeInput } from './AssigneeInput'
+import { EpicInput } from './EpicInput'
 
 interface MarkdownStorage {
   markdown: { getMarkdown: () => string }
@@ -56,7 +77,7 @@ const priorityDots: Record<Priority, string> = {
   critical: 'bg-red-500',
   high: 'bg-orange-500',
   medium: 'bg-yellow-500',
-  low: 'bg-green-500',
+  low: 'bg-green-500'
 }
 
 const statusDots: Record<FeatureStatus, string> = {
@@ -64,19 +85,42 @@ const statusDots: Record<FeatureStatus, string> = {
   todo: 'bg-blue-400',
   'in-progress': 'bg-amber-400',
   review: 'bg-purple-400',
-  done: 'bg-emerald-400',
+  done: 'bg-emerald-400'
 }
 
 function getAiAgentTabs(): { agent: AIAgent; label: string; color: string; activeColor: string }[] {
   return [
-    { agent: 'claude', label: t('ai.claude'), color: 'hover:bg-amber-100 dark:hover:bg-amber-900/30', activeColor: 'bg-amber-700 text-white' },
-    { agent: 'codex', label: t('ai.codex'), color: 'hover:bg-emerald-100 dark:hover:bg-emerald-900/30', activeColor: 'bg-emerald-500 text-white' },
-    { agent: 'copilot', label: t('ai.copilot'), color: 'hover:bg-sky-100 dark:hover:bg-sky-900/30', activeColor: 'bg-sky-600 text-white' },
-    { agent: 'opencode', label: t('ai.opencode'), color: 'hover:bg-slate-100 dark:hover:bg-slate-700/30', activeColor: 'bg-slate-500 text-white' },
+    {
+      agent: 'claude',
+      label: t('ai.claude'),
+      color: 'hover:bg-amber-100 dark:hover:bg-amber-900/30',
+      activeColor: 'bg-amber-700 text-white'
+    },
+    {
+      agent: 'codex',
+      label: t('ai.codex'),
+      color: 'hover:bg-emerald-100 dark:hover:bg-emerald-900/30',
+      activeColor: 'bg-emerald-500 text-white'
+    },
+    {
+      agent: 'copilot',
+      label: t('ai.copilot'),
+      color: 'hover:bg-sky-100 dark:hover:bg-sky-900/30',
+      activeColor: 'bg-sky-600 text-white'
+    },
+    {
+      agent: 'opencode',
+      label: t('ai.opencode'),
+      color: 'hover:bg-slate-100 dark:hover:bg-slate-700/30',
+      activeColor: 'bg-slate-500 text-white'
+    }
   ]
 }
 
-const agentButtonColors: Record<AIAgent, { bg: string; hover: string; shadow: string; border: string }> = {
+const agentButtonColors: Record<
+  AIAgent,
+  { bg: string; hover: string; shadow: string; border: string }
+> = {
   claude: {
     bg: 'bg-amber-700',
     hover: 'hover:bg-amber-800',
@@ -100,28 +144,67 @@ const agentButtonColors: Record<AIAgent, { bg: string; hover: string; shadow: st
     hover: 'hover:bg-slate-700',
     shadow: 'shadow-sm',
     border: 'border border-slate-700/50'
-  },
+  }
 }
 
-function getAiModesByAgent(): Record<AIAgent, { permissionMode: AIPermissionMode; label: string; description: string }[]> {
+function getAiModesByAgent(): Record<
+  AIAgent,
+  { permissionMode: AIPermissionMode; label: string; description: string }[]
+> {
   return {
     claude: [
-      { permissionMode: 'default', label: t('ai.mode.default'), description: t('ai.mode.claude.default.description') },
-      { permissionMode: 'plan', label: t('ai.mode.plan'), description: t('ai.mode.claude.plan.description') },
-      { permissionMode: 'acceptEdits', label: t('ai.mode.autoEdit'), description: t('ai.mode.claude.autoEdit.description') },
-      { permissionMode: 'bypassPermissions', label: t('ai.mode.fullAuto'), description: t('ai.mode.claude.fullAuto.description') },
+      {
+        permissionMode: 'default',
+        label: t('ai.mode.default'),
+        description: t('ai.mode.claude.default.description')
+      },
+      {
+        permissionMode: 'plan',
+        label: t('ai.mode.plan'),
+        description: t('ai.mode.claude.plan.description')
+      },
+      {
+        permissionMode: 'acceptEdits',
+        label: t('ai.mode.autoEdit'),
+        description: t('ai.mode.claude.autoEdit.description')
+      },
+      {
+        permissionMode: 'bypassPermissions',
+        label: t('ai.mode.fullAuto'),
+        description: t('ai.mode.claude.fullAuto.description')
+      }
     ],
     codex: [
-      { permissionMode: 'default', label: t('ai.mode.suggest'), description: t('ai.mode.codex.suggest.description') },
-      { permissionMode: 'acceptEdits', label: t('ai.mode.autoEdit'), description: t('ai.mode.codex.autoEdit.description') },
-      { permissionMode: 'bypassPermissions', label: t('ai.mode.fullAuto'), description: t('ai.mode.codex.fullAuto.description') },
+      {
+        permissionMode: 'default',
+        label: t('ai.mode.suggest'),
+        description: t('ai.mode.codex.suggest.description')
+      },
+      {
+        permissionMode: 'acceptEdits',
+        label: t('ai.mode.autoEdit'),
+        description: t('ai.mode.codex.autoEdit.description')
+      },
+      {
+        permissionMode: 'bypassPermissions',
+        label: t('ai.mode.fullAuto'),
+        description: t('ai.mode.codex.fullAuto.description')
+      }
     ],
     copilot: [
-      { permissionMode: 'default', label: t('ai.mode.default'), description: t('ai.mode.copilot.default.description') },
+      {
+        permissionMode: 'default',
+        label: t('ai.mode.default'),
+        description: t('ai.mode.copilot.default.description')
+      }
     ],
     opencode: [
-      { permissionMode: 'default', label: t('ai.mode.default'), description: t('ai.mode.opencode.default.description') },
-    ],
+      {
+        permissionMode: 'default',
+        label: t('ai.mode.default'),
+        description: t('ai.mode.opencode.default.description')
+      }
+    ]
   }
 }
 
@@ -134,7 +217,7 @@ interface DropdownProps {
 
 function Dropdown({ value, options, onChange, className }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const current = options.find(o => o.value === value)
+  const current = options.find((o) => o.value === value)
 
   return (
     <div className={cn('relative', className)}>
@@ -145,7 +228,11 @@ function Dropdown({ value, options, onChange, className }: DropdownProps) {
       >
         {current?.dot && <span className={cn('w-2 h-2 rounded-full shrink-0', current.dot)} />}
         <span>{current?.label}</span>
-        <ChevronDown size={12} style={{ color: 'var(--vscode-descriptionForeground)' }} className="ml-0.5" />
+        <ChevronDown
+          size={12}
+          style={{ color: 'var(--vscode-descriptionForeground)' }}
+          className="ml-0.5"
+        />
       </button>
       {isOpen && (
         <>
@@ -154,10 +241,10 @@ function Dropdown({ value, options, onChange, className }: DropdownProps) {
             className="absolute top-full left-0 mt-1 z-20 rounded-lg shadow-lg py-1 min-w-[140px]"
             style={{
               background: 'var(--vscode-dropdown-background)',
-              border: '1px solid var(--vscode-dropdown-border, var(--vscode-panel-border))',
+              border: '1px solid var(--vscode-dropdown-border, var(--vscode-panel-border))'
             }}
           >
-            {options.map(option => (
+            {options.map((option) => (
               <button
                 key={option.value}
                 onClick={() => {
@@ -167,18 +254,28 @@ function Dropdown({ value, options, onChange, className }: DropdownProps) {
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors"
                 style={{
                   color: 'var(--vscode-dropdown-foreground)',
-                  background: option.value === value ? 'var(--vscode-list-activeSelectionBackground)' : undefined,
+                  background:
+                    option.value === value
+                      ? 'var(--vscode-list-activeSelectionBackground)'
+                      : undefined
                 }}
-                onMouseEnter={e => {
-                  if (option.value !== value) e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'
+                onMouseEnter={(e) => {
+                  if (option.value !== value)
+                    e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'
                 }}
-                onMouseLeave={e => {
+                onMouseLeave={(e) => {
                   if (option.value !== value) e.currentTarget.style.background = 'transparent'
                 }}
               >
                 {option.dot && <span className={cn('w-2 h-2 rounded-full shrink-0', option.dot)} />}
                 <span className="flex-1 text-left">{option.label}</span>
-                {option.value === value && <Check size={12} style={{ color: 'var(--vscode-focusBorder)' }} className="shrink-0" />}
+                {option.value === value && (
+                  <Check
+                    size={12}
+                    style={{ color: 'var(--vscode-focusBorder)' }}
+                    className="shrink-0"
+                  />
+                )}
               </button>
             ))}
           </div>
@@ -188,18 +285,24 @@ function Dropdown({ value, options, onChange, className }: DropdownProps) {
   )
 }
 
-function PropertyRow({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
+function PropertyRow({
+  label,
+  icon,
+  children
+}: {
+  label: string
+  icon: React.ReactNode
+  children: React.ReactNode
+}) {
   return (
-    <div
-      className="flex items-center gap-3 px-4 py-[5px] transition-colors vscode-hover-bg"
-    >
+    <div className="flex items-center gap-3 px-4 py-[5px] transition-colors vscode-hover-bg">
       <div className="flex items-center gap-2 w-[90px] shrink-0">
         <span style={{ color: 'var(--vscode-descriptionForeground)' }}>{icon}</span>
-        <span className="text-[11px]" style={{ color: 'var(--vscode-descriptionForeground)' }}>{label}</span>
+        <span className="text-[11px]" style={{ color: 'var(--vscode-descriptionForeground)' }}>
+          {label}
+        </span>
       </div>
-      <div className="flex-1 min-w-0">
-        {children}
-      </div>
+      <div className="flex-1 min-w-0">{children}</div>
     </div>
   )
 }
@@ -232,7 +335,10 @@ function AIDropdown({ onSelect }: AIDropdownProps) {
         <Wand2 size={13} />
         <span>{t('editor.buildWithAI')}</span>
         <kbd className="ml-0.5 text-[9px] opacity-60 font-mono">⌘B</kbd>
-        <ChevronDown size={11} className={cn('ml-0.5 opacity-60 transition-transform', isOpen && 'rotate-180')} />
+        <ChevronDown
+          size={11}
+          className={cn('ml-0.5 opacity-60 transition-transform', isOpen && 'rotate-180')}
+        />
       </button>
       {isOpen && (
         <>
@@ -266,8 +372,12 @@ function AIDropdown({ onSelect }: AIDropdownProps) {
                   }}
                   className="w-full text-left px-3 py-2.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-700/50 transition-colors"
                 >
-                  <div className="text-xs font-medium text-zinc-900 dark:text-zinc-100">{mode.label}</div>
-                  <div className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">{mode.description}</div>
+                  <div className="text-xs font-medium text-zinc-900 dark:text-zinc-100">
+                    {mode.label}
+                  </div>
+                  <div className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                    {mode.description}
+                  </div>
                 </button>
               ))}
             </div>
@@ -278,22 +388,28 @@ function AIDropdown({ onSelect }: AIDropdownProps) {
   )
 }
 
-function LabelEditor({ labels, onChange }: { labels: string[]; onChange: (labels: string[]) => void }) {
+function LabelEditor({
+  labels,
+  onChange
+}: {
+  labels: string[]
+  onChange: (labels: string[]) => void
+}) {
   const [newLabel, setNewLabel] = useState('')
   const [isFocused, setIsFocused] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-  const features = useStore(s => s.features)
+  const features = useStore((s) => s.features)
 
   const existingLabels = useMemo(() => {
     const labelSet = new Set<string>()
-    features.forEach(f => f.labels.forEach(l => labelSet.add(l)))
+    features.forEach((f) => f.labels.forEach((l) => labelSet.add(l)))
     return Array.from(labelSet).sort()
   }, [features])
 
   const suggestions = useMemo(() => {
-    const available = existingLabels.filter(l => !labels.includes(l))
+    const available = existingLabels.filter((l) => !labels.includes(l))
     if (!newLabel.trim()) return available
-    return available.filter(l => l.toLowerCase().includes(newLabel.toLowerCase()))
+    return available.filter((l) => l.toLowerCase().includes(newLabel.toLowerCase()))
   }, [newLabel, existingLabels, labels])
 
   const showSuggestions = isFocused && suggestions.length > 0
@@ -307,18 +423,18 @@ function LabelEditor({ labels, onChange }: { labels: string[]; onChange: (labels
   }
 
   const removeLabel = (label: string) => {
-    onChange(labels.filter(l => l !== label))
+    onChange(labels.filter((l) => l !== label))
   }
 
   return (
     <div className="relative flex items-center gap-1.5 flex-wrap">
-      {labels.map(label => (
+      {labels.map((label) => (
         <span
           key={label}
           className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded"
           style={{
             background: 'var(--vscode-badge-background)',
-            color: 'var(--vscode-badge-foreground)',
+            color: 'var(--vscode-badge-foreground)'
           }}
         >
           {label}
@@ -331,7 +447,10 @@ function LabelEditor({ labels, onChange }: { labels: string[]; onChange: (labels
         </span>
       ))}
       <button
-        onClick={() => { setIsFocused(true); setTimeout(() => inputRef.current?.focus(), 0) }}
+        onClick={() => {
+          setIsFocused(true)
+          setTimeout(() => inputRef.current?.focus(), 0)
+        }}
         className="inline-flex items-center gap-0.5 px-1 py-0.5 text-[10px] rounded transition-colors vscode-hover-bg"
         style={{ color: 'var(--vscode-descriptionForeground)' }}
       >
@@ -345,41 +464,57 @@ function LabelEditor({ labels, onChange }: { labels: string[]; onChange: (labels
         onFocus={() => setIsFocused(true)}
         onBlur={() => setTimeout(() => setIsFocused(false), 150)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') { e.preventDefault(); addLabel() }
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            addLabel()
+          }
           if (e.key === 'Backspace' && !newLabel && labels.length > 0) {
             onChange(labels.slice(0, -1))
           }
-          if (e.key === 'Escape') { setNewLabel(''); inputRef.current?.blur() }
+          if (e.key === 'Escape') {
+            setNewLabel('')
+            inputRef.current?.blur()
+          }
         }}
         placeholder={labels.length === 0 ? t('editor.addLabels') : ''}
         className="flex-1 min-w-[60px] bg-transparent border-none outline-none text-xs"
-        style={{ color: 'var(--vscode-foreground)', display: isFocused || newLabel ? 'block' : 'none' }}
+        style={{
+          color: 'var(--vscode-foreground)',
+          display: isFocused || newLabel ? 'block' : 'none'
+        }}
       />
       {showSuggestions && (
         <div
           className="absolute top-full left-0 mt-1 z-20 rounded-lg shadow-lg py-1 max-h-[160px] overflow-auto min-w-[180px]"
           style={{
             background: 'var(--vscode-dropdown-background)',
-            border: '1px solid var(--vscode-dropdown-border, var(--vscode-panel-border))',
+            border: '1px solid var(--vscode-dropdown-border, var(--vscode-panel-border))'
           }}
         >
-          {suggestions.map(label => (
+          {suggestions.map((label) => (
             <button
               key={label}
               type="button"
-              onMouseDown={(e) => { e.preventDefault(); addLabel(label) }}
+              onMouseDown={(e) => {
+                e.preventDefault()
+                addLabel(label)
+              }}
               className="w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors"
               style={{ color: 'var(--vscode-dropdown-foreground)' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = 'var(--vscode-list-hoverBackground)')
+              }
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
               <span
                 className="inline-block px-1.5 py-0.5 text-[10px] font-medium rounded"
                 style={{
                   background: 'var(--vscode-badge-background)',
-                  color: 'var(--vscode-badge-foreground)',
+                  color: 'var(--vscode-badge-foreground)'
                 }}
-              >{label}</span>
+              >
+                {label}
+              </span>
             </button>
           ))}
         </div>
@@ -388,7 +523,17 @@ function LabelEditor({ labels, onChange }: { labels: string[]; onChange: (labels
   )
 }
 
-export function FeatureEditor({ featureId, content, frontmatter, contentVersion, onSave, onClose, onDelete, onOpenFile, onStartWithAI }: FeatureEditorProps) {
+export function FeatureEditor({
+  featureId,
+  content,
+  frontmatter,
+  contentVersion,
+  onSave,
+  onClose,
+  onDelete,
+  onOpenFile,
+  onStartWithAI
+}: FeatureEditorProps) {
   const { cardSettings } = useStore()
   const [currentFrontmatter, setCurrentFrontmatter] = useState(frontmatter)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
@@ -440,7 +585,9 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
       isInitialLoad.current = true
       editor.commands.setContent(content)
       // Allow a tick for the onUpdate from setContent to fire, then re-enable
-      requestAnimationFrame(() => { isInitialLoad.current = false })
+      requestAnimationFrame(() => {
+        isInitialLoad.current = false
+      })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor, featureId, contentVersion])
@@ -450,19 +597,22 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
     setCurrentFrontmatter(frontmatter)
   }, [frontmatter])
 
-  const handleFrontmatterUpdate = useCallback((updates: Partial<FeatureFrontmatter>) => {
-    setCurrentFrontmatter(prev => {
-      const next = { ...prev, ...updates }
-      // Schedule a save with the updated frontmatter
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-      debounceRef.current = setTimeout(() => {
-        if (!editor) return
-        const markdown = getMarkdown(editor)
-        onSave(markdown, next)
-      }, 800)
-      return next
-    })
-  }, [editor, onSave])
+  const handleFrontmatterUpdate = useCallback(
+    (updates: Partial<FeatureFrontmatter>) => {
+      setCurrentFrontmatter((prev) => {
+        const next = { ...prev, ...updates }
+        // Schedule a save with the updated frontmatter
+        if (debounceRef.current) clearTimeout(debounceRef.current)
+        debounceRef.current = setTimeout(() => {
+          if (!editor) return
+          const markdown = getMarkdown(editor)
+          onSave(markdown, next)
+        }, 800)
+        return next
+      })
+    },
+    [editor, onSave]
+  )
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -495,7 +645,7 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
       className="h-full flex flex-col"
       style={{
         background: 'var(--vscode-editor-background)',
-        borderLeft: '1px solid var(--vscode-panel-border)',
+        borderLeft: '1px solid var(--vscode-panel-border)'
       }}
     >
       {/* Header */}
@@ -506,9 +656,14 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
         <div className="flex items-center gap-3">
           {confirmingDelete ? (
             <div className="flex items-center gap-1.5">
-              <span className="text-xs" style={{ color: 'var(--vscode-errorForeground)' }}>{t('editor.deleteConfirm')}</span>
+              <span className="text-xs" style={{ color: 'var(--vscode-errorForeground)' }}>
+                {t('editor.deleteConfirm')}
+              </span>
               <button
-                onClick={() => { setConfirmingDelete(false); onDelete() }}
+                onClick={() => {
+                  setConfirmingDelete(false)
+                  onDelete()
+                }}
                 className="px-2 py-1 text-xs font-medium rounded transition-colors text-white bg-red-600 hover:bg-red-700"
               >
                 {t('editor.deleteYes')}
@@ -524,9 +679,16 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
           ) : (
             <>
               <button
-                onClick={() => { onOpenFile(); onClose(); }}
+                onClick={() => {
+                  onOpenFile()
+                  onClose()
+                }}
                 className="p-1.5 px-2 rounded border transition-colors vscode-hover-bg flex items-center gap-1"
-                style={{ color: 'var(--vscode-descriptionForeground)', borderColor: 'var(--vscode-widget-border, var(--vscode-contrastBorder, rgba(128,128,128,0.35)))' }}
+                style={{
+                  color: 'var(--vscode-descriptionForeground)',
+                  borderColor:
+                    'var(--vscode-widget-border, var(--vscode-contrastBorder, rgba(128,128,128,0.35)))'
+                }}
                 title={t('editor.openMdFile')}
               >
                 <FileText size={16} />
@@ -535,7 +697,11 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
               <button
                 onClick={() => setConfirmingDelete(true)}
                 className="p-1.5 px-2 rounded border transition-colors vscode-hover-bg flex items-center gap-1"
-                style={{ color: 'var(--vscode-descriptionForeground)', borderColor: 'var(--vscode-widget-border, var(--vscode-contrastBorder, rgba(128,128,128,0.35)))' }}
+                style={{
+                  color: 'var(--vscode-descriptionForeground)',
+                  borderColor:
+                    'var(--vscode-widget-border, var(--vscode-contrastBorder, rgba(128,128,128,0.35)))'
+                }}
                 title={t('editor.deleteTicket')}
               >
                 <Trash2 size={16} />
@@ -564,7 +730,11 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
         <PropertyRow label={t('property.status')} icon={<CircleDot size={13} />}>
           <Dropdown
             value={currentFrontmatter.status}
-            options={statuses.map(s => ({ value: s, label: statusLabels[s], dot: statusDots[s] }))}
+            options={statuses.map((s) => ({
+              value: s,
+              label: statusLabels[s],
+              dot: statusDots[s]
+            }))}
             onChange={(v) => handleFrontmatterUpdate({ status: v as FeatureStatus })}
           />
         </PropertyRow>
@@ -572,7 +742,11 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
           <PropertyRow label={t('property.priority')} icon={<Signal size={13} />}>
             <Dropdown
               value={currentFrontmatter.priority}
-              options={priorities.map(p => ({ value: p, label: priorityLabels[p], dot: priorityDots[p] }))}
+              options={priorities.map((p) => ({
+                value: p,
+                label: priorityLabels[p],
+                dot: priorityDots[p]
+              }))}
               onChange={(v) => handleFrontmatterUpdate({ priority: v as Priority })}
             />
           </PropertyRow>
@@ -585,6 +759,14 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
             />
           </PropertyRow>
         )}
+        {cardSettings.showEpic && (
+          <PropertyRow label={t('property.epic')} icon={<Layers size={13} />}>
+            <EpicInput
+              value={currentFrontmatter.epic || ''}
+              onChange={(v) => handleFrontmatterUpdate({ epic: v.trim() ? v.trim() : null })}
+            />
+          </PropertyRow>
+        )}
         {cardSettings.showDueDate && (
           <PropertyRow label={t('property.dueDate')} icon={<Calendar size={13} />}>
             <input
@@ -592,17 +774,21 @@ export function FeatureEditor({ featureId, content, frontmatter, contentVersion,
               value={currentFrontmatter.dueDate || ''}
               onChange={(e) => handleFrontmatterUpdate({ dueDate: e.target.value || null })}
               className="bg-transparent border-none outline-none text-xs"
-              style={{ color: currentFrontmatter.dueDate ? 'var(--vscode-foreground)' : 'var(--vscode-descriptionForeground)' }}
+              style={{
+                color: currentFrontmatter.dueDate
+                  ? 'var(--vscode-foreground)'
+                  : 'var(--vscode-descriptionForeground)'
+              }}
             />
           </PropertyRow>
         )}
         {cardSettings.showLabels && (
-        <PropertyRow label={t('property.labels')} icon={<Tag size={13} />}>
-          <LabelEditor
-            labels={currentFrontmatter.labels}
-            onChange={(labels) => handleFrontmatterUpdate({ labels })}
-          />
-        </PropertyRow>
+          <PropertyRow label={t('property.labels')} icon={<Tag size={13} />}>
+            <LabelEditor
+              labels={currentFrontmatter.labels}
+              onChange={(labels) => handleFrontmatterUpdate({ labels })}
+            />
+          </PropertyRow>
         )}
       </div>
 

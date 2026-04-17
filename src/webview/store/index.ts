@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import type { Feature, FeatureStatus, KanbanColumn, Priority, CardDisplaySettings } from '../../shared/types'
+import type { Feature, FeatureStatus, KanbanColumn, Priority, CardDisplaySettings, BoardViewMode } from '../../shared/types'
+import { featureMatchesEpicLane } from '../../shared/epicLane'
 
 export type DueDateFilter = 'all' | 'overdue' | 'today' | 'this-week' | 'no-date'
 export type LayoutMode = 'horizontal' | 'vertical'
@@ -15,8 +16,10 @@ interface KanbanState {
   labelFilter: string | 'all'
   dueDateFilter: DueDateFilter
   layout: LayoutMode
+  boardViewMode: BoardViewMode
   cardSettings: CardDisplaySettings
   collapsedColumns: Set<string>
+  collapsedEpics: Set<string>
 
   setLocale: (locale: string) => void
   setFeatures: (features: Feature[]) => void
@@ -30,17 +33,21 @@ interface KanbanState {
   setDueDateFilter: (filter: DueDateFilter) => void
   setLayout: (layout: LayoutMode) => void
   toggleLayout: () => void
+  setBoardViewMode: (mode: BoardViewMode) => void
   setCollapsedColumns: (ids: string[]) => void
   toggleColumnCollapsed: (columnId: string) => void
+  setCollapsedEpics: (ids: string[]) => void
+  toggleEpicCollapsed: (epicKey: string) => void
   clearAllFilters: () => void
 
   addFeature: (feature: Feature) => void
   updateFeature: (id: string, updates: Partial<Feature>) => void
   removeFeature: (id: string) => void
-  getFeaturesByStatus: (status: FeatureStatus) => Feature[]
-  getFilteredFeaturesByStatus: (status: FeatureStatus) => Feature[]
+  getFeaturesByStatus: (status: FeatureStatus, epicLane?: string | null) => Feature[]
+  getFilteredFeaturesByStatus: (status: FeatureStatus, epicLane?: string | null) => Feature[]
   getUniqueAssignees: () => string[]
   getUniqueLabels: () => string[]
+  getUniqueEpics: () => string[]
   hasActiveFilters: () => boolean
 }
 
@@ -91,12 +98,15 @@ export const useStore = create<KanbanState>((set, get) => ({
   labelFilter: 'all',
   dueDateFilter: 'all',
   layout: 'horizontal',
+  boardViewMode: 'standard',
   collapsedColumns: new Set<string>(),
+  collapsedEpics: new Set<string>(),
   cardSettings: {
     showPriorityBadges: true,
     showAssignee: true,
     showDueDate: true,
     showLabels: true,
+    showEpic: true,
     showBuildWithAI: true,
     showFileName: false,
     compactMode: false,
@@ -117,6 +127,7 @@ export const useStore = create<KanbanState>((set, get) => ({
   setDueDateFilter: (filter) => set({ dueDateFilter: filter }),
   setLayout: (layout) => set({ layout }),
   toggleLayout: () => set((state) => ({ layout: state.layout === 'horizontal' ? 'vertical' : 'horizontal' })),
+  setBoardViewMode: (mode) => set({ boardViewMode: mode }),
   setCollapsedColumns: (ids) => set({ collapsedColumns: new Set(ids) }),
   toggleColumnCollapsed: (columnId) => set((state) => {
     const next = new Set(state.collapsedColumns)
@@ -126,6 +137,16 @@ export const useStore = create<KanbanState>((set, get) => ({
       next.add(columnId)
     }
     return { collapsedColumns: next }
+  }),
+  setCollapsedEpics: (ids) => set({ collapsedEpics: new Set(ids) }),
+  toggleEpicCollapsed: (epicKey) => set((state) => {
+    const next = new Set(state.collapsedEpics)
+    if (next.has(epicKey)) {
+      next.delete(epicKey)
+    } else {
+      next.add(epicKey)
+    }
+    return { collapsedEpics: next }
   }),
 
   clearAllFilters: () =>
@@ -152,14 +173,14 @@ export const useStore = create<KanbanState>((set, get) => ({
       features: state.features.filter((f) => f.id !== id)
     })),
 
-  getFeaturesByStatus: (status) => {
+  getFeaturesByStatus: (status, epicLane) => {
     const { features } = get()
     return features
-      .filter((f) => f.status === status)
+      .filter((f) => f.status === status && featureMatchesEpicLane(f, epicLane))
       .sort((a, b) => (a.order < b.order ? -1 : a.order > b.order ? 1 : 0))
   },
 
-  getFilteredFeaturesByStatus: (status) => {
+  getFilteredFeaturesByStatus: (status, epicLane) => {
     const {
       features,
       searchQuery,
@@ -172,6 +193,7 @@ export const useStore = create<KanbanState>((set, get) => ({
     return features
       .filter((f) => {
         if (f.status !== status) return false
+        if (!featureMatchesEpicLane(f, epicLane)) return false
 
         // Priority filter
         if (priorityFilter !== 'all' && f.priority !== priorityFilter) return false
@@ -213,6 +235,7 @@ export const useStore = create<KanbanState>((set, get) => ({
             f.content.toLowerCase().includes(query) ||
             f.id.toLowerCase().includes(query) ||
             (f.assignee && f.assignee.toLowerCase().includes(query)) ||
+            (f.epic && f.epic.toLowerCase().includes(query)) ||
             f.labels.some((l) => l.toLowerCase().includes(query))
           )
         }
@@ -238,6 +261,16 @@ export const useStore = create<KanbanState>((set, get) => ({
       f.labels.forEach((l) => labels.add(l))
     })
     return Array.from(labels).sort()
+  },
+
+  getUniqueEpics: () => {
+    const { features } = get()
+    const epics = new Set<string>()
+    features.forEach((f) => {
+      const e = f.epic?.trim()
+      if (e) epics.add(e)
+    })
+    return Array.from(epics).sort()
   },
 
   hasActiveFilters: () => {
