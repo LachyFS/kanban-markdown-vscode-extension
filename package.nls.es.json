@@ -41,6 +41,7 @@
   "config.compactMode.description": "Usar diseño compacto de tarjetas para mostrar más funciones.",
   "config.addNewCardsToTop.description": "Cuando está activado, las nuevas tarjetas se añaden arriba de la columna en lugar de abajo.",
   "config.markdownEditorMode.description": "Abrir archivos de funciones en el editor de texto nativo de VS Code en lugar del editor de texto enriquecido integrado.",
+  "config.hideScrollbar.description": "Ocultar las barras de desplazamiento en el tablero Kanban (el desplazamiento sigue funcionando).",
   "config.language.description": "Idioma para la interfaz de Kanban Markdown. Establece 'auto' para seguir el idioma de VS Code.",
   "config.language.auto": "Seguir el idioma de VS Code",
   "config.language.en": "Inglés (English)",

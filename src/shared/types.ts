@@ -84,6 +84,7 @@ export interface CardDisplaySettings {
   showFileName: boolean
   compactMode: boolean
   markdownEditorMode: boolean
+  hideScrollbar: boolean
   defaultPriority: Priority
   defaultStatus: FeatureStatus
 }

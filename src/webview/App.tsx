@@ -16,6 +16,7 @@ function App(): React.JSX.Element {
 
   const {
     columns,
+    cardSettings,
     setFeatures,
     setColumns,
     setIsDarkMode,
@@ -188,6 +189,11 @@ function App(): React.JSX.Element {
 
     return () => observer.disconnect()
   }, [setIsDarkMode])
+
+  // Toggle scrollbar visibility based on user setting
+  useEffect(() => {
+    document.documentElement.classList.toggle('hide-scrollbar', cardSettings.hideScrollbar)
+  }, [cardSettings.hideScrollbar])
 
   // Listen for messages from extension
   useEffect(() => {

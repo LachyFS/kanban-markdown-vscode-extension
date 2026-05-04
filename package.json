@@ -271,6 +271,11 @@
           "type": "boolean",
           "default": false,
           "description": "%config.markdownEditorMode.description%"
+        },
+        "kanban-markdown.hideScrollbar": {
+          "type": "boolean",
+          "default": false,
+          "description": "%config.hideScrollbar.description%"
         }
       }
     },

@@ -1162,6 +1162,7 @@ export class KanbanPanel {
       showFileName: config.get<boolean>('showFileName', false),
       compactMode: config.get<boolean>('compactMode', false),
       markdownEditorMode: config.get<boolean>('markdownEditorMode', false),
+      hideScrollbar: config.get<boolean>('hideScrollbar', false),
       defaultPriority: config.get<Priority>('defaultPriority', 'medium'),
       defaultStatus: config.get<FeatureStatus>('defaultStatus', 'backlog')
     }

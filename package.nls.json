@@ -41,6 +41,7 @@
   "config.compactMode.description": "Use compact card layout to show more features.",
   "config.addNewCardsToTop.description": "When enabled, new cards are added to the top of the column instead of the bottom.",
   "config.markdownEditorMode.description": "Open feature files in VS Code's native text editor instead of the inline rich-text editor.",
+  "config.hideScrollbar.description": "Hide scrollbars in the Kanban board (scrolling still works).",
   "config.language.description": "Language for the Kanban Markdown UI. Set to 'auto' to follow VS Code's display language.",
   "config.language.auto": "Follow VS Code's display language",
   "config.language.en": "English",

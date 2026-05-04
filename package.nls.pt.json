@@ -41,6 +41,7 @@
   "config.compactMode.description": "Usar disposição compacta de cartões para mostrar mais funcionalidades.",
   "config.addNewCardsToTop.description": "Quando ativado, os novos cartões são adicionados no topo da coluna em vez de no fundo.",
   "config.markdownEditorMode.description": "Abrir ficheiros de funcionalidades no editor de texto nativo do VS Code em vez do editor de texto rico integrado.",
+  "config.hideScrollbar.description": "Ocultar as barras de deslocamento no quadro Kanban (o deslocamento continua a funcionar).",
   "config.language.description": "Idioma para a interface do Kanban Markdown. Defina 'auto' para seguir o idioma do VS Code.",
   "config.language.auto": "Seguir o idioma do VS Code",
   "config.language.en": "Inglês (English)",
