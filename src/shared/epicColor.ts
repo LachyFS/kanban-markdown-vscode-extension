@@ -1,12 +1,4 @@
-/** FNV-1a 32-bit — deterministic hash for epic names */
-function hashEpicName(str: string): number {
-  let h = 2166136261 >>> 0
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i)
-    h = Math.imul(h, 16777619) >>> 0
-  }
-  return h >>> 0
-}
+import { fnv1aHash32, hsl } from './colorUtils'
 
 export interface EpicThemeColors {
   /** Soft pastel for borders / outlines */
@@ -21,7 +13,7 @@ export interface EpicThemeColors {
  */
 export function epicThemeFromName(epicName: string, isDark: boolean): EpicThemeColors {
   const key = epicName.trim()
-  const h = hashEpicName(key)
+  const h = fnv1aHash32(key)
   const hue = h % 360
   const sat = 34 + ((h >>> 8) % 22) // 34–55
 
@@ -30,8 +22,8 @@ export function epicThemeFromName(epicName: string, isDark: boolean): EpicThemeC
     const fgSat = Math.min(55, sat + 14)
     const fgL = 72 + ((h >>> 20) % 12) // 72–83
     return {
-      border: `hsl(${hue}, ${sat}%, ${borderL}%)`,
-      foreground: `hsl(${hue}, ${fgSat}%, ${fgL}%)`
+      border: hsl(hue, sat, borderL),
+      foreground: hsl(hue, fgSat, fgL)
     }
   }
 
@@ -39,7 +31,7 @@ export function epicThemeFromName(epicName: string, isDark: boolean): EpicThemeC
   const fgSat = Math.min(55, sat + 12)
   const fgL = 34 + ((h >>> 20) % 10) // 34–43 — readable on light cards
   return {
-    border: `hsl(${hue}, ${sat}%, ${borderL}%)`,
-    foreground: `hsl(${hue}, ${fgSat}%, ${fgL}%)`
+    border: hsl(hue, sat, borderL),
+    foreground: hsl(hue, fgSat, fgL)
   }
 }

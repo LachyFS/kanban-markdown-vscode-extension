@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo } from 'react'
+import { assigneeThemeFromName } from '../../shared/assigneeColor'
 import { useStore } from '../store'
 import { t } from '../lib/i18n'
 
@@ -7,6 +8,7 @@ export function AssigneeInput({ value, onChange }: { value: string; onChange: (v
   const [isFocused, setIsFocused] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const features = useStore(s => s.features)
+  const isDarkMode = useStore(s => s.isDarkMode)
 
   const existingAssignees = useMemo(() => {
     const assignees = new Set<string>()
@@ -34,6 +36,7 @@ export function AssigneeInput({ value, onChange }: { value: string; onChange: (v
         .toUpperCase()
         .slice(0, 2)
     : null
+  const assigneeTheme = value.trim() ? assigneeThemeFromName(value, isDarkMode) : null
 
   return (
     <div className="relative flex-1 min-w-0">
@@ -44,10 +47,17 @@ export function AssigneeInput({ value, onChange }: { value: string; onChange: (v
         {initials && (
           <span
             className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold"
-            style={{
-              background: 'var(--vscode-badge-background)',
-              color: 'var(--vscode-badge-foreground)',
-            }}
+            style={
+              assigneeTheme
+                ? {
+                    background: assigneeTheme.badgeBackground,
+                    color: assigneeTheme.badgeForeground
+                  }
+                : {
+                    background: 'var(--vscode-badge-background)',
+                    color: 'var(--vscode-badge-foreground)'
+                  }
+            }
           >
             {initials}
           </span>
@@ -72,7 +82,9 @@ export function AssigneeInput({ value, onChange }: { value: string; onChange: (v
             border: '1px solid var(--vscode-dropdown-border, var(--vscode-panel-border))',
           }}
         >
-          {suggestions.map(assignee => (
+          {suggestions.map(assignee => {
+            const suggestionTheme = assigneeThemeFromName(assignee, isDarkMode)
+            return (
             <button
               key={assignee}
               type="button"
@@ -88,8 +100,8 @@ export function AssigneeInput({ value, onChange }: { value: string; onChange: (v
               <span
                 className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold"
                 style={{
-                  background: 'var(--vscode-badge-background)',
-                  color: 'var(--vscode-badge-foreground)',
+                  background: suggestionTheme.badgeBackground,
+                  color: suggestionTheme.badgeForeground
                 }}
               >
                 {assignee
@@ -99,9 +111,10 @@ export function AssigneeInput({ value, onChange }: { value: string; onChange: (v
                   .toUpperCase()
                   .slice(0, 2)}
               </span>
-              <span>{assignee}</span>
+              <span style={{ color: suggestionTheme.nameForeground }}>{assignee}</span>
             </button>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
