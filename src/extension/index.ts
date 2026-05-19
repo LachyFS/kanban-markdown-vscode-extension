@@ -83,6 +83,7 @@ async function createFeatureFromPrompts(): Promise<void> {
     id: filename,
     status,
     priority,
+    storyPoints: null,
     assignee: null,
     epic: null,
     dueDate: null,

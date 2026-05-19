@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 import { FeatureCard } from './FeatureCard'
 import type { Feature, KanbanColumn as KanbanColumnType } from '../../shared/types'
 import type { LayoutMode } from '../store'
+import { useStore } from '../store'
 import type { DropTarget } from './KanbanBoard'
 import { t } from '../lib/i18n'
 
@@ -45,6 +46,32 @@ export function KanbanColumn({
 }: KanbanColumnProps) {
   const isVertical = layout === 'vertical'
   const isDropTarget = dropTarget && dropTarget.columnId === column.id
+  const pointsLabel = useStore((s) => s.cardSettings.pointsLabel?.trim() || 'Story points')
+  const storyPointsTotal = features.reduce((sum, feature) => sum + (feature.storyPoints ?? 0), 0)
+  const groupedByAssignee = features.reduce<Map<string, Feature[]>>((acc, feature) => {
+    const key = feature.assignee?.trim() || t('toolbar.unassigned')
+    const existing = acc.get(key) ?? []
+    existing.push(feature)
+    acc.set(key, existing)
+    return acc
+  }, new Map())
+  const assigneeBuckets = Array.from(groupedByAssignee.entries()).map(([assignee, groupedFeatures]) => ({
+    assignee,
+    cards: groupedFeatures.length,
+    points: groupedFeatures.reduce((sum, feature) => sum + (feature.storyPoints ?? 0), 0)
+  }))
+  const cardsBreakdown = assigneeBuckets
+    .map((entry) => ({
+      assignee: entry.assignee,
+      value: entry.cards
+    }))
+    .sort((a, b) => (b.value - a.value) || a.assignee.localeCompare(b.assignee))
+  const pointsBreakdown = assigneeBuckets
+    .map((entry) => ({
+      assignee: entry.assignee,
+      value: entry.points
+    }))
+    .sort((a, b) => (b.value - a.value) || a.assignee.localeCompare(b.assignee))
   const [menuOpen, setMenuOpen] = useState(false)
   const [submenuOpen, setSubmenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -75,9 +102,34 @@ export function KanbanColumn({
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: column.color }} />
           <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{column.name}</h3>
-          <span className="text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-200 dark:bg-zinc-700 px-1.5 py-0.5 rounded-full">
-            {features.length}
-          </span>
+          <div className="relative group">
+            <span className="text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-200 dark:bg-zinc-700 px-1.5 py-0.5 rounded-full">
+              {features.length}
+            </span>
+            <div className="absolute top-full left-0 mt-1 z-30 min-w-[180px] max-w-[260px] rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-lg p-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
+              <div className="text-xs font-medium text-zinc-900 dark:text-zinc-100 mb-1">Cards: {features.length}</div>
+              {cardsBreakdown.map((entry) => (
+                <div key={`cards-${entry.assignee}`} className="text-xs text-zinc-600 dark:text-zinc-300 flex items-center justify-between gap-2">
+                  <span className="truncate">{entry.assignee}</span>
+                  <span>{entry.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="relative group">
+            <span className="text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-200 dark:bg-zinc-700 px-1.5 py-0.5 rounded-full">
+              {storyPointsTotal}
+            </span>
+            <div className="absolute top-full left-0 mt-1 z-30 min-w-[180px] max-w-[260px] rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-lg p-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
+              <div className="text-xs font-medium text-zinc-900 dark:text-zinc-100 mb-1">{pointsLabel}: {storyPointsTotal}</div>
+              {pointsBreakdown.map((entry) => (
+                <div key={`points-${entry.assignee}`} className="text-xs text-zinc-600 dark:text-zinc-300 flex items-center justify-between gap-2">
+                  <span className="truncate">{entry.assignee}</span>
+                  <span>{entry.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-0.5">
           <button

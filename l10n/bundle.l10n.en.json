@@ -24,6 +24,7 @@
 
   "property.status": "Status",
   "property.priority": "Priority",
+  "property.storyPoints": "Story points",
   "property.assignee": "Assignee",
   "property.dueDate": "Due date",
   "property.labels": "Labels",

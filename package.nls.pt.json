@@ -38,6 +38,7 @@
   "config.showEpic.description": "Mostrar o épico (agrupamento principal) nos cartões e nos editores.",
   "config.showBuildWithAI.description": "Mostrar o botão 'Construir com IA' nos cartões de funcionalidades.",
   "config.showFileName.description": "Mostrar o nome do ficheiro markdown de origem nos cartões de funcionalidades.",
+  "config.pointsLabel.description": "Etiqueta usada para os valores de pontos nas dicas do quadro (por exemplo, Story points ou Hours).",
   "config.compactMode.description": "Usar disposição compacta de cartões para mostrar mais funcionalidades.",
   "config.addNewCardsToTop.description": "Quando ativado, os novos cartões são adicionados no topo da coluna em vez de no fundo.",
   "config.markdownEditorMode.description": "Abrir ficheiros de funcionalidades no editor de texto nativo do VS Code em vez do editor de texto rico integrado.",

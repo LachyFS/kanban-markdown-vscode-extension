@@ -13,6 +13,7 @@ function makeFeature(overrides: Partial<Feature> = {}): Feature {
     id: 'abc-123',
     status: 'in-progress',
     priority: 'high',
+    storyPoints: 3,
     assignee: 'foo',
     epic: null,
     dueDate: '2026-03-01',
@@ -32,6 +33,7 @@ function makeFrontmatter(overrides: Record<string, string> = {}): string {
     id: '"abc-123"',
     status: '"in-progress"',
     priority: '"high"',
+    storyPoints: '3',
     assignee: '"foo"',
     epic: 'null',
     dueDate: '"2026-03-01"',
@@ -59,6 +61,7 @@ describe('parseFeatureFile', () => {
     expect(feature!.id).toBe('abc-123')
     expect(feature!.status).toBe('in-progress')
     expect(feature!.priority).toBe('high')
+    expect(feature!.storyPoints).toBe(3)
     expect(feature!.assignee).toBe('foo')
     expect(feature!.epic).toBeNull()
     expect(feature!.dueDate).toBe('2026-03-01')
@@ -85,6 +88,16 @@ describe('parseFeatureFile', () => {
   })
 
   describe('null / missing field handling', () => {
+    it('returns null storyPoints when frontmatter value is null', () => {
+      const content = makeFrontmatter({ storyPoints: 'null' }) + ''
+      expect(parseFeatureFile(content, FIXTURE_PATH)!.storyPoints).toBeNull()
+    })
+
+    it('returns null storyPoints when frontmatter value is invalid', () => {
+      const content = makeFrontmatter({ storyPoints: '"abc"' }) + ''
+      expect(parseFeatureFile(content, FIXTURE_PATH)!.storyPoints).toBeNull()
+    })
+
     it('returns null assignee when frontmatter value is null', () => {
       const content = makeFrontmatter({ assignee: 'null' }) + ''
       const feature = parseFeatureFile(content, FIXTURE_PATH)!
@@ -173,7 +186,8 @@ describe('serializeFeature', () => {
   })
 
   it('writes null fields as literal null (not quoted "null")', () => {
-    const output = serializeFeature(makeFeature({ assignee: null, dueDate: null, completedAt: null }))
+    const output = serializeFeature(makeFeature({ storyPoints: null, assignee: null, dueDate: null, completedAt: null }))
+    expect(output).toContain('storyPoints: null')
     expect(output).toContain('assignee: null')
     expect(output).toContain('epic: null')
     expect(output).toContain('dueDate: null')
@@ -186,6 +200,7 @@ describe('serializeFeature', () => {
     expect(output).toContain('id: "abc-123"')
     expect(output).toContain('status: "in-progress"')
     expect(output).toContain('priority: "high"')
+    expect(output).toContain('storyPoints: 3')
   })
 
   it('serializes labels as a bracketed list of quoted strings', () => {
@@ -219,6 +234,7 @@ describe('round-trip: serializeFeature → parseFeatureFile', () => {
     expect(recovered!.id).toBe(original.id)
     expect(recovered!.status).toBe(original.status)
     expect(recovered!.priority).toBe(original.priority)
+    expect(recovered!.storyPoints).toBe(original.storyPoints)
     expect(recovered!.assignee).toBe(original.assignee)
     expect(recovered!.epic).toBe(original.epic)
     expect(recovered!.dueDate).toBe(original.dueDate)
@@ -232,9 +248,10 @@ describe('round-trip: serializeFeature → parseFeatureFile', () => {
   })
 
   it('round-trips a feature with all nullable fields set to null', () => {
-    const original = makeFeature({ assignee: null, dueDate: null, completedAt: null, labels: [] })
+    const original = makeFeature({ storyPoints: null, assignee: null, dueDate: null, completedAt: null, labels: [] })
     const recovered = parseFeatureFile(serializeFeature(original), original.filePath)!
 
+    expect(recovered.storyPoints).toBeNull()
     expect(recovered.assignee).toBeNull()
     expect(recovered.dueDate).toBeNull()
     expect(recovered.completedAt).toBeNull()

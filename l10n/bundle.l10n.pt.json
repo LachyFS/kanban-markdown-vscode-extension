@@ -24,6 +24,7 @@
 
   "property.status": "Estado",
   "property.priority": "Prioridade",
+  "property.storyPoints": "Pontos de história",
   "property.assignee": "Responsável",
   "property.dueDate": "Data limite",
   "property.labels": "Etiquetas",

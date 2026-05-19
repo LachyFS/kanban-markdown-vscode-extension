@@ -38,6 +38,7 @@
   "config.showEpic.description": "Show epic (parent grouping) on feature cards and in editors.",
   "config.showBuildWithAI.description": "Show the 'Build with AI' button on feature cards.",
   "config.showFileName.description": "Show the source markdown filename on feature cards.",
+  "config.pointsLabel.description": "Label used for point values in board tooltips (for example, Story points or Hours).",
   "config.compactMode.description": "Use compact card layout to show more features.",
   "config.addNewCardsToTop.description": "When enabled, new cards are added to the top of the column instead of the bottom.",
   "config.markdownEditorMode.description": "Open feature files in VS Code's native text editor instead of the inline rich-text editor.",

@@ -17,6 +17,7 @@ function normalizeEpic(value: string | null | undefined): string | null {
 interface CreateFeatureData {
   status: FeatureStatus
   priority: Priority
+  storyPoints: number | null
   content: string
   assignee: string | null
   epic: string | null
@@ -577,6 +578,7 @@ export class KanbanPanel {
       id: uniqueFilename,
       status: data.status,
       priority: data.priority,
+      storyPoints: data.storyPoints,
       assignee: data.assignee,
       epic: normalizeEpic(data.epic),
       dueDate: data.dueDate,
@@ -836,6 +838,7 @@ export class KanbanPanel {
       id: feature.id,
       status: feature.status,
       priority: feature.priority,
+      storyPoints: feature.storyPoints,
       assignee: feature.assignee,
       epic: feature.epic,
       dueDate: feature.dueDate,
@@ -871,6 +874,7 @@ export class KanbanPanel {
     feature.content = content
     feature.status = frontmatter.status
     feature.priority = frontmatter.priority
+    feature.storyPoints = frontmatter.storyPoints
     feature.assignee = frontmatter.assignee
     feature.epic = normalizeEpic(frontmatter.epic)
     feature.dueDate = frontmatter.dueDate
@@ -1160,6 +1164,7 @@ export class KanbanPanel {
       showEpic: config.get<boolean>('showEpic', true),
       showBuildWithAI: config.get<boolean>('showBuildWithAI', true) && !vscode.workspace.getConfiguration('chat').get<boolean>('disableAIFeatures', false),
       showFileName: config.get<boolean>('showFileName', false),
+      pointsLabel: config.get<string>('pointsLabel', 'Story points'),
       compactMode: config.get<boolean>('compactMode', false),
       markdownEditorMode: config.get<boolean>('markdownEditorMode', false),
       hideScrollbar: config.get<boolean>('hideScrollbar', false),
