@@ -243,13 +243,13 @@ describe('KanbanBoard — moveAllCards', () => {
     const menuBtn = within(backlogSection).getByTitle('Column options')
     await user.click(menuBtn)
 
-    // Trigger mouseEnter on the "Move all cards" wrapper div to open submenu
-    const moveAllWrapper = screen.getByText('Move all cards in this list').closest('div')!
+    // Trigger mouseEnter on the "Move all cards" menu item to open submenu
+    const moveAllWrapper = await screen.findByRole('menuitem', {
+      name: 'Move all cards in this list'
+    })
     fireEvent.mouseEnter(moveAllWrapper)
 
-    // Click 'To Do' as the target — scoped to the Backlog section to avoid
-    // matching the 'Collapse To Do' / 'Add to To Do' buttons in other columns
-    await user.click(within(backlogSection).getByRole('button', { name: 'To Do' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'To Do' }))
 
     expect(mockPostMessage).toHaveBeenCalledWith({
       type: 'moveAllCards',
@@ -269,10 +269,12 @@ describe('KanbanBoard — moveAllCards', () => {
     const menuBtn = within(backlogSection).getByTitle('Column options')
     await user.click(menuBtn)
 
-    const moveAllWrapper = screen.getByText('Move all cards in this list').closest('div')!
+    const moveAllWrapper = await screen.findByRole('menuitem', {
+      name: 'Move all cards in this list'
+    })
     fireEvent.mouseEnter(moveAllWrapper)
 
-    await user.click(within(backlogSection).getByRole('button', { name: 'To Do' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'To Do' }))
 
     expect(mockPostMessage).toHaveBeenCalledWith({
       type: 'moveAllCards',
@@ -300,7 +302,7 @@ describe('KanbanBoard — archiveAllCards', () => {
     const menuBtn = within(doneSection).getByTitle('Column options')
     await user.click(menuBtn)
 
-    await user.click(screen.getByRole('button', { name: /archive all cards/i }))
+    await user.click(await screen.findByRole('menuitem', { name: /archive all cards/i }))
 
     expect(mockPostMessage).toHaveBeenCalledWith({
       type: 'archiveAllCards',

@@ -1,5 +1,6 @@
 import { Plus, ChevronLeft, MoreVertical, ChevronRight } from 'lucide-react'
-import { useState, useRef, useEffect } from 'react'
+import { Menu } from '@base-ui/react/menu'
+import { useState } from 'react'
 import { FeatureCard } from './FeatureCard'
 import type { Feature, KanbanColumn as KanbanColumnType } from '../../shared/types'
 import type { LayoutMode } from '../store'
@@ -46,19 +47,15 @@ export function KanbanColumn({
   const isVertical = layout === 'vertical'
   const isDropTarget = dropTarget && dropTarget.columnId === column.id
   const [menuOpen, setMenuOpen] = useState(false)
-  const [submenuOpen, setSubmenuOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!menuOpen) return
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [menuOpen])
+  const hasCards = features.length > 0
+  const menuPopupClassName =
+    'z-50 min-w-[220px] bg-white dark:bg-zinc-800 border border-zinc-200 ' +
+    'dark:border-zinc-700 rounded-md shadow-lg py-1 text-zinc-700 dark:text-zinc-200'
+  const menuItemClassName =
+    'w-full px-3 py-2 text-sm text-left outline-none hover:bg-zinc-100 ' +
+    'dark:hover:bg-zinc-700 data-[highlighted]:bg-zinc-100 ' +
+    'dark:data-[highlighted]:bg-zinc-700 data-[disabled]:opacity-40 ' +
+    'data-[disabled]:pointer-events-none'
 
   return (
     <div
@@ -94,53 +91,64 @@ export function KanbanColumn({
           >
             <Plus size={16} className="text-zinc-500" />
           </button>
-          <div ref={menuRef} className="relative flex">
-            <button
-              onClick={() => setMenuOpen((o) => !o)}
+          <Menu.Root modal={false} open={menuOpen} onOpenChange={setMenuOpen}>
+            <Menu.Trigger
+              onClick={() => setMenuOpen((open) => !open)}
               className="p-0.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
               title={t('column.options')}
             >
               <MoreVertical size={16} className="text-zinc-500" />
-            </button>
-            {menuOpen && (
-              <div className="absolute right-0 top-full mt-1 z-50 min-w-[200px] bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md shadow-lg py-1">
-                <div
-                  className={`relative ${features.length === 0 ? 'opacity-40 pointer-events-none' : ''}`}
-                  onMouseEnter={() => setSubmenuOpen(true)}
-                  onMouseLeave={() => setSubmenuOpen(false)}
-                >
-                  <button
-                    className="w-full text-left px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center justify-between gap-2"
-                  >
-                    <span>{t('column.moveAllCards')}</span>
-                    <ChevronRight size={14} className="text-zinc-400 flex-shrink-0" />
-                  </button>
-                  {submenuOpen && (
-                    <div className="absolute left-full top-0 ml-0.5 z-50 min-w-[160px] bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md shadow-lg py-1">
-                      {otherColumns.map((col) => (
-                        <button
-                          key={col.id}
-                          className="w-full text-left px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-2"
-                          onClick={() => { onMoveAllCards(col.id); setMenuOpen(false); setSubmenuOpen(false) }}
-                        >
-                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: col.color }} />
-                          {col.name}
-                        </button>
-                      ))}
-                    </div>
+            </Menu.Trigger>
+            <Menu.Portal>
+              <Menu.Positioner align="end" sideOffset={4}>
+                <Menu.Popup className={menuPopupClassName}>
+                  <Menu.SubmenuRoot>
+                    <Menu.SubmenuTrigger
+                      className={`${menuItemClassName} flex items-center justify-between gap-2`}
+                      disabled={!hasCards}
+                      openOnHover
+                      delay={0}
+                      closeDelay={250}
+                    >
+                      <span>{t('column.moveAllCards')}</span>
+                      <ChevronRight size={14} className="text-zinc-400 flex-shrink-0" />
+                    </Menu.SubmenuTrigger>
+                    <Menu.Portal>
+                      <Menu.Positioner side="right" align="start" sideOffset={-4}>
+                        <Menu.Popup className={`${menuPopupClassName} min-w-[180px]`}>
+                          {otherColumns.map((col) => (
+                            <Menu.Item
+                              key={col.id}
+                              className={`${menuItemClassName} flex items-center gap-2`}
+                              onClick={() => {
+                                onMoveAllCards(col.id)
+                                setMenuOpen(false)
+                              }}
+                            >
+                              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: col.color }} />
+                              {col.name}
+                            </Menu.Item>
+                          ))}
+                        </Menu.Popup>
+                      </Menu.Positioner>
+                    </Menu.Portal>
+                  </Menu.SubmenuRoot>
+                  {onArchiveAllCards && (
+                    <Menu.Item
+                      className={menuItemClassName}
+                      disabled={!hasCards}
+                      onClick={() => {
+                        onArchiveAllCards()
+                        setMenuOpen(false)
+                      }}
+                    >
+                      {t('column.archiveAllCards')}
+                    </Menu.Item>
                   )}
-                </div>
-                {onArchiveAllCards && (
-                  <button
-                    className={`w-full text-left px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 ${features.length === 0 ? 'opacity-40 pointer-events-none' : ''}`}
-                    onClick={() => { onArchiveAllCards(); setMenuOpen(false) }}
-                  >
-                    {t('column.archiveAllCards')}
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+                </Menu.Popup>
+              </Menu.Positioner>
+            </Menu.Portal>
+          </Menu.Root>
         </div>
       </div>
 
