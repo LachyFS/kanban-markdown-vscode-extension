@@ -77,6 +77,6 @@ export function buildAITerminalLaunch(
     case 'copilot':
       return { name: agentNames[agent], shellPath: agent, shellArgs: ['--interactive', prompt] }
     case 'opencode':
-      return { name: agentNames[agent], shellPath: agent, shellArgs: ['run', prompt] }
+      return { name: agentNames[agent], shellPath: agent, shellArgs: ['--prompt', prompt] }
   }
 }

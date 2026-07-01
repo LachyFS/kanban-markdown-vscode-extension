@@ -74,11 +74,11 @@ describe('aiTerminal', () => {
       .toEqual(['--dangerously-bypass-approvals-and-sandbox', 'prompt'])
   })
 
-  it('runs OpenCode through the run subcommand', () => {
+  it('starts OpenCode interactively with the prompt', () => {
     expect(buildAITerminalLaunch('opencode', 'default', 'prompt')).toEqual({
       name: 'OpenCode',
       shellPath: 'opencode',
-      shellArgs: ['run', 'prompt']
+      shellArgs: ['--prompt', 'prompt']
     })
   })
 
