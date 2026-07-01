@@ -74,6 +74,14 @@ describe('aiTerminal', () => {
       .toEqual(['--dangerously-bypass-approvals-and-sandbox', 'prompt'])
   })
 
+  it('runs OpenCode through the run subcommand', () => {
+    expect(buildAITerminalLaunch('opencode', 'default', 'prompt')).toEqual({
+      name: 'OpenCode',
+      shellPath: 'opencode',
+      shellArgs: ['run', 'prompt']
+    })
+  })
+
   it('normalizes unknown webview/config values to safe defaults', () => {
     expect(normalizeAIAgent('copilot')).toBe('copilot')
     expect(normalizeAIAgent('powershell')).toBe('claude')

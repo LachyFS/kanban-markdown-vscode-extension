@@ -75,7 +75,8 @@ export function buildAITerminalLaunch(
       }
     }
     case 'copilot':
-    case 'opencode':
       return { name: agentNames[agent], shellPath: agent, shellArgs: [prompt] }
+    case 'opencode':
+      return { name: agentNames[agent], shellPath: agent, shellArgs: ['run', prompt] }
   }
 }
