@@ -2,7 +2,8 @@ import * as vscode from 'vscode'
 import * as crypto from 'crypto'
 import * as path from 'path'
 import type { FeatureFrontmatter, EditorExtensionMessage, EditorWebviewMessage } from '../shared/editorTypes'
-import type { FeatureStatus, Priority, AIAgent } from '../shared/types'
+import type { FeatureStatus, Priority } from '../shared/types'
+import { buildAITerminalLaunch, buildFeaturePrompt, normalizeAIAgent, normalizeAIPermissionMode } from './aiTerminal'
 
 /**
  * Provides a webview panel that shows feature metadata (frontmatter) as a header.
@@ -108,61 +109,22 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
           const titleMatch = docContent.match(/^#\s+(.+)$/m)
           const title = titleMatch ? titleMatch[1].trim() : 'Untitled'
 
-          const labels = fm.labels.length > 0 ? ` [${fm.labels.join(', ')}]` : ''
-          const description = docContent.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim()
-          const shortDesc = description.length > 200 ? description.substring(0, 200) + '...' : description
+          const prompt = buildFeaturePrompt({
+            title,
+            priority: fm.priority,
+            labels: fm.labels,
+            content: docContent,
+            filePath: this._currentDocument.uri.fsPath
+          })
 
-          const prompt = `Implement this feature: "${title}" (${fm.priority} priority)${labels}. ${shortDesc} See full details in: ${this._currentDocument.uri.fsPath}`
-
-          const agent: AIAgent = message.agent || 'claude'
-          const permissionMode = message.permissionMode || 'default'
-
-          let args: string[]
-
-          switch (agent) {
-            case 'claude': {
-              args = []
-              if (permissionMode !== 'default') {
-                args.push('--permission-mode', permissionMode)
-              }
-              args.push(prompt)
-              break
-            }
-            case 'codex': {
-              const approvalMap: Record<string, string> = {
-                'default': 'ask',
-                'plan': 'ask',
-                'acceptEdits': 'auto',
-                'bypassPermissions': 'full-auto'
-              }
-              const approvalMode = approvalMap[permissionMode] || 'suggest'
-              args = ['--ask-for-approval', approvalMode, prompt]
-              break
-            }
-            case 'opencode': {
-              args = [prompt]
-              break
-            }
-            case 'copilot': {
-              args = [prompt]
-              break
-            }
-            default:
-              args = [prompt]
-          }
-
-          const agentNames: Record<string, string> = {
-            'claude': 'Claude Code',
-            'copilot': 'GitHub Copilot',
-            'codex': 'Codex',
-            'opencode': 'OpenCode'
-          }
+          const agent = normalizeAIAgent(message.agent)
+          const permissionMode = normalizeAIPermissionMode(message.permissionMode)
+          const launch = buildAITerminalLaunch(agent, permissionMode, prompt)
           const terminal = vscode.window.createTerminal({
-            name: agentNames[agent] || 'AI Agent',
+            ...launch,
             cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
           })
           terminal.show()
-          terminal.sendText([this._shellQuote(agent), ...args.map(a => this._shellQuote(a))].join(' '))
           break
         }
       }
@@ -337,10 +299,6 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
 
   private _getNonce(): string {
     return crypto.randomBytes(24).toString('base64url')
-  }
-
-  private _shellQuote(arg: string): string {
-    return "'" + arg.replace(/'/g, "'\\''") + "'"
   }
 
   private _getHtmlForWebview(webview: vscode.Webview): string {
