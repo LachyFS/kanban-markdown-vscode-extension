@@ -82,6 +82,14 @@ describe('aiTerminal', () => {
     })
   })
 
+  it('starts Copilot interactively with the prompt', () => {
+    expect(buildAITerminalLaunch('copilot', 'default', 'prompt')).toEqual({
+      name: 'GitHub Copilot',
+      shellPath: 'copilot',
+      shellArgs: ['--interactive', 'prompt']
+    })
+  })
+
   it('normalizes unknown webview/config values to safe defaults', () => {
     expect(normalizeAIAgent('copilot')).toBe('copilot')
     expect(normalizeAIAgent('powershell')).toBe('claude')
