@@ -55,11 +55,18 @@ export function buildAITerminalLaunch(
       return { name: agentNames[agent], shellPath: agent, shellArgs }
     }
     case 'codex': {
-      const approvalMap: Record<AIPermissionMode, string> = {
-        default: 'ask',
-        plan: 'ask',
-        acceptEdits: 'auto',
-        bypassPermissions: 'full-auto'
+      if (permissionMode === 'bypassPermissions') {
+        return {
+          name: agentNames[agent],
+          shellPath: agent,
+          shellArgs: ['--dangerously-bypass-approvals-and-sandbox', prompt]
+        }
+      }
+
+      const approvalMap: Record<Exclude<AIPermissionMode, 'bypassPermissions'>, string> = {
+        default: 'on-request',
+        plan: 'on-request',
+        acceptEdits: 'never'
       }
       return {
         name: agentNames[agent],

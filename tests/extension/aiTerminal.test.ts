@@ -65,13 +65,13 @@ describe('aiTerminal', () => {
 
   it('maps Codex permission modes to approval arguments', () => {
     expect(buildAITerminalLaunch('codex', 'default', 'prompt').shellArgs)
-      .toEqual(['--ask-for-approval', 'ask', 'prompt'])
+      .toEqual(['--ask-for-approval', 'on-request', 'prompt'])
     expect(buildAITerminalLaunch('codex', 'plan', 'prompt').shellArgs)
-      .toEqual(['--ask-for-approval', 'ask', 'prompt'])
+      .toEqual(['--ask-for-approval', 'on-request', 'prompt'])
     expect(buildAITerminalLaunch('codex', 'acceptEdits', 'prompt').shellArgs)
-      .toEqual(['--ask-for-approval', 'auto', 'prompt'])
+      .toEqual(['--ask-for-approval', 'never', 'prompt'])
     expect(buildAITerminalLaunch('codex', 'bypassPermissions', 'prompt').shellArgs)
-      .toEqual(['--ask-for-approval', 'full-auto', 'prompt'])
+      .toEqual(['--dangerously-bypass-approvals-and-sandbox', 'prompt'])
   })
 
   it('normalizes unknown webview/config values to safe defaults', () => {
