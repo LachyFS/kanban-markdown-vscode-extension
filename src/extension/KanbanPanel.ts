@@ -6,6 +6,7 @@ import { getTitleFromContent, generateFeatureFilename } from '../shared/types'
 import type { Feature, FeatureStatus, Priority, KanbanColumn, FeatureFrontmatter, CardDisplaySettings, FilenamePattern, AIAgent, AIPermissionMode, BoardViewMode } from '../shared/types'
 import { ensureStatusSubfolders, moveFeatureFile, getFeatureFilePath, getStatusFromPath, fileExists } from './featureFileUtils'
 import { parseFeatureFile, serializeFeature } from '../shared/featureFrontmatter'
+import { ensureCommentsSection } from '../shared/comments'
 import { featureMatchesEpicLane } from '../shared/epicLane'
 import { t, getBundle, getEffectiveLocale, reloadBundle, getAllDefaultColumnNames, getDefaultColumnNamesForLocale } from './l10n'
 
@@ -585,7 +586,7 @@ export class KanbanPanel {
       completedAt: data.status === 'done' ? now : null,
       labels: data.labels,
       order: newOrder,
-      content: data.content,
+      content: ensureCommentsSection(data.content),
       filePath
     }
 
@@ -868,7 +869,7 @@ export class KanbanPanel {
     const oldStatus = feature.status
 
     // Update feature in memory
-    feature.content = content
+    feature.content = ensureCommentsSection(content)
     feature.status = frontmatter.status
     feature.priority = frontmatter.priority
     feature.assignee = frontmatter.assignee

@@ -25,11 +25,13 @@ import type {
   AIAgent,
   AIPermissionMode
 } from '../../shared/types'
+import { splitComments, withComments, type TaskComment } from '../../shared/comments'
 import { cn } from '../lib/utils'
 import { t } from '../lib/i18n'
 import { useStore } from '../store'
 import { AssigneeInput } from './AssigneeInput'
 import { EpicInput } from './EpicInput'
+import { CommentsSection } from './CommentsSection'
 
 interface MarkdownStorage {
   markdown: { getMarkdown: () => string }
@@ -537,12 +539,20 @@ export function FeatureEditor({
   const { cardSettings } = useStore()
   const [currentFrontmatter, setCurrentFrontmatter] = useState(frontmatter)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [comments, setComments] = useState<TaskComment[]>(() => splitComments(content).comments)
   const priorityLabels = getPriorityLabels()
   const statusLabels = getStatusLabels()
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isInitialLoad = useRef(true)
   const currentFrontmatterRef = useRef(currentFrontmatter)
   currentFrontmatterRef.current = currentFrontmatter
+  const commentsRef = useRef(comments)
+  commentsRef.current = comments
+
+  const getFullMarkdown = useCallback(
+    (ed: { storage: unknown }) => withComments(getMarkdown(ed), commentsRef.current),
+    []
+  )
 
   const editor = useEditor({
     extensions: [
@@ -560,17 +570,15 @@ export function FeatureEditor({
       if (isInitialLoad.current) return
       if (debounceRef.current) clearTimeout(debounceRef.current)
       debounceRef.current = setTimeout(() => {
-        const markdown = getMarkdown(ed)
-        onSave(markdown, currentFrontmatterRef.current)
+        onSave(getFullMarkdown(ed), currentFrontmatterRef.current)
       }, 800)
     }
   })
 
   const save = useCallback(() => {
     if (!editor) return
-    const markdown = getMarkdown(editor)
-    onSave(markdown, currentFrontmatter)
-  }, [editor, currentFrontmatter, onSave])
+    onSave(getFullMarkdown(editor), currentFrontmatter)
+  }, [editor, currentFrontmatter, onSave, getFullMarkdown])
 
   // Clean up debounce on unmount
   useEffect(() => {
@@ -582,8 +590,10 @@ export function FeatureEditor({
   // Set content when a new feature is opened (keyed by featureId, not content)
   useEffect(() => {
     if (editor && content) {
+      const { body, comments: parsed } = splitComments(content)
+      setComments(parsed)
       isInitialLoad.current = true
-      editor.commands.setContent(content)
+      editor.commands.setContent(body)
       // Allow a tick for the onUpdate from setContent to fire, then re-enable
       requestAnimationFrame(() => {
         isInitialLoad.current = false
@@ -605,11 +615,22 @@ export function FeatureEditor({
         if (debounceRef.current) clearTimeout(debounceRef.current)
         debounceRef.current = setTimeout(() => {
           if (!editor) return
-          const markdown = getMarkdown(editor)
-          onSave(markdown, next)
+          onSave(getFullMarkdown(editor), next)
         }, 800)
         return next
       })
+    },
+    [editor, onSave, getFullMarkdown]
+  )
+
+  const handleCommentsChange = useCallback(
+    (next: TaskComment[]) => {
+      setComments(next)
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      debounceRef.current = setTimeout(() => {
+        if (!editor) return
+        onSave(withComments(getMarkdown(editor), next), currentFrontmatterRef.current)
+      }, 800)
     },
     [editor, onSave]
   )
@@ -794,7 +815,12 @@ export function FeatureEditor({
 
       {/* Editor */}
       <div className="flex-1 overflow-auto">
-        <EditorContent editor={editor} className="h-full" />
+        <EditorContent editor={editor} />
+        <CommentsSection
+          comments={comments}
+          defaultAuthor={currentFrontmatter.assignee || ''}
+          onChange={handleCommentsChange}
+        />
       </div>
     </div>
   )

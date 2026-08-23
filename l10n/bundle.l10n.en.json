@@ -184,5 +184,17 @@
   "sidebar.newFeature": "New Feature",
   "sidebar.overview": "Overview",
   "sidebar.total": "{count} total",
-  "sidebar.inProgress": "In Progress"
+  "sidebar.inProgress": "In Progress",
+
+  "comments.heading": "Comments",
+  "comments.dateTime": "Date Time",
+  "comments.content": "Content",
+  "comments.author": "Author",
+  "comments.placeholder": "Add a comment...",
+  "comments.authorPlaceholder": "Author",
+  "comments.add": "Add comment",
+  "comments.edit": "Edit comment",
+  "comments.save": "Save comment",
+  "comments.cancel": "Cancel",
+  "comments.delete": "Delete comment"
 }
