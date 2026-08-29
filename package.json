@@ -212,13 +212,15 @@
             "claude",
             "codex",
             "copilot",
-            "opencode"
+            "opencode",
+            "cursor"
           ],
           "enumDescriptions": [
             "%config.aiAgent.claude%",
             "%config.aiAgent.codex%",
             "%config.aiAgent.copilot%",
-            "%config.aiAgent.opencode%"
+            "%config.aiAgent.opencode%",
+            "%config.aiAgent.cursor%"
           ],
           "description": "%config.aiAgent.description%"
         },

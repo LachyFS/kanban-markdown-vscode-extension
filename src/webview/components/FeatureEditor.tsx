@@ -113,6 +113,12 @@ function getAiAgentTabs(): { agent: AIAgent; label: string; color: string; activ
       label: t('ai.opencode'),
       color: 'hover:bg-slate-100 dark:hover:bg-slate-700/30',
       activeColor: 'bg-slate-500 text-white'
+    },
+    {
+      agent: 'cursor',
+      label: t('ai.cursor'),
+      color: 'hover:bg-indigo-100 dark:hover:bg-indigo-900/30',
+      activeColor: 'bg-indigo-600 text-white'
     }
   ]
 }
@@ -144,6 +150,12 @@ const agentButtonColors: Record<
     hover: 'hover:bg-slate-700',
     shadow: 'shadow-sm',
     border: 'border border-slate-700/50'
+  },
+  cursor: {
+    bg: 'bg-indigo-600',
+    hover: 'hover:bg-indigo-700',
+    shadow: 'shadow-sm',
+    border: 'border border-indigo-700/50'
   }
 }
 
@@ -203,6 +215,18 @@ function getAiModesByAgent(): Record<
         permissionMode: 'default',
         label: t('ai.mode.default'),
         description: t('ai.mode.opencode.default.description')
+      }
+    ],
+    cursor: [
+      {
+        permissionMode: 'default',
+        label: t('ai.mode.agent'),
+        description: t('ai.mode.cursor.agent.description')
+      },
+      {
+        permissionMode: 'plan',
+        label: t('ai.mode.plan'),
+        description: t('ai.mode.cursor.plan.description')
       }
     ]
   }

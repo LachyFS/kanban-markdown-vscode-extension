@@ -147,6 +147,14 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
               args = [prompt]
               break
             }
+            case 'cursor': {
+              args = []
+              if (permissionMode === 'plan') {
+                args.push('--mode', 'plan')
+              }
+              args.push(prompt)
+              break
+            }
             default:
               args = [prompt]
           }
@@ -155,14 +163,19 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
             'claude': 'Claude Code',
             'copilot': 'GitHub Copilot',
             'codex': 'Codex',
-            'opencode': 'OpenCode'
+            'opencode': 'OpenCode',
+            'cursor': 'Cursor'
+          }
+          const agentBinaries: Record<string, string> = {
+            'cursor': 'agent'
           }
           const terminal = vscode.window.createTerminal({
             name: agentNames[agent] || 'AI Agent',
             cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
           })
           terminal.show()
-          terminal.sendText([this._shellQuote(agent), ...args.map(a => this._shellQuote(a))].join(' '))
+          const binary = agentBinaries[agent] || agent
+          terminal.sendText([this._shellQuote(binary), ...args.map(a => this._shellQuote(a))].join(' '))
           break
         }
       }
