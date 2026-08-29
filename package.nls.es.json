@@ -31,6 +31,7 @@
   "config.aiAgent.codex": "Codex (OpenAI)",
   "config.aiAgent.copilot": "GitHub Copilot",
   "config.aiAgent.opencode": "OpenCode",
+  "config.aiAgent.cursor": "Cursor CLI",
   "config.showPriorityBadges.description": "Mostrar insignias de prioridad en las tarjetas de funciones.",
   "config.showAssignee.description": "Mostrar asignado en las tarjetas de funciones.",
   "config.showDueDate.description": "Mostrar fecha límite en las tarjetas de funciones.",

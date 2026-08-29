@@ -31,6 +31,7 @@
   "config.aiAgent.codex": "Codex (OpenAI)",
   "config.aiAgent.copilot": "GitHub Copilot",
   "config.aiAgent.opencode": "OpenCode",
+  "config.aiAgent.cursor": "Cursor CLI",
   "config.showPriorityBadges.description": "Mostrar crachás de prioridade nos cartões de funcionalidades.",
   "config.showAssignee.description": "Mostrar responsável nos cartões de funcionalidades.",
   "config.showDueDate.description": "Mostrar data limite nos cartões de funcionalidades.",
