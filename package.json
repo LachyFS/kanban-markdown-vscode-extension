@@ -84,13 +84,15 @@
             "auto",
             "en",
             "es",
-            "pt"
+            "pt",
+            "ru"
           ],
           "enumDescriptions": [
             "%config.language.auto%",
             "%config.language.en%",
             "%config.language.es%",
-            "%config.language.pt%"
+            "%config.language.pt%",
+            "%config.language.ru%"
           ],
           "description": "%config.language.description%"
         },

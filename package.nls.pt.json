@@ -46,5 +46,6 @@
   "config.language.auto": "Seguir o idioma do VS Code",
   "config.language.en": "Inglês (English)",
   "config.language.es": "Espanhol (Español)",
-  "config.language.pt": "Português"
+  "config.language.pt": "Português",
+  "config.language.ru": "Russo (Русский)"
 }
