@@ -282,7 +282,7 @@
           "default": 1.0,
           "minimum": 0.5,
           "maximum": 3,
-          "description": "Zoom level for the Kanban board (0.5 to 3)."
+          "description": "%config.zoomLevel.description%"
         }
       }
     },

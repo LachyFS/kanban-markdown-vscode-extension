@@ -7,6 +7,7 @@ import type { Feature, FeatureStatus, Priority, KanbanColumn, FeatureFrontmatter
 import { ensureStatusSubfolders, moveFeatureFile, getFeatureFilePath, getStatusFromPath, fileExists } from './featureFileUtils'
 import { parseFeatureFile, serializeFeature } from '../shared/featureFrontmatter'
 import { featureMatchesEpicLane } from '../shared/epicLane'
+import { normalizeZoomLevel } from '../shared/zoom'
 import { t, getBundle, getEffectiveLocale, reloadBundle, getAllDefaultColumnNames, getDefaultColumnNamesForLocale } from './l10n'
 import { getAITerminalOptions, buildFeaturePrompt, normalizeAIAgent, normalizeAIPermissionMode } from './aiTerminal'
 
@@ -228,7 +229,7 @@ export class KanbanPanel {
           // Handle live zoom updates
           if (e.affectsConfiguration('kanban-markdown.zoomLevel')) {
             const config = vscode.workspace.getConfiguration('kanban-markdown')
-            const newZoom = config.get<number>('zoomLevel', 1.0)
+            const newZoom = normalizeZoomLevel(config.get('zoomLevel'))
             this._panel.webview.postMessage({ type: 'updateZoom', value: newZoom })
           }
           if (e.affectsConfiguration('kanban-markdown.language')) {
@@ -323,17 +324,17 @@ export class KanbanPanel {
     
     // Fetch the zoom level from the workspace configuration
     const config = vscode.workspace.getConfiguration('kanban-markdown')
-    const zoomLevel = config.get<number>('zoomLevel', 1.0)
+    const zoomLevel = normalizeZoomLevel(config.get('zoomLevel'))
 
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource} 'nonce-${nonce}';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'nonce-${nonce}'; script-src ${webview.cspSource} 'nonce-${nonce}';">
   <link href="${styleUri}" rel="stylesheet">
   <title>Kanban Board</title>
-  <style>
+  <style nonce="${nonce}">
     :root {
       --kanban-zoom: ${zoomLevel};
     }
