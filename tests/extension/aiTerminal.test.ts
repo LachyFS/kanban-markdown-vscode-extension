@@ -11,6 +11,16 @@ import {
 } from '../../src/extension/aiTerminal'
 
 describe('aiTerminal', () => {
+  it('starts Cursor interactively and uses its explicit Plan mode without bypassing permissions', () => {
+    const prompt = 'literal "prompt" ; & %PATH% $(whoami)'
+    expect(normalizeAIAgent('cursor')).toBe('cursor')
+    for (const mode of ['default', 'acceptEdits', 'bypassPermissions'] as const) {
+      expect(buildAITerminalLaunch('cursor', mode, prompt)).toEqual({
+        name: 'Cursor', shellPath: 'agent', shellArgs: [prompt]
+      })
+    }
+    expect(buildAITerminalLaunch('cursor', 'plan', prompt).shellArgs).toEqual(['--mode', 'plan', prompt])
+  })
   it('builds a feature prompt from feature context', () => {
     const prompt = buildFeaturePrompt({
       title: 'Add swimlanes',
@@ -123,6 +133,27 @@ describe('Windows agent resolution', () => {
     await fs.writeFile(path.join(packageDirectory, bin), '')
     return path.join(packageDirectory, bin)
   }
+
+  it('bypasses Cursor shell wrappers and ignores staged versions', async () => {
+    await fs.writeFile(path.join(directory, 'agent.cmd'), '@echo must not run')
+    for (const version of ['2026.9.30-abc', '2026.10.22-27dcf5f', '2099.01.01-abc.new', '2099.01.01-abc.previous']) {
+      const versionDirectory = path.join(directory, 'versions', version)
+      await fs.mkdir(versionDirectory, { recursive: true })
+      await fs.writeFile(path.join(versionDirectory, 'node.exe'), '')
+      await fs.writeFile(path.join(versionDirectory, 'index.js'), '')
+    }
+    const prompt = '" & echo injected & %PATH% !PATH!'
+    const launch = await getAITerminalOptions('cursor', 'plan', prompt, 'win32', { PATH: directory })
+    const versionDirectory = path.join(directory, 'versions', '2026.10.22-27dcf5f')
+    expect(launch.shellPath).toBe(path.join(versionDirectory, 'node.exe'))
+    expect(launch.shellArgs).toEqual([path.join(versionDirectory, 'index.js'), '--mode', 'plan', prompt])
+  })
+
+  it('resolves native Cursor as agent.exe, never cursor.exe or a batch fallback', async () => {
+    expect((await getAITerminalOptions('cursor', 'default', 'prompt', 'win32', { PATH: directory })).shellPath).toBe('agent.exe')
+    await fs.writeFile(path.join(directory, 'agent.exe'), '')
+    expect((await getAITerminalOptions('cursor', 'default', 'prompt', 'win32', { PATH: directory })).shellPath).toBe(path.join(directory, 'agent.exe'))
+  })
 
   it('launches global npm JavaScript directly through Node, preserving hostile arguments', async () => {
     const entryPoint = await npmAgent('bin/codex.js')

@@ -20,13 +20,14 @@ const agentNames: Record<AIAgent, string> = {
   claude: 'Claude Code',
   codex: 'Codex',
   copilot: 'GitHub Copilot',
-  opencode: 'OpenCode'
+  opencode: 'OpenCode',
+  cursor: 'Cursor'
 }
 
 const agents = new Set<string>(Object.keys(agentNames))
 const permissionModes = new Set<string>(['default', 'plan', 'acceptEdits', 'bypassPermissions'])
 
-const agentPackages: Record<AIAgent, string> = {
+const agentPackages: Partial<Record<AIAgent, string>> = {
   claude: '@anthropic-ai/claude-code',
   codex: '@openai/codex',
   copilot: '@github/copilot',
@@ -43,19 +44,39 @@ export async function getAITerminalOptions(
 ): Promise<AITerminalLaunch> {
   const launch = buildAITerminalLaunch(agent, permissionMode, prompt)
   if (platform !== 'win32') return launch
+  const binary = launch.shellPath
 
   const searchPath = Object.entries(env).find(([key]) => key.toLowerCase() === 'path')?.[1] || ''
   for (const entry of searchPath.split(';')) {
     const directory = entry.replace(/^"|"$/g, '')
     if (!path.isAbsolute(directory)) continue
 
-    const executable = path.join(directory, `${agent}.exe`)
+    const executable = path.join(directory, `${binary}.exe`)
     if (await isFile(executable)) return { ...launch, shellPath: executable }
-    if (!await isFile(path.join(directory, `${agent}.cmd`))) continue
+    if (agent === 'cursor') {
+      if (!await isFile(path.join(directory, 'agent.cmd')) && !await isFile(path.join(directory, 'agent.ps1'))) continue
+      // Cursor's official Windows installer ships Node and index.js behind shell wrappers.
+      // Resolve that documented layout directly; card content must never enter those wrappers.
+      let versionDirectory = directory
+      if (!await isFile(path.join(directory, 'node.exe'))) {
+        const versions = (await fs.readdir(path.join(directory, 'versions'), { withFileTypes: true }))
+          .filter(entry => entry.isDirectory() && /^\d{4}\.\d{1,2}\.\d{1,2}(-\d{2}-\d{2}-\d{2})?-[a-f0-9]+$/.test(entry.name))
+          .sort((a, b) => b.name.localeCompare(a.name, 'en', { numeric: true }))
+        if (!versions[0]) throw new Error('No installed Cursor CLI version found')
+        versionDirectory = path.join(directory, 'versions', versions[0].name)
+      }
+      const node = path.join(versionDirectory, 'node.exe')
+      const script = path.join(versionDirectory, 'index.js')
+      if (!await isFile(node) || !await isFile(script)) throw new Error('Incomplete Cursor CLI installation')
+      return { ...launch, shellPath: node, shellArgs: [script, ...launch.shellArgs] }
+    }
+    if (!await isFile(path.join(directory, `${binary}.cmd`))) continue
 
     // npm global bins sit beside node_modules; local bins live in node_modules/.bin.
     const modules = path.basename(directory) === '.bin' ? path.dirname(directory) : path.join(directory, 'node_modules')
-    const packageDirectory = path.join(modules, agentPackages[agent])
+    const packageName = agentPackages[agent]
+    if (!packageName) continue
+    const packageDirectory = path.join(modules, packageName)
     const manifest = JSON.parse(await fs.readFile(path.join(packageDirectory, 'package.json'), 'utf8'))
     const bin = typeof manifest.bin === 'string' ? manifest.bin : manifest.bin?.[agent]
     if (typeof bin !== 'string') throw new Error(`No executable found for ${agent}`)
@@ -76,7 +97,7 @@ export async function getAITerminalOptions(
   }
 
   // Use an explicit executable suffix so VS Code cannot resolve a .cmd/.bat file.
-  return { ...launch, shellPath: `${agent}.exe` }
+  return { ...launch, shellPath: `${binary}.exe` }
 }
 
 async function isFile(filePath: string): Promise<boolean> {
@@ -109,6 +130,12 @@ export function buildAITerminalLaunch(
   prompt: string
 ): AITerminalLaunch {
   switch (agent) {
+    case 'cursor':
+      return {
+        name: agentNames[agent],
+        shellPath: 'agent',
+        shellArgs: permissionMode === 'plan' ? ['--mode', 'plan', prompt] : [prompt]
+      }
     case 'claude': {
       const shellArgs: string[] = []
       if (permissionMode !== 'default') {

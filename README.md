@@ -89,6 +89,8 @@ Cards include a "Build with AI" action that passes full feature context (title, 
 | OpenCode | Default |
 | Cursor CLI | Agent, Plan |
 
+Cursor CLI uses the `agent` command from the [official installation](https://cursor.com/docs/cli/installation), including native Windows installations.
+
 ### Kanban Skill
 
 Give agents read/write access to your board from the terminal:
