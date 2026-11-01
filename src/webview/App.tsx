@@ -296,6 +296,7 @@ function App(): React.JSX.Element {
   const handleCreateFeature = (data: {
     status: FeatureStatus
     priority: Priority
+    storyPoints: number | null
     content: string
     assignee: string | null
     epic: string | null

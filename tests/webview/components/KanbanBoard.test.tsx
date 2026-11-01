@@ -42,6 +42,7 @@ function makeFeature(overrides: Partial<Feature> = {}): Feature {
     id: 'feat-1',
     status: 'backlog',
     priority: 'medium',
+    storyPoints: null,
     assignee: null,
     epic: null,
     dueDate: null,

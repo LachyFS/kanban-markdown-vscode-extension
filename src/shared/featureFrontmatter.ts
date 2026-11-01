@@ -1,6 +1,13 @@
 import * as path from 'path'
 import type { Feature, FeatureStatus, Priority } from './types'
 
+function parseStoryPoints(rawValue: string): number | null {
+  if (!rawValue) return null
+  if (!/^\d+$/.test(rawValue)) return null
+  const parsed = Number.parseInt(rawValue, 10)
+  return Number.isSafeInteger(parsed) ? parsed : null
+}
+
 export function parseFeatureFile(content: string, filePath: string): Feature | null {
   content = content.replace(/\r\n/g, '\n')
   const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/)
@@ -26,6 +33,7 @@ export function parseFeatureFile(content: string, filePath: string): Feature | n
     id: getValue('id') || path.basename(filePath, '.md'),
     status: (getValue('status') as FeatureStatus) || 'backlog',
     priority: (getValue('priority') as Priority) || 'medium',
+    storyPoints: parseStoryPoints(getValue('storyPoints')),
     assignee: getValue('assignee') || null,
     epic: getValue('epic') || null,
     dueDate: getValue('dueDate') || null,
@@ -46,6 +54,7 @@ export function serializeFeature(feature: Feature): string {
     `status: "${feature.status}"`,
     `priority: "${feature.priority}"`,
     `assignee: ${feature.assignee ? `"${feature.assignee}"` : 'null'}`,
+    `storyPoints: ${feature.storyPoints === null ? 'null' : feature.storyPoints}`,
     `epic: ${feature.epic ? `"${feature.epic}"` : 'null'}`,
     `dueDate: ${feature.dueDate ? `"${feature.dueDate}"` : 'null'}`,
     `created: "${feature.created}"`,

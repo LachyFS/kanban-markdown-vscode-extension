@@ -38,6 +38,7 @@
   "config.showEpic.description": "Mostrar la épica (agrupación principal) en las tarjetas y en los editores.",
   "config.showBuildWithAI.description": "Mostrar el botón 'Construir con IA' en las tarjetas de funciones.",
   "config.showFileName.description": "Mostrar el nombre del archivo markdown de origen en las tarjetas de funciones.",
+  "config.pointsLabel.description": "Etiqueta usada para los valores de puntos en los tooltips del tablero (por ejemplo, Puntos de historia u Horas).",
   "config.compactMode.description": "Usar diseño compacto de tarjetas para mostrar más funciones.",
   "config.addNewCardsToTop.description": "Cuando está activado, las nuevas tarjetas se añaden arriba de la columna en lugar de abajo.",
   "config.markdownEditorMode.description": "Abrir archivos de funciones en el editor de texto nativo de VS Code en lugar del editor de texto enriquecido integrado.",

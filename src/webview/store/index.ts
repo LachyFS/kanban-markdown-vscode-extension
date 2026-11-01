@@ -109,6 +109,7 @@ export const useStore = create<KanbanState>((set, get) => ({
     showEpic: true,
     showBuildWithAI: true,
     showFileName: false,
+    pointsLabel: 'Story points',
     compactMode: false,
     markdownEditorMode: false,
     hideScrollbar: false,

@@ -27,6 +27,7 @@ const defaultSettings: CardDisplaySettings = {
   showEpic: true,
   showBuildWithAI: true,
   showFileName: false,
+  pointsLabel: 'Story points',
   compactMode: false,
   markdownEditorMode: false,
   defaultPriority: 'medium',
@@ -42,6 +43,7 @@ function makeFeature(overrides: Partial<Feature> = {}): Feature {
     id: 'card-1',
     status: 'todo',
     priority: 'high',
+    storyPoints: null,
     assignee: 'lucio',
     epic: null,
     dueDate: null,
@@ -183,6 +185,20 @@ describe('FeatureCard — assignee', () => {
     setSettings({ showAssignee: true })
     render(<FeatureCard feature={makeFeature({ assignee: 'John Doe' })} onClick={() => {}} />)
     expect(screen.getByText('JD')).toBeInTheDocument()
+  })
+})
+
+describe('FeatureCard — story points', () => {
+  it('shows story points when value is 0', () => {
+    setSettings()
+    render(<FeatureCard feature={makeFeature({ storyPoints: 0 })} onClick={() => {}} />)
+    expect(screen.getByText('0')).toBeInTheDocument()
+  })
+
+  it('hides story points when value is null', () => {
+    setSettings()
+    render(<FeatureCard feature={makeFeature({ storyPoints: null })} onClick={() => {}} />)
+    expect(screen.queryByText('0')).not.toBeInTheDocument()
   })
 })
 

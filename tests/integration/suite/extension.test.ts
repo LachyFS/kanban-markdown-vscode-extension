@@ -65,6 +65,7 @@ function makeFeature(overrides: Partial<Feature> = {}): Feature {
     id: 'test-id-001',
     status: 'todo',
     priority: 'high',
+    storyPoints: 5,
     assignee: 'alice',
     epic: null,
     dueDate: '2026-06-01',
@@ -254,6 +255,7 @@ suite('Integration: frontmatter round-trip with vscode.workspace.fs', () => {
     assert.strictEqual(parsed!.id, feature.id)
     assert.strictEqual(parsed!.status, feature.status)
     assert.strictEqual(parsed!.priority, feature.priority)
+    assert.strictEqual(parsed!.storyPoints, feature.storyPoints)
     assert.strictEqual(parsed!.assignee, feature.assignee)
     assert.strictEqual(parsed!.dueDate, feature.dueDate)
     assert.strictEqual(parsed!.order, feature.order)
@@ -264,6 +266,7 @@ suite('Integration: frontmatter round-trip with vscode.workspace.fs', () => {
   test('null optional fields survive round-trip', async () => {
     const feature = makeFeature({
       priority: 'medium',
+      storyPoints: null,
       assignee: null,
       dueDate: null,
       completedAt: null,
@@ -276,6 +279,7 @@ suite('Integration: frontmatter round-trip with vscode.workspace.fs', () => {
     const parsed = parseFeatureFile(content, filePath)
 
     assert.ok(parsed !== null)
+    assert.strictEqual(parsed!.storyPoints, null)
     assert.strictEqual(parsed!.assignee, null)
     assert.strictEqual(parsed!.dueDate, null)
     assert.strictEqual(parsed!.completedAt, null)

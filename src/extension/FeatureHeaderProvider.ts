@@ -5,6 +5,13 @@ import type { FeatureFrontmatter, EditorExtensionMessage, EditorWebviewMessage }
 import type { FeatureStatus, Priority } from '../shared/types'
 import { getAITerminalOptions, buildFeaturePrompt, normalizeAIAgent, normalizeAIPermissionMode } from './aiTerminal'
 
+function parseStoryPoints(rawValue: string): number | null {
+  if (!rawValue) return null
+  if (!/^\d+$/.test(rawValue)) return null
+  const parsed = Number.parseInt(rawValue, 10)
+  return Number.isSafeInteger(parsed) ? parsed : null
+}
+
 /**
  * Provides a webview panel that shows feature metadata (frontmatter) as a header.
  * The actual markdown editing is done by VSCode's native text editor.
@@ -241,6 +248,7 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
       id: getValue('id') || 'unknown',
       status: (getValue('status') as FeatureStatus) || 'backlog',
       priority: (getValue('priority') as Priority) || 'medium',
+      storyPoints: parseStoryPoints(getValue('storyPoints')),
       assignee: getValue('assignee') || null,
       epic: getValue('epic') || null,
       dueDate: getValue('dueDate') || null,
@@ -260,6 +268,7 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
       id: 'unknown',
       status: 'backlog',
       priority: 'medium',
+      storyPoints: null,
       assignee: null,
       epic: null,
       dueDate: null,
@@ -283,6 +292,7 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
       `status: "${updatedFrontmatter.status}"`,
       `priority: "${updatedFrontmatter.priority}"`,
       `assignee: ${updatedFrontmatter.assignee ? `"${updatedFrontmatter.assignee}"` : 'null'}`,
+      `storyPoints: ${updatedFrontmatter.storyPoints === null ? 'null' : updatedFrontmatter.storyPoints}`,
       `epic: ${updatedFrontmatter.epic ? `"${updatedFrontmatter.epic}"` : 'null'}`,
       `dueDate: ${updatedFrontmatter.dueDate ? `"${updatedFrontmatter.dueDate}"` : 'null'}`,
       `created: "${updatedFrontmatter.created}"`,

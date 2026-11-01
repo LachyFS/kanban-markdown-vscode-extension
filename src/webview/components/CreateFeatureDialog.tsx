@@ -5,7 +5,7 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Markdown } from 'tiptap-markdown'
-import { X, ChevronDown, User, Tag, Check, CircleDot, Signal, Calendar, Layers } from 'lucide-react'
+import { X, ChevronDown, User, Tag, Check, CircleDot, Signal, Calendar, Layers, Hash } from 'lucide-react'
 import type { FeatureStatus, Priority } from '../../shared/types'
 import { useStore } from '../store'
 import { cn } from '../lib/utils'
@@ -23,16 +23,16 @@ function getMarkdown(editor: { storage: unknown }): string {
 interface CreateFeatureDialogProps {
   isOpen: boolean
   onClose: () => void
-  onCreate: (data: {
-    status: FeatureStatus
-    priority: Priority
-    content: string
-    assignee: string | null
-    epic: string | null
-    dueDate: string | null
-    labels: string[]
-  }) => void
+  onCreate: (data: { status: FeatureStatus; priority: Priority; storyPoints: number | null; content: string; assignee: string | null; epic: string | null; dueDate: string | null; labels: string[] }) => void
   initialStatus?: FeatureStatus
+}
+
+function parseStoryPointsInput(value: string): number | null {
+  const trimmed = value.trim()
+  if (trimmed === '') return null
+  if (!/^\d+$/.test(trimmed)) return null
+  const parsed = Number.parseInt(trimmed, 10)
+  return Number.isSafeInteger(parsed) ? parsed : null
 }
 
 function getPriorityConfig(): { value: Priority; label: string; dot: string }[] {
@@ -306,12 +306,14 @@ function CreateFeatureDialogContent({
   initialStatus
 }: CreateFeatureDialogProps) {
   const { cardSettings } = useStore()
+  const pointsLabel = cardSettings.pointsLabel?.trim() || t('property.storyPoints')
   const priorityConfig = getPriorityConfig()
   const statusConfig = getStatusConfig()
   const [title, setTitle] = useState('')
   const [status, setStatus] = useState<FeatureStatus>(initialStatus ?? cardSettings.defaultStatus)
   const [priority, setPriority] = useState<Priority>(cardSettings.defaultPriority)
   const [assignee, setAssignee] = useState('')
+  const [storyPointsInput, setStoryPointsInput] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [labels, setLabels] = useState<string[]>([])
   const [epic, setEpic] = useState('')
@@ -341,10 +343,13 @@ function CreateFeatureDialogContent({
     const description = descriptionEditor ? getMarkdown(descriptionEditor).trim() : ''
     const heading = title.trim()
     if (!heading && !description) return
-    const content = heading ? `# ${heading}${description ? '\n\n' + description : ''}` : description
+    const content = heading
+      ? `# ${heading}${description ? '\n\n' + description : ''}`
+      : description
     onCreate({
       status,
       priority,
+      storyPoints: parseStoryPointsInput(storyPointsInput),
       content,
       assignee: assignee.trim() || null,
       epic: epic.trim() || null,
@@ -444,6 +449,27 @@ function CreateFeatureDialogContent({
               <AssigneeInput value={assignee} onChange={setAssignee} />
             </PropertyRow>
           )}
+          {cardSettings.showEpic && (
+            <PropertyRow label={t('property.epic')} icon={<Layers size={13} />}>
+              <EpicInput value={epic} onChange={setEpic} />
+            </PropertyRow>
+          )}
+          <PropertyRow label={pointsLabel} icon={<Hash size={13} />}>
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={storyPointsInput}
+              onChange={(e) => {
+                const next = e.target.value
+                if (next !== '' && !/^\d+$/.test(next)) return
+                setStoryPointsInput(next)
+              }}
+              placeholder="-"
+              className="bg-transparent border-none outline-none text-xs w-full"
+              style={{ color: storyPointsInput ? 'var(--vscode-foreground)' : 'var(--vscode-descriptionForeground)' }}
+            />
+          </PropertyRow>
           {cardSettings.showEpic && (
             <PropertyRow label={t('property.epic')} icon={<Layers size={13} />}>
               <EpicInput value={epic} onChange={setEpic} />

@@ -16,7 +16,8 @@ import {
   Calendar,
   Trash2,
   FileText,
-  Layers
+  Layers,
+  Hash
 } from 'lucide-react'
 import type {
   FeatureFrontmatter,
@@ -72,6 +73,14 @@ function getStatusLabels(): Record<FeatureStatus, string> {
 
 const priorities: Priority[] = ['critical', 'high', 'medium', 'low']
 const statuses: FeatureStatus[] = ['backlog', 'todo', 'in-progress', 'review', 'done']
+
+function parseStoryPointsInput(value: string): number | null {
+  const trimmed = value.trim()
+  if (trimmed === '') return null
+  if (!/^\d+$/.test(trimmed)) return null
+  const parsed = Number.parseInt(trimmed, 10)
+  return Number.isSafeInteger(parsed) ? parsed : null
+}
 
 const priorityDots: Record<Priority, string> = {
   critical: 'bg-red-500',
@@ -535,6 +544,7 @@ export function FeatureEditor({
   onStartWithAI
 }: FeatureEditorProps) {
   const { cardSettings } = useStore()
+  const pointsLabel = cardSettings.pointsLabel?.trim() || t('property.storyPoints')
   const [currentFrontmatter, setCurrentFrontmatter] = useState(frontmatter)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const priorityLabels = getPriorityLabels()
@@ -759,6 +769,29 @@ export function FeatureEditor({
             />
           </PropertyRow>
         )}
+        <PropertyRow label={pointsLabel} icon={<Hash size={13} />}>
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={
+              currentFrontmatter.storyPoints === null ? '' : String(currentFrontmatter.storyPoints)
+            }
+            onChange={(e) => {
+              const next = e.target.value
+              if (next !== '' && !/^\d+$/.test(next)) return
+              handleFrontmatterUpdate({ storyPoints: parseStoryPointsInput(next) })
+            }}
+            placeholder="-"
+            className="bg-transparent border-none outline-none text-xs w-full"
+            style={{
+              color:
+                currentFrontmatter.storyPoints === null
+                  ? 'var(--vscode-descriptionForeground)'
+                  : 'var(--vscode-foreground)'
+            }}
+          />
+        </PropertyRow>
         {cardSettings.showEpic && (
           <PropertyRow label={t('property.epic')} icon={<Layers size={13} />}>
             <EpicInput

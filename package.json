@@ -257,6 +257,11 @@
           "default": false,
           "description": "%config.showFileName.description%"
         },
+        "kanban-markdown.pointsLabel": {
+          "type": "string",
+          "default": "Story points",
+          "description": "%config.pointsLabel.description%"
+        },
         "kanban-markdown.compactMode": {
           "type": "boolean",
           "default": false,

@@ -11,6 +11,7 @@ export interface Feature {
   id: string
   status: FeatureStatus
   priority: Priority
+  storyPoints: number | null
   assignee: string | null
   epic: string | null
   dueDate: string | null
@@ -82,6 +83,7 @@ export interface CardDisplaySettings {
   showEpic: boolean
   showBuildWithAI: boolean
   showFileName: boolean
+  pointsLabel: string
   compactMode: boolean
   markdownEditorMode: boolean
   hideScrollbar: boolean
@@ -111,6 +113,7 @@ export interface FeatureFrontmatter {
   id: string
   status: FeatureStatus
   priority: Priority
+  storyPoints: number | null
   assignee: string | null
   epic: string | null
   dueDate: string | null
@@ -123,7 +126,7 @@ export interface FeatureFrontmatter {
 
 export type WebviewMessage =
   | { type: 'ready' }
-  | { type: 'createFeature'; data: { status: FeatureStatus; priority: Priority; content: string; assignee: string | null; epic: string | null; dueDate: string | null; labels: string[] } }
+  | { type: 'createFeature'; data: { status: FeatureStatus; priority: Priority; storyPoints: number | null; content: string; assignee: string | null; epic: string | null; dueDate: string | null; labels: string[] } }
   | { type: 'moveFeature'; featureId: string; newStatus: string; newOrder: number }
   | { type: 'deleteFeature'; featureId: string }
   | { type: 'updateFeature'; featureId: string; updates: Partial<Feature> }

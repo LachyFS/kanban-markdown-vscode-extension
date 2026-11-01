@@ -1,4 +1,4 @@
-import { Calendar, Check, FileText, Layers } from 'lucide-react'
+import { Calendar, FileText, Layers } from 'lucide-react'
 import { getTitleFromContent } from '../../shared/types'
 import type { Feature, Priority } from '../../shared/types'
 import { epicThemeFromName } from '../../shared/epicColor'
@@ -66,29 +66,8 @@ export function FeatureCard({ feature, onClick, isDragging }: FeatureCardProps) 
 
   const dueInfo = feature.status === 'done' ? null : formatDueDate(feature.dueDate)
 
-  const formatCompletedAt = (dateStr: string | null) => {
-    if (!dateStr) return null
-    const completed = new Date(dateStr)
-    const now = new Date()
-    const diffMs = now.getTime() - completed.getTime()
-    const diffMins = Math.floor(diffMs / (1000 * 60))
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-    if (diffMins < 1) return t('card.justNow')
-    if (diffMins < 60) return t('card.minutesAgo', { count: diffMins })
-    if (diffHours < 24) return t('card.hoursAgo', { count: diffHours })
-    if (diffDays === 1) return t('card.oneDayAgo')
-    if (diffDays < 30) return t('card.daysAgo', { count: diffDays })
-    if (diffDays < 365) return t('card.monthsAgo', { count: Math.floor(diffDays / 30) })
-    return t('card.yearsAgo', { count: Math.floor(diffDays / 365) })
-  }
-
-  const completedText = feature.status === 'done' ? formatCompletedAt(feature.completedAt) : null
-
   const epicTrimmed = feature.epic?.trim()
   const epicTheme = epicTrimmed ? epicThemeFromName(epicTrimmed, isDarkMode) : null
-
   return (
     <div
       onClick={onClick}
@@ -164,14 +143,14 @@ export function FeatureCard({ feature, onClick, isDragging }: FeatureCardProps) 
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between text-xs mt-auto">
-        <div className="flex items-center gap-1">
+      <div className="flex items-center justify-between gap-2 text-xs mt-auto">
+        <div className="flex items-center gap-1 flex-1 min-w-0">
           {cardSettings.showAssignee && feature.assignee && feature.assignee !== 'null' && (
-            <div className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400">
+            <div className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 min-w-0">
               <span className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold bg-zinc-200 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-300">
                 {feature.assignee.split(/\s+/).map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
               </span>
-              <span>{feature.assignee}</span>
+              <span className="truncate">{feature.assignee}</span>
             </div>
           )}
         </div>
@@ -181,10 +160,9 @@ export function FeatureCard({ feature, onClick, isDragging }: FeatureCardProps) 
             <span>{dueInfo.text}</span>
           </div>
         )}
-        {completedText && (
-          <div className="flex items-center gap-1" style={{ color: 'var(--vscode-descriptionForeground)' }}>
-            <Check size={12} />
-            <span>{completedText}</span>
+        {feature.storyPoints !== null && (
+          <div className="text-zinc-500 dark:text-zinc-400 text-right truncate max-w-[40%]">
+            {feature.storyPoints}
           </div>
         )}
       </div>
