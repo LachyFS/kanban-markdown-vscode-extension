@@ -1,3 +1,5 @@
+import { promises as fs } from 'fs'
+import * as path from 'path'
 import type { AIAgent, AIPermissionMode, Priority } from '../shared/types'
 
 interface FeaturePromptInput {
@@ -10,7 +12,7 @@ interface FeaturePromptInput {
 
 interface AITerminalLaunch {
   name: string
-  shellPath: AIAgent
+  shellPath: string
   shellArgs: string[]
 }
 
@@ -23,6 +25,67 @@ const agentNames: Record<AIAgent, string> = {
 
 const agents = new Set<string>(Object.keys(agentNames))
 const permissionModes = new Set<string>(['default', 'plan', 'acceptEdits', 'bypassPermissions'])
+
+const agentPackages: Record<AIAgent, string> = {
+  claude: '@anthropic-ai/claude-code',
+  codex: '@openai/codex',
+  copilot: '@github/copilot',
+  opencode: 'opencode-ai'
+}
+
+/** Resolve npm's Windows shims to their entry point, without executing cmd.exe. */
+export async function getAITerminalOptions(
+  agent: AIAgent,
+  permissionMode: AIPermissionMode,
+  prompt: string,
+  platform: NodeJS.Platform = process.platform,
+  env: NodeJS.ProcessEnv = process.env
+): Promise<AITerminalLaunch> {
+  const launch = buildAITerminalLaunch(agent, permissionMode, prompt)
+  if (platform !== 'win32') return launch
+
+  const searchPath = Object.entries(env).find(([key]) => key.toLowerCase() === 'path')?.[1] || ''
+  for (const entry of searchPath.split(';')) {
+    const directory = entry.replace(/^"|"$/g, '')
+    if (!path.isAbsolute(directory)) continue
+
+    const executable = path.join(directory, `${agent}.exe`)
+    if (await isFile(executable)) return { ...launch, shellPath: executable }
+    if (!await isFile(path.join(directory, `${agent}.cmd`))) continue
+
+    // npm global bins sit beside node_modules; local bins live in node_modules/.bin.
+    const modules = path.basename(directory) === '.bin' ? path.dirname(directory) : path.join(directory, 'node_modules')
+    const packageDirectory = path.join(modules, agentPackages[agent])
+    const manifest = JSON.parse(await fs.readFile(path.join(packageDirectory, 'package.json'), 'utf8'))
+    const bin = typeof manifest.bin === 'string' ? manifest.bin : manifest.bin?.[agent]
+    if (typeof bin !== 'string') throw new Error(`No executable found for ${agent}`)
+    const entryPoint = path.resolve(packageDirectory, bin)
+    if (!await isFile(entryPoint)) throw new Error(`No executable found for ${agent}`)
+    if (path.extname(entryPoint).toLowerCase() === '.exe') {
+      return { ...launch, shellPath: entryPoint }
+    }
+    if (!['', '.js', '.cjs', '.mjs'].includes(path.extname(entryPoint).toLowerCase())) {
+      throw new Error(`Unsupported executable for ${agent}: ${entryPoint}`)
+    }
+    const localNode = path.join(directory, 'node.exe')
+    return {
+      ...launch,
+      shellPath: await isFile(localNode) ? localNode : 'node.exe',
+      shellArgs: [entryPoint, ...launch.shellArgs]
+    }
+  }
+
+  // Use an explicit executable suffix so VS Code cannot resolve a .cmd/.bat file.
+  return { ...launch, shellPath: `${agent}.exe` }
+}
+
+async function isFile(filePath: string): Promise<boolean> {
+  try {
+    return (await fs.stat(filePath)).isFile()
+  } catch {
+    return false
+  }
+}
 
 export function normalizeAIAgent(value: string | undefined): AIAgent {
   return value && agents.has(value) ? value as AIAgent : 'claude'

@@ -8,7 +8,7 @@ import { ensureStatusSubfolders, moveFeatureFile, getFeatureFilePath, getStatusF
 import { parseFeatureFile, serializeFeature } from '../shared/featureFrontmatter'
 import { featureMatchesEpicLane } from '../shared/epicLane'
 import { t, getBundle, getEffectiveLocale, reloadBundle, getAllDefaultColumnNames, getDefaultColumnNamesForLocale } from './l10n'
-import { buildAITerminalLaunch, buildFeaturePrompt, normalizeAIAgent, normalizeAIPermissionMode } from './aiTerminal'
+import { getAITerminalOptions, buildFeaturePrompt, normalizeAIAgent, normalizeAIPermissionMode } from './aiTerminal'
 
 function normalizeEpic(value: string | null | undefined): string | null {
   const t = value?.trim()
@@ -927,7 +927,7 @@ export class KanbanPanel {
     const config = vscode.workspace.getConfiguration('kanban-markdown')
     const selectedAgent = normalizeAIAgent(agent || config.get<string>('aiAgent'))
     const selectedPermissionMode = normalizeAIPermissionMode(permissionMode)
-    const launch = buildAITerminalLaunch(selectedAgent, selectedPermissionMode, prompt)
+    const launch = await getAITerminalOptions(selectedAgent, selectedPermissionMode, prompt)
     const terminal = vscode.window.createTerminal({
       ...launch,
       cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath

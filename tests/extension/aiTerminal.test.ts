@@ -1,7 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { promises as fs } from 'fs'
+import * as os from 'os'
+import * as path from 'path'
 import {
   buildAITerminalLaunch,
   buildFeaturePrompt,
+  getAITerminalOptions,
   normalizeAIAgent,
   normalizeAIPermissionMode
 } from '../../src/extension/aiTerminal'
@@ -98,5 +102,74 @@ describe('aiTerminal', () => {
     expect(normalizeAIPermissionMode('plan')).toBe('plan')
     expect(normalizeAIPermissionMode('unsafe-mode')).toBe('default')
     expect(normalizeAIPermissionMode(undefined)).toBe('default')
+  })
+})
+
+describe('Windows agent resolution', () => {
+  let directory: string
+
+  beforeEach(async () => {
+    directory = await fs.mkdtemp(path.join(os.tmpdir(), 'kanban-agent-'))
+  })
+  afterEach(async () => { await fs.rm(directory, { recursive: true, force: true }) })
+
+  async function npmAgent(bin: string, binDirectory = directory) {
+    const modules = path.basename(binDirectory) === '.bin' ? path.dirname(binDirectory) : path.join(binDirectory, 'node_modules')
+    const packageDirectory = path.join(modules, '@openai', 'codex')
+    await fs.mkdir(binDirectory, { recursive: true })
+    await fs.mkdir(path.dirname(path.join(packageDirectory, bin)), { recursive: true })
+    await fs.writeFile(path.join(binDirectory, 'codex.cmd'), '@echo should never run')
+    await fs.writeFile(path.join(packageDirectory, 'package.json'), JSON.stringify({ bin: { codex: bin } }))
+    await fs.writeFile(path.join(packageDirectory, bin), '')
+    return path.join(packageDirectory, bin)
+  }
+
+  it('launches global npm JavaScript directly through Node, preserving hostile arguments', async () => {
+    const entryPoint = await npmAgent('bin/codex.js')
+    const prompt = '" & echo injected & rem %PATH% !PATH! $(whoami) `x`\nnext line'
+    const launch = await getAITerminalOptions('codex', 'default', prompt, 'win32', { Path: directory })
+    expect(launch.shellPath).toBe('node.exe')
+    expect(launch.shellArgs).toEqual([entryPoint, '--ask-for-approval', 'on-request', prompt])
+  })
+
+  it('resolves local npm bins and a Node executable alongside the shim', async () => {
+    const binDirectory = path.join(directory, 'node_modules', '.bin')
+    const entryPoint = await npmAgent('bin/codex.js', binDirectory)
+    const nodePath = path.join(binDirectory, 'node.exe')
+    await fs.writeFile(nodePath, '')
+    const launch = await getAITerminalOptions('codex', 'default', 'prompt', 'win32', { PATH: binDirectory })
+    expect(launch.shellPath).toBe(nodePath)
+    expect(launch.shellArgs[0]).toBe(entryPoint)
+  })
+
+  it('launches a native npm binary without Node', async () => {
+    const entryPoint = await npmAgent('bin/codex.exe')
+    const launch = await getAITerminalOptions('codex', 'default', 'prompt', 'win32', { PATH: directory })
+    expect(launch.shellPath).toBe(entryPoint)
+    expect(launch.shellArgs).toEqual(['--ask-for-approval', 'on-request', 'prompt'])
+  })
+
+  it('prefers the native executable beside an npm shim', async () => {
+    await npmAgent('bin/codex.js')
+    const executable = path.join(directory, 'codex.exe')
+    await fs.writeFile(executable, '')
+    const launch = await getAITerminalOptions('codex', 'default', 'prompt', 'win32', { PATH: directory })
+    expect(launch.shellPath).toBe(executable)
+  })
+
+  it('never falls back to executing batch files', async () => {
+    await npmAgent('bin/codex.cmd')
+    await expect(getAITerminalOptions('codex', 'default', 'prompt', 'win32', { PATH: directory }))
+      .rejects.toThrow('Unsupported executable')
+  })
+
+  it('uses an explicit exe suffix when no supported installation is found', async () => {
+    const launch = await getAITerminalOptions('codex', 'default', 'prompt', 'win32', { PATH: directory })
+    expect(launch.shellPath).toBe('codex.exe')
+  })
+
+  it('keeps POSIX launches as direct process arguments', async () => {
+    expect(await getAITerminalOptions('claude', 'default', 'prompt', 'linux'))
+      .toEqual(buildAITerminalLaunch('claude', 'default', 'prompt'))
   })
 })

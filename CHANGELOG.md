@@ -5,6 +5,17 @@ All notable changes to the Kanban Markdown extension will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.2] - 2026-11-02
+
+### Security
+
+- Prevent Windows shell command injection through card content in Build with AI ([#58](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/58)). Agent prompts are passed as process arguments, including for npm-installed agents on Windows.
+- Update bundled Tiptap, ProseMirror, Markdown-it, and Linkify-it dependencies to address published security advisories.
+
+### Fixed
+
+- Correct interactive launch arguments for Codex, GitHub Copilot, and OpenCode.
+
 ## [1.11.0] - 2026-03-01
 
 ### Added

@@ -19,7 +19,10 @@ jobs:
 
   test:
     needs: package-manager-guard
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout
@@ -36,6 +39,7 @@ jobs:
           run_install: false
 
       - name: Get pnpm store directory
+        shell: bash
         run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
       - name: Cache pnpm store
@@ -61,6 +65,7 @@ jobs:
         run: pnpm run build:extension
 
       - name: Install VS Code headless dependencies
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update -y
           sudo apt-get install -y \
@@ -72,7 +77,12 @@ jobs:
             libasound2t64
 
       - name: Integration tests
+        if: runner.os == 'Linux'
         run: xvfb-run -a pnpm run test:integration
+
+      - name: Integration tests (Windows)
+        if: runner.os == 'Windows'
+        run: pnpm run test:integration
 
   build:
     needs: test

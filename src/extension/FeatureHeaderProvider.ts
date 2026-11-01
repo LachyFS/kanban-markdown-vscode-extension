@@ -3,7 +3,7 @@ import * as crypto from 'crypto'
 import * as path from 'path'
 import type { FeatureFrontmatter, EditorExtensionMessage, EditorWebviewMessage } from '../shared/editorTypes'
 import type { FeatureStatus, Priority } from '../shared/types'
-import { buildAITerminalLaunch, buildFeaturePrompt, normalizeAIAgent, normalizeAIPermissionMode } from './aiTerminal'
+import { getAITerminalOptions, buildFeaturePrompt, normalizeAIAgent, normalizeAIPermissionMode } from './aiTerminal'
 
 /**
  * Provides a webview panel that shows feature metadata (frontmatter) as a header.
@@ -119,7 +119,7 @@ export class FeatureHeaderProvider implements vscode.WebviewViewProvider {
 
           const agent = normalizeAIAgent(message.agent)
           const permissionMode = normalizeAIPermissionMode(message.permissionMode)
-          const launch = buildAITerminalLaunch(agent, permissionMode, prompt)
+          const launch = await getAITerminalOptions(agent, permissionMode, prompt)
           const terminal = vscode.window.createTerminal({
             ...launch,
             cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
