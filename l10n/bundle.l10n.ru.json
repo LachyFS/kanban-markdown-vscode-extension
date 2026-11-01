@@ -184,5 +184,9 @@
   "sidebar.newFeature": "Новая задача",
   "sidebar.overview": "Обзор",
   "sidebar.total": "{count} всего",
-  "sidebar.inProgress": "В работе"
+  "sidebar.inProgress": "В работе",
+  "ai.cursor": "Cursor",
+  "ai.mode.agent": "Агент",
+  "ai.mode.cursor.agent.description": "Стандартный режим агента",
+  "ai.mode.cursor.plan.description": "Сначала составляет план"
 }

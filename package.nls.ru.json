@@ -47,5 +47,7 @@
   "config.language.en": "Английский (English)",
   "config.language.es": "Испанский (Español)",
   "config.language.pt": "Португальский (Português)",
-  "config.language.ru": "Русский"
+  "config.language.ru": "Русский",
+  "config.zoomLevel.description": "Масштаб канбан-доски (от 0,5 до 3).",
+  "config.aiAgent.cursor": "Cursor CLI"
 }
