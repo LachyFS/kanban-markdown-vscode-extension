@@ -321,7 +321,7 @@ export class KanbanPanel {
     )
 
     const nonce = this._getNonce()
-    
+
     // Fetch the zoom level from the workspace configuration
     const config = vscode.workspace.getConfiguration('kanban-markdown')
     const zoomLevel = normalizeZoomLevel(config.get('zoomLevel'))
