@@ -61,6 +61,14 @@ jobs:
       - name: Unit tests
         run: pnpm test
 
+      - name: Check translations
+        if: runner.os == 'Linux'
+        run: pnpm run check-l10n
+
+      - name: Audit runtime dependencies
+        if: runner.os == 'Linux'
+        run: pnpm audit --prod
+
       - name: Build extension (required for integration tests)
         run: pnpm run build:extension
 

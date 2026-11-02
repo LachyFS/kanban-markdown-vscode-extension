@@ -6,7 +6,7 @@ Thanks for your interest in contributing to Kanban Markdown! This guide will hel
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18+)
+- [Node.js](https://nodejs.org/) (v20.19+ or v22.12+)
 - [VS Code](https://code.visualstudio.com/) (v1.85.0+)
 - pnpm
 
