@@ -3,9 +3,9 @@ import * as path from 'path'
 import { generateKeyBetween } from 'fractional-indexing'
 import { KanbanPanel } from './KanbanPanel'
 import { SidebarViewProvider } from './SidebarViewProvider'
-import { generateFeatureFilename } from '../shared/types'
+import { DEFAULT_COLUMNS, generateFeatureFilename } from '../shared/types'
 import { serializeFeature } from '../shared/featureFrontmatter'
-import type { Feature, FeatureStatus, Priority } from '../shared/types'
+import type { Feature, FeatureStatus, Priority, KanbanColumn } from '../shared/types'
 import { ensureStatusSubfolders, getFeatureFilePath } from './featureFileUtils'
 import { t, loadBundle } from './l10n'
 
@@ -32,13 +32,10 @@ async function createFeatureFromPrompts(): Promise<void> {
   if (!title) return
 
   // Ask for status
-  const statusItems: StatusQuickPickItem[] = [
-    { label: t('status.backlog'), description: t('status.backlog.description'), statusValue: 'backlog' },
-    { label: t('status.todo'), description: t('status.todo.description'), statusValue: 'todo' },
-    { label: t('status.inProgress'), description: t('status.inProgress.description'), statusValue: 'in-progress' },
-    { label: t('status.review'), description: t('status.review.description'), statusValue: 'review' },
-    { label: t('status.done'), description: t('status.done.description'), statusValue: 'done' }
-  ]
+  const config = vscode.workspace.getConfiguration('kanban-markdown')
+  const statusItems: StatusQuickPickItem[] = config.get<KanbanColumn[]>('columns', DEFAULT_COLUMNS).map(column => ({
+    label: column.name, statusValue: column.id
+  }))
   const statusPick = await vscode.window.showQuickPick(statusItems, {
     placeHolder: t('ext.selectStatus')
   })
@@ -67,7 +64,6 @@ async function createFeatureFromPrompts(): Promise<void> {
   })
 
   // Create the feature file
-  const config = vscode.workspace.getConfiguration('kanban-markdown')
   const featuresDirectory = config.get<string>('featuresDirectory') || '.devtool/features'
   const featuresDir = path.join(workspaceFolders[0].uri.fsPath, featuresDirectory)
   await vscode.workspace.fs.createDirectory(vscode.Uri.file(featuresDir))

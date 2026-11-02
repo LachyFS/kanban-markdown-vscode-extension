@@ -5,6 +5,16 @@ All notable changes to the Kanban Markdown extension will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.1] - 2026-11-02
+
+### Fixed
+
+- Render Markdown images and preserve their original paths when editing or saving cards ([#52](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/52)). Local images load through VS Code's workspace resource restrictions; HTTPS images are supported.
+- Render interactive checklists and preserve checked, unchecked, and nested tasks through saves ([#59](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/59)).
+- Use configured column names, colours, and status IDs in card editing, creation, and the Add Feature command ([#61](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/61)).
+- Open relative Markdown links in the board or native editor, while retaining external HTTP/HTTPS links ([#68](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/68), [#64](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/64)).
+- Focus the menu with Alt without revealing a hidden activity bar or sidebar ([#8](https://github.com/LachyFS/kanban-markdown-vscode-extension/issues/8)).
+
 ## [1.15.0] - 2026-11-02
 
 ### Added

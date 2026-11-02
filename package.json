@@ -2,7 +2,7 @@
   "name": "kanban-markdown",
   "displayName": "Kanban Markdown",
   "description": "A kanban board for your codebase. Features stored as markdown.",
-  "version": "1.15.0",
+  "version": "1.15.1",
   "packageManager": "pnpm@9.15.9",
   "publisher": "LachyFS",
   "license": "MIT",
@@ -366,6 +366,8 @@
     }
   },
   "dependencies": {
+    "@tiptap/extension-image": "^3.32.2",
+    "@tiptap/extension-list": "^3.32.2",
     "@tiptap/extension-placeholder": "^3.32.2",
     "@tiptap/pm": "^3.32.2",
     "@tiptap/react": "^3.32.2",
