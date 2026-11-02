@@ -4,6 +4,27 @@ import { Editor, mergeAttributes } from '@tiptap/react'
 import { getMarkdown, markdownExtensions } from '../../src/webview/lib/markdownEditor'
 
 describe('bundled Markdown editor', () => {
+  it('preserves mixed ordinary bullets and checklist items across repeated saves', () => {
+    const editor = new Editor({
+      extensions: markdownExtensions(''),
+      content: '- [ ] parent\n  - ordinary\n  - [x] child'
+    })
+    try {
+      for (let save = 0; save < 3; save++) {
+        expect(editor.view.dom.querySelectorAll('li')).toHaveLength(3)
+        expect(editor.view.dom.querySelectorAll('input[type=checkbox]')).toHaveLength(2)
+        expect(editor.view.dom.querySelectorAll('input:checked')).toHaveLength(1)
+        const markdown = getMarkdown(editor)
+        expect(markdown).toContain('- [ ] parent')
+        expect(markdown).toContain('  - ordinary')
+        expect(markdown).toContain('  - [x] child')
+        editor.commands.setContent(markdown)
+      }
+    } finally {
+      editor.destroy()
+    }
+  })
+
   it('preserves local and inline images and editable nested checklists through save/reopen', () => {
     const editor = new Editor({
       extensions: markdownExtensions('', () => 'https://file.vscode-resource.vscode-cdn.net/project/features/'),

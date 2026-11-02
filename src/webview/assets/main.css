@@ -76,36 +76,6 @@ input:focus-visible {
   outline: none;
 }
 
-.ProseMirror img {
-  max-width: 100%;
-  height: auto;
-}
-
-.ProseMirror ul[data-type='taskList'] {
-  list-style: none;
-  padding-left: 0;
-}
-
-.ProseMirror li[data-type='taskItem'] {
-  display: flex;
-  gap: 0.5rem;
-  padding-left: 0;
-}
-
-.ProseMirror li[data-type='taskItem'] > label {
-  flex-shrink: 0;
-  user-select: none;
-}
-
-.ProseMirror li[data-type='taskItem'] > div {
-  flex: 1;
-  min-width: 0;
-}
-
-.ProseMirror li[data-type='taskItem'] > div > p {
-  margin: 0;
-}
-
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
@@ -261,19 +231,24 @@ input:focus-visible {
   padding-left: 0;
 }
 
-.prose ul[data-type="taskList"] li {
+.prose ul[data-type="taskList"] li[data-checked] {
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
 }
 
-.prose ul[data-type="taskList"] li > label {
+.prose ul[data-type="taskList"] li[data-checked] > label {
   flex-shrink: 0;
   margin-top: 0.125rem;
 }
 
-.prose ul[data-type="taskList"] li > div {
+.prose ul[data-type="taskList"] li[data-checked] > div {
   flex: 1;
+}
+
+.prose ul[data-type="taskList"] > li:not([data-checked]) {
+  list-style: disc;
+  margin-left: 1.5rem;
 }
 
 /* Table styling */

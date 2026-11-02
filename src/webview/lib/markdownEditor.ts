@@ -43,7 +43,8 @@ export function markdownExtensions(
     StarterKit.configure({ link: { openOnClick: openLinks } }),
     Placeholder.configure({ placeholder }),
     MarkdownImage.configure({ inline: true }),
-    TaskList,
+    // Markdown allows ordinary bullets alongside tasks in the same list.
+    TaskList.extend({ content: '(taskItem | listItem)+' }),
     TaskItem.configure({ nested: true }),
     Markdown.configure({ html: false, transformPastedText: true })
   ]
