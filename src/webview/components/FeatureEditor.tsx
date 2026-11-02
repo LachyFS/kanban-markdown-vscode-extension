@@ -1,8 +1,6 @@
 import { useEffect, useCallback, useState, useRef, useMemo } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import Placeholder from '@tiptap/extension-placeholder'
-import { Markdown } from 'tiptap-markdown'
+import { getMarkdown, markdownExtensions } from '../lib/markdownEditor'
 import {
   X,
   User,
@@ -21,7 +19,6 @@ import {
 import type {
   FeatureFrontmatter,
   Priority,
-  FeatureStatus,
   AIAgent,
   AIPermissionMode
 } from '../../shared/types'
@@ -31,19 +28,13 @@ import { useStore } from '../store'
 import { AssigneeInput } from './AssigneeInput'
 import { EpicInput } from './EpicInput'
 
-interface MarkdownStorage {
-  markdown: { getMarkdown: () => string }
-}
-
-function getMarkdown(editor: { storage: unknown }): string {
-  return (editor.storage as MarkdownStorage).markdown.getMarkdown()
-}
-
 interface FeatureEditorProps {
   featureId: string
   content: string
   frontmatter: FeatureFrontmatter
   contentVersion?: number
+  resourceBaseUri?: string
+  onOpenLink: (href: string) => void
   onSave: (content: string, frontmatter: FeatureFrontmatter) => void
   onClose: () => void
   onDelete: () => void
@@ -60,32 +51,13 @@ function getPriorityLabels(): Record<Priority, string> {
   }
 }
 
-function getStatusLabels(): Record<FeatureStatus, string> {
-  return {
-    backlog: t('status.backlog'),
-    todo: t('status.todo'),
-    'in-progress': t('status.inProgress'),
-    review: t('status.review'),
-    done: t('status.done')
-  }
-}
-
 const priorities: Priority[] = ['critical', 'high', 'medium', 'low']
-const statuses: FeatureStatus[] = ['backlog', 'todo', 'in-progress', 'review', 'done']
 
 const priorityDots: Record<Priority, string> = {
   critical: 'bg-red-500',
   high: 'bg-orange-500',
   medium: 'bg-yellow-500',
   low: 'bg-green-500'
-}
-
-const statusDots: Record<FeatureStatus, string> = {
-  backlog: 'bg-zinc-400',
-  todo: 'bg-blue-400',
-  'in-progress': 'bg-amber-400',
-  review: 'bg-purple-400',
-  done: 'bg-emerald-400'
 }
 
 function getAiAgentTabs(): { agent: AIAgent; label: string; color: string; activeColor: string }[] {
@@ -234,7 +206,7 @@ function getAiModesByAgent(): Record<
 
 interface DropdownProps {
   value: string
-  options: { value: string; label: string; dot?: string }[]
+  options: { value: string; label: string; dot?: string; color?: string }[]
   onChange: (value: string) => void
   className?: string
 }
@@ -250,8 +222,8 @@ function Dropdown({ value, options, onChange, className }: DropdownProps) {
         className="flex items-center gap-2 px-2 py-1 text-xs font-medium rounded transition-colors vscode-hover-bg"
         style={{ color: 'var(--vscode-foreground)' }}
       >
-        {current?.dot && <span className={cn('w-2 h-2 rounded-full shrink-0', current.dot)} />}
-        <span>{current?.label}</span>
+        {(current?.dot || current?.color) && <span className={cn('w-2 h-2 rounded-full shrink-0', current.dot)} style={{ backgroundColor: current.color }} />}
+        <span>{current?.label ?? value}</span>
         <ChevronDown
           size={12}
           style={{ color: 'var(--vscode-descriptionForeground)' }}
@@ -291,7 +263,7 @@ function Dropdown({ value, options, onChange, className }: DropdownProps) {
                   if (option.value !== value) e.currentTarget.style.background = 'transparent'
                 }}
               >
-                {option.dot && <span className={cn('w-2 h-2 rounded-full shrink-0', option.dot)} />}
+                {(option.dot || option.color) && <span className={cn('w-2 h-2 rounded-full shrink-0', option.dot)} style={{ backgroundColor: option.color }} />}
                 <span className="flex-1 text-left">{option.label}</span>
                 {option.value === value && (
                   <Check
@@ -552,30 +524,42 @@ export function FeatureEditor({
   content,
   frontmatter,
   contentVersion,
+  resourceBaseUri,
+  onOpenLink,
   onSave,
   onClose,
   onDelete,
   onOpenFile,
   onStartWithAI
 }: FeatureEditorProps) {
-  const { cardSettings } = useStore()
+  const { cardSettings, columns } = useStore()
   const [currentFrontmatter, setCurrentFrontmatter] = useState(frontmatter)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const priorityLabels = getPriorityLabels()
-  const statusLabels = getStatusLabels()
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isInitialLoad = useRef(true)
   const currentFrontmatterRef = useRef(currentFrontmatter)
   currentFrontmatterRef.current = currentFrontmatter
 
+  const resourceBaseRef = useRef(resourceBaseUri)
+  resourceBaseRef.current = resourceBaseUri
+
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Placeholder.configure({ placeholder: t('editor.startWriting') }),
-      Markdown.configure({ html: false, transformPastedText: true })
-    ],
+    extensions: markdownExtensions(t('editor.startWriting'), () => resourceBaseRef.current, false),
     content: '',
     editorProps: {
+      handleClick: (_view, _pos, event) => {
+        const link = (event.target as HTMLElement).closest('a')
+        if (!link) return false
+        event.preventDefault()
+        if (debounceRef.current) {
+          clearTimeout(debounceRef.current)
+          debounceRef.current = null
+          if (editor) onSave(getMarkdown(editor), currentFrontmatterRef.current)
+        }
+        onOpenLink(link.getAttribute('href') || '')
+        return true
+      },
       attributes: {
         class: 'prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[200px] p-4'
       }
@@ -588,7 +572,7 @@ export function FeatureEditor({
         onSave(markdown, currentFrontmatterRef.current)
       }, 800)
     }
-  })
+  }, [featureId, resourceBaseUri])
 
   const save = useCallback(() => {
     if (!editor) return
@@ -605,7 +589,9 @@ export function FeatureEditor({
 
   // Set content when a new feature is opened (keyed by featureId, not content)
   useEffect(() => {
-    if (editor && content) {
+    if (editor && !editor.isDestroyed) {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      debounceRef.current = null
       isInitialLoad.current = true
       editor.commands.setContent(content)
       // Allow a tick for the onUpdate from setContent to fire, then re-enable
@@ -754,12 +740,12 @@ export function FeatureEditor({
         <PropertyRow label={t('property.status')} icon={<CircleDot size={13} />}>
           <Dropdown
             value={currentFrontmatter.status}
-            options={statuses.map((s) => ({
-              value: s,
-              label: statusLabels[s],
-              dot: statusDots[s]
+            options={columns.map(column => ({
+              value: column.id,
+              label: column.name,
+              color: column.color
             }))}
-            onChange={(v) => handleFrontmatterUpdate({ status: v as FeatureStatus })}
+            onChange={(v) => handleFrontmatterUpdate({ status: v })}
           />
         </PropertyRow>
         {cardSettings.showPriorityBadges && (

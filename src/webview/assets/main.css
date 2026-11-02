@@ -76,6 +76,36 @@ input:focus-visible {
   outline: none;
 }
 
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+}
+
+.ProseMirror ul[data-type='taskList'] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.ProseMirror li[data-type='taskItem'] {
+  display: flex;
+  gap: 0.5rem;
+  padding-left: 0;
+}
+
+.ProseMirror li[data-type='taskItem'] > label {
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.ProseMirror li[data-type='taskItem'] > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.ProseMirror li[data-type='taskItem'] > div > p {
+  margin: 0;
+}
+
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;

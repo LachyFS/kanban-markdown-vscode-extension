@@ -7,6 +7,7 @@ import type { Feature, FeatureStatus, Priority, KanbanColumn, FeatureFrontmatter
 import { ensureStatusSubfolders, moveFeatureFile, getFeatureFilePath, getStatusFromPath, fileExists } from './featureFileUtils'
 import { parseFeatureFile, serializeFeature } from '../shared/featureFrontmatter'
 import { featureMatchesEpicLane } from '../shared/epicLane'
+import { resolveMarkdownLink } from './markdownLinks'
 import { normalizeZoomLevel } from '../shared/zoom'
 import { t, getBundle, getEffectiveLocale, reloadBundle, getAllDefaultColumnNames, getDefaultColumnNamesForLocale } from './l10n'
 import { getAITerminalOptions, buildFeaturePrompt, normalizeAIAgent, normalizeAIPermissionMode } from './aiTerminal'
@@ -90,7 +91,8 @@ export class KanbanPanel {
       enableScripts: true,
       localResourceRoots: [
         vscode.Uri.joinPath(extensionUri, 'dist'),
-        vscode.Uri.joinPath(extensionUri, 'dist', 'webview')
+        vscode.Uri.joinPath(extensionUri, 'dist', 'webview'),
+        ...this._getMarkdownResourceRoots()
       ]
     }
 
@@ -152,14 +154,11 @@ export class KanbanPanel {
             }
             break
           }
+          case 'openLink':
+            await this._openMarkdownLink(message.featureId, message.href)
+            break
           case 'openSettings':
             vscode.commands.executeCommand('workbench.action.openSettings', '@ext:LachyFS.kanban-markdown')
-            break
-          case 'focusMenuBar':
-            // Focus must leave the webview before focusMenuBar works (VS Code limitation).
-            // Use Activity Bar (not Side Bar) — it's always visible and won't expand a collapsed sidebar.
-            await vscode.commands.executeCommand('workbench.action.focusActivityBar')
-            await vscode.commands.executeCommand('workbench.action.focusMenuBar')
             break
           case 'toggleColumnCollapsed': {
             const collapsed: string[] = this._context.workspaceState.get('kanban-markdown.collapsedColumns', [])
@@ -219,6 +218,9 @@ export class KanbanPanel {
         }
         if (e.affectsConfiguration('kanban-markdown.featuresDirectory')) {
           // Features directory changed - need to reload everything
+          this._panel.webview.options = { ...this._panel.webview.options, localResourceRoots: [
+            vscode.Uri.joinPath(this._extensionUri, 'dist'), ...this._getMarkdownResourceRoots()
+          ] }
           this._setupFileWatcher()
           this._loadFeatures().then(() => this._sendFeaturesToWebview())
         } else {
@@ -331,7 +333,7 @@ export class KanbanPanel {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'nonce-${nonce}'; script-src ${webview.cspSource} 'nonce-${nonce}';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https:; style-src ${webview.cspSource} 'nonce-${nonce}'; script-src ${webview.cspSource} 'nonce-${nonce}';">
   <link href="${styleUri}" rel="stylesheet">
   <title>Kanban Board</title>
   <style nonce="${nonce}">
@@ -830,6 +832,39 @@ export class KanbanPanel {
     this._sendFeaturesToWebview()
   }
 
+  private _getMarkdownResourceRoots(): vscode.Uri[] {
+    const roots = vscode.workspace.workspaceFolders?.map(folder => folder.uri) ?? []
+    const featuresDir = this._getWorkspaceFeaturesDir()
+    if (featuresDir) roots.push(vscode.Uri.file(featuresDir))
+    return roots
+  }
+
+  private _resourceBaseUri(directory: string | null): string | undefined {
+    return directory ? this._panel.webview.asWebviewUri(vscode.Uri.file(directory + path.sep)).toString() : undefined
+  }
+
+  private async _openMarkdownLink(featureId: unknown, href: unknown): Promise<void> {
+    if (typeof featureId !== 'string' || typeof href !== 'string') return
+    const source = this._features.find(feature => feature.id === featureId)
+    if (!source) return
+
+    if (/^https?:\/\//i.test(href)) {
+      await vscode.env.openExternal(vscode.Uri.parse(href))
+      return
+    }
+
+    const target = resolveMarkdownLink(href, source.filePath, this._getMarkdownResourceRoots().map(uri => uri.fsPath))
+    if (!target || !await fileExists(target)) return
+    const feature = this._features.find(item => path.resolve(item.filePath) === target)
+    const nativeEditor = vscode.workspace.getConfiguration('kanban-markdown').get<boolean>('markdownEditorMode', false)
+    if (feature && !nativeEditor) {
+      await this._sendFeatureContent(feature.id)
+    } else {
+      const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(target))
+      await vscode.window.showTextDocument(doc, { viewColumn: vscode.ViewColumn.Beside, preview: true })
+    }
+  }
+
   private async _openFeatureInNativeEditor(featureId: string): Promise<void> {
     const feature = this._features.find(f => f.id === featureId)
     if (!feature) return
@@ -866,6 +901,7 @@ export class KanbanPanel {
       type: 'featureContent',
       featureId: feature.id,
       content: feature.content,
+      resourceBaseUri: this._resourceBaseUri(path.dirname(feature.filePath)),
       frontmatter
     })
   }
@@ -1156,6 +1192,7 @@ export class KanbanPanel {
 
     this._panel.webview.postMessage({
       type: 'init',
+      resourceBaseUri: this._resourceBaseUri(this._getWorkspaceFeaturesDir()),
       features,
       columns,
       settings,

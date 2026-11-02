@@ -2,23 +2,13 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { AssigneeInput } from './AssigneeInput'
 import { EpicInput } from './EpicInput'
 import { useEditor, EditorContent } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import Placeholder from '@tiptap/extension-placeholder'
-import { Markdown } from 'tiptap-markdown'
+import { getMarkdown, markdownExtensions } from '../lib/markdownEditor'
 import { X, ChevronDown, User, Tag, Check, CircleDot, Signal, Calendar, Layers } from 'lucide-react'
 import type { FeatureStatus, Priority } from '../../shared/types'
 import { useStore } from '../store'
 import { cn } from '../lib/utils'
 import { DatePicker } from './DatePicker'
 import { t } from '../lib/i18n'
-
-interface MarkdownStorage {
-  markdown: { getMarkdown: () => string }
-}
-
-function getMarkdown(editor: { storage: unknown }): string {
-  return (editor.storage as MarkdownStorage).markdown.getMarkdown()
-}
 
 interface CreateFeatureDialogProps {
   isOpen: boolean
@@ -33,6 +23,7 @@ interface CreateFeatureDialogProps {
     labels: string[]
   }) => void
   initialStatus?: FeatureStatus
+  resourceBaseUri?: string
 }
 
 function getPriorityConfig(): { value: Priority; label: string; dot: string }[] {
@@ -44,19 +35,9 @@ function getPriorityConfig(): { value: Priority; label: string; dot: string }[] 
   ]
 }
 
-function getStatusConfig(): { value: FeatureStatus; label: string; dot: string }[] {
-  return [
-    { value: 'backlog', label: t('status.backlog'), dot: 'bg-zinc-400' },
-    { value: 'todo', label: t('status.todo'), dot: 'bg-blue-400' },
-    { value: 'in-progress', label: t('status.inProgress'), dot: 'bg-amber-400' },
-    { value: 'review', label: t('status.review'), dot: 'bg-purple-400' },
-    { value: 'done', label: t('status.done'), dot: 'bg-emerald-400' }
-  ]
-}
-
 interface DropdownProps {
   value: string
-  options: { value: string; label: string; dot?: string }[]
+  options: { value: string; label: string; dot?: string; color?: string }[]
   onChange: (value: string) => void
   className?: string
 }
@@ -79,8 +60,8 @@ function Dropdown({ value, options, onChange, className }: DropdownProps) {
         }
         onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
       >
-        {current?.dot && <span className={cn('w-2 h-2 rounded-full shrink-0', current.dot)} />}
-        <span>{current?.label}</span>
+        {(current?.dot || current?.color) && <span className={cn('w-2 h-2 rounded-full shrink-0', current.dot)} style={{ backgroundColor: current.color }} />}
+        <span>{current?.label ?? value}</span>
         <ChevronDown
           size={12}
           style={{ color: 'var(--vscode-descriptionForeground)' }}
@@ -121,7 +102,7 @@ function Dropdown({ value, options, onChange, className }: DropdownProps) {
                   if (option.value !== value) e.currentTarget.style.background = 'transparent'
                 }}
               >
-                {option.dot && <span className={cn('w-2 h-2 rounded-full shrink-0', option.dot)} />}
+                {(option.dot || option.color) && <span className={cn('w-2 h-2 rounded-full shrink-0', option.dot)} style={{ backgroundColor: option.color }} />}
                 <span className="flex-1 text-left">{option.label}</span>
                 {option.value === value && (
                   <Check
@@ -303,13 +284,17 @@ function CreateFeatureDialogContent({
   isOpen,
   onClose,
   onCreate,
-  initialStatus
+  initialStatus,
+  resourceBaseUri
 }: CreateFeatureDialogProps) {
-  const { cardSettings } = useStore()
+  const { cardSettings, columns } = useStore()
   const priorityConfig = getPriorityConfig()
-  const statusConfig = getStatusConfig()
+  const statusConfig = columns.map(column => ({ value: column.id, label: column.name, color: column.color }))
   const [title, setTitle] = useState('')
-  const [status, setStatus] = useState<FeatureStatus>(initialStatus ?? cardSettings.defaultStatus)
+  const [status, setStatus] = useState<FeatureStatus>(() => {
+    const preferred = initialStatus ?? cardSettings.defaultStatus
+    return columns.some(column => column.id === preferred) ? preferred : columns[0]?.id ?? preferred
+  })
   const [priority, setPriority] = useState<Priority>(cardSettings.defaultPriority)
   const [assignee, setAssignee] = useState('')
   const [dueDate, setDueDate] = useState('')
@@ -318,11 +303,7 @@ function CreateFeatureDialogContent({
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   const descriptionEditor = useEditor({
-    extensions: [
-      StarterKit,
-      Placeholder.configure({ placeholder: t('create.addDescription') }),
-      Markdown.configure({ html: false, transformPastedText: true })
-    ],
+    extensions: markdownExtensions(t('create.addDescription'), () => resourceBaseUri),
     content: '',
     editorProps: {
       attributes: {
@@ -422,7 +403,7 @@ function CreateFeatureDialogContent({
           <PropertyRow label={t('property.status')} icon={<CircleDot size={13} />}>
             <Dropdown
               value={status}
-              options={statusConfig.map((s) => ({ value: s.value, label: s.label, dot: s.dot }))}
+              options={statusConfig}
               onChange={(v) => setStatus(v as FeatureStatus)}
             />
           </PropertyRow>

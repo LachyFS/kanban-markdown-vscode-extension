@@ -1,7 +1,8 @@
 // Kanban types
 
 export type Priority = 'critical' | 'high' | 'medium' | 'low'
-export type FeatureStatus = 'backlog' | 'todo' | 'in-progress' | 'review' | 'done'
+// Status IDs come from the workspace's configurable columns.
+export type FeatureStatus = string
 
 // AI agent types
 export type AIAgent = 'claude' | 'codex' | 'opencode' | 'copilot' | 'cursor'
@@ -102,10 +103,10 @@ export function epicLaneId(epic: string | null | undefined): string {
 
 export type ExtensionMessage =
   | { type: 'updateZoom'; value: number }
-  | { type: 'init'; features: Feature[]; columns: KanbanColumn[]; settings: CardDisplaySettings; collapsedColumns: string[]; boardViewMode: BoardViewMode; collapsedEpics: string[]; locale: string; translations: Record<string, string> }
+  | { type: 'init'; features: Feature[]; columns: KanbanColumn[]; settings: CardDisplaySettings; collapsedColumns: string[]; boardViewMode: BoardViewMode; collapsedEpics: string[]; locale: string; translations: Record<string, string>; resourceBaseUri?: string }
   | { type: 'featuresUpdated'; features: Feature[] }
   | { type: 'triggerCreateDialog' }
-  | { type: 'featureContent'; featureId: string; content: string; frontmatter: FeatureFrontmatter }
+  | { type: 'featureContent'; featureId: string; content: string; frontmatter: FeatureFrontmatter; resourceBaseUri?: string }
 
 // Frontmatter for editing
 export interface FeatureFrontmatter {
@@ -132,6 +133,7 @@ export type WebviewMessage =
   | { type: 'saveFeatureContent'; featureId: string; content: string; frontmatter: FeatureFrontmatter }
   | { type: 'closeFeature' }
   | { type: 'openFile'; featureId: string }
+  | { type: 'openLink'; featureId: string; href: string }
   | { type: 'openSettings' }
   | { type: 'toggleColumnCollapsed'; columnId: string }
   | { type: 'setBoardViewMode'; mode: BoardViewMode }
