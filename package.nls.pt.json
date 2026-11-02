@@ -46,5 +46,6 @@
   "config.language.auto": "Seguir o idioma do VS Code",
   "config.language.en": "Inglês (English)",
   "config.language.es": "Espanhol (Español)",
-  "config.language.pt": "Português"
+  "config.language.pt": "Português",
+  "config.zoomLevel.description": "Nível de zoom do quadro Kanban (de 0,5 a 3)."
 }

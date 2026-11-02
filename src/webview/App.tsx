@@ -9,6 +9,7 @@ import { Toolbar } from './components/Toolbar'
 import { UndoToast } from './components/UndoToast'
 import type { Feature, FeatureStatus, Priority, ExtensionMessage, FeatureFrontmatter, AIAgent, AIPermissionMode, BoardViewMode } from '../shared/types'
 import { getTitleFromContent } from '../shared/types'
+import { normalizeZoomLevel } from '../shared/zoom'
 import { vscode } from './vscodeApi'
 import { initLocale, t } from './lib/i18n'
 
@@ -202,6 +203,9 @@ function App(): React.JSX.Element {
       if (!message || typeof message.type !== 'string') return
 
       switch (message.type) {
+        case 'updateZoom':
+          document.documentElement.style.setProperty('--kanban-zoom', String(normalizeZoomLevel(message.value)))
+          break
         case 'init':
           if (message.translations) {
             initLocale(message.translations)

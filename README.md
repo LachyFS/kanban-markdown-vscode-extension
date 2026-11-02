@@ -141,6 +141,7 @@ Settings live under `kanban-markdown.*` in your VS Code/Cursor preferences.
 | `compactMode` | `false` | Use compact card layout |
 | `addNewCardsToTop` | `false` | Add new cards to the top of the column |
 | `markdownEditorMode` | `false` | Open files in VS Code's native text editor instead of the inline rich-text editor |
+| `zoomLevel` | `1.0` | Zoom level for the kanban board |
 
 Default columns:
 

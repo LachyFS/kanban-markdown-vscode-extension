@@ -46,5 +46,6 @@
   "config.language.auto": "Follow VS Code's display language",
   "config.language.en": "English",
   "config.language.es": "Spanish (Español)",
-  "config.language.pt": "Portuguese (Português)"
+  "config.language.pt": "Portuguese (Português)",
+  "config.zoomLevel.description": "Zoom level for the Kanban board (0.5 to 3)."
 }

@@ -276,6 +276,13 @@
           "type": "boolean",
           "default": false,
           "description": "%config.hideScrollbar.description%"
+        },
+        "kanban-markdown.zoomLevel": {
+          "type": "number",
+          "default": 1.0,
+          "minimum": 0.5,
+          "maximum": 3,
+          "description": "%config.zoomLevel.description%"
         }
       }
     },
