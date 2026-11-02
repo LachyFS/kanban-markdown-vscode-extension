@@ -31,6 +31,7 @@
   "config.aiAgent.codex": "Codex (OpenAI)",
   "config.aiAgent.copilot": "GitHub Copilot",
   "config.aiAgent.opencode": "OpenCode",
+  "config.aiAgent.cursor": "Cursor CLI",
   "config.showPriorityBadges.description": "Show priority badges on feature cards.",
   "config.showAssignee.description": "Show assignee on feature cards.",
   "config.showDueDate.description": "Show due date on feature cards.",
@@ -47,5 +48,6 @@
   "config.language.en": "English",
   "config.language.es": "Spanish (Español)",
   "config.language.pt": "Portuguese (Português)",
+  "config.zoomLevel.description": "Zoom level for the Kanban board (0.5 to 3).",
   "config.language.ru": "Russian (Русский)"
 }

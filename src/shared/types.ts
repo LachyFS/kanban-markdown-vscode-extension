@@ -4,7 +4,7 @@ export type Priority = 'critical' | 'high' | 'medium' | 'low'
 export type FeatureStatus = 'backlog' | 'todo' | 'in-progress' | 'review' | 'done'
 
 // AI agent types
-export type AIAgent = 'claude' | 'codex' | 'opencode' | 'copilot'
+export type AIAgent = 'claude' | 'codex' | 'opencode' | 'copilot' | 'cursor'
 export type AIPermissionMode = 'default' | 'plan' | 'acceptEdits' | 'bypassPermissions'
 
 export interface Feature {
@@ -101,6 +101,7 @@ export function epicLaneId(epic: string | null | undefined): string {
 }
 
 export type ExtensionMessage =
+  | { type: 'updateZoom'; value: number }
   | { type: 'init'; features: Feature[]; columns: KanbanColumn[]; settings: CardDisplaySettings; collapsedColumns: string[]; boardViewMode: BoardViewMode; collapsedEpics: string[]; locale: string; translations: Record<string, string> }
   | { type: 'featuresUpdated'; features: Feature[] }
   | { type: 'triggerCreateDialog' }

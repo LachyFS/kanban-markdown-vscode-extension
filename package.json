@@ -214,13 +214,15 @@
             "claude",
             "codex",
             "copilot",
-            "opencode"
+            "opencode",
+            "cursor"
           ],
           "enumDescriptions": [
             "%config.aiAgent.claude%",
             "%config.aiAgent.codex%",
             "%config.aiAgent.copilot%",
-            "%config.aiAgent.opencode%"
+            "%config.aiAgent.opencode%",
+            "%config.aiAgent.cursor%"
           ],
           "description": "%config.aiAgent.description%"
         },
@@ -278,6 +280,13 @@
           "type": "boolean",
           "default": false,
           "description": "%config.hideScrollbar.description%"
+        },
+        "kanban-markdown.zoomLevel": {
+          "type": "number",
+          "default": 1.0,
+          "minimum": 0.5,
+          "maximum": 3,
+          "description": "%config.zoomLevel.description%"
         }
       }
     },

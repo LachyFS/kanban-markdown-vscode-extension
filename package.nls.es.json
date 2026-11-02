@@ -31,6 +31,7 @@
   "config.aiAgent.codex": "Codex (OpenAI)",
   "config.aiAgent.copilot": "GitHub Copilot",
   "config.aiAgent.opencode": "OpenCode",
+  "config.aiAgent.cursor": "Cursor CLI",
   "config.showPriorityBadges.description": "Mostrar insignias de prioridad en las tarjetas de funciones.",
   "config.showAssignee.description": "Mostrar asignado en las tarjetas de funciones.",
   "config.showDueDate.description": "Mostrar fecha límite en las tarjetas de funciones.",
@@ -47,5 +48,6 @@
   "config.language.en": "Inglés (English)",
   "config.language.es": "Español",
   "config.language.pt": "Portugués (Português)",
+  "config.zoomLevel.description": "Nivel de zoom del tablero Kanban (de 0,5 a 3).",
   "config.language.ru": "Ruso (Русский)"
 }

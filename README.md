@@ -87,6 +87,9 @@ Cards include a "Build with AI" action that passes full feature context (title, 
 | Codex | Suggest, Auto-edit, Full Auto |
 | GitHub Copilot | Default |
 | OpenCode | Default |
+| Cursor CLI | Agent, Plan |
+
+Cursor CLI uses the `agent` command from the [official installation](https://cursor.com/docs/cli/installation), including native Windows installations.
 
 ### Kanban Skill
 
@@ -131,7 +134,7 @@ Settings live under `kanban-markdown.*` in your VS Code/Cursor preferences.
 | `defaultPriority` | `medium` | Default priority for new features |
 | `defaultStatus` | `backlog` | Default status for new features |
 | `columns` | *see below* | Customize column IDs, names, and colors |
-| `aiAgent` | `claude` | AI agent for "Build with AI" (`claude`, `codex`, `copilot`, `opencode`) |
+| `aiAgent` | `claude` | AI agent for "Build with AI" (`claude`, `codex`, `copilot`, `opencode`, `cursor`) |
 | `showPriorityBadges` | `true` | Show priority badges on cards |
 | `showAssignee` | `true` | Show assignee on cards |
 | `showDueDate` | `true` | Show due date on cards |
@@ -141,6 +144,7 @@ Settings live under `kanban-markdown.*` in your VS Code/Cursor preferences.
 | `compactMode` | `false` | Use compact card layout |
 | `addNewCardsToTop` | `false` | Add new cards to the top of the column |
 | `markdownEditorMode` | `false` | Open files in VS Code's native text editor instead of the inline rich-text editor |
+| `zoomLevel` | `1.0` | Zoom level for the kanban board |
 
 Default columns:
 
