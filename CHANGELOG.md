@@ -5,11 +5,22 @@ All notable changes to the Kanban Markdown extension will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.15.0] - 2026-11-02
 
 ### Added
 
-- Cursor CLI agent integration for "Build with AI", with Agent and Plan modes
+- Russian translation by [collex100](https://github.com/collex100) ([#72](https://github.com/LachyFS/kanban-markdown-vscode-extension/pull/72)).
+- Configurable board zoom with live updates by [brunoR500](https://github.com/brunoR500) ([#73](https://github.com/LachyFS/kanban-markdown-vscode-extension/pull/73)).
+- Cursor CLI integration with Agent and Plan modes by [Wenish](https://github.com/Wenish) ([#71](https://github.com/LachyFS/kanban-markdown-vscode-extension/pull/71)).
+- Consistent assignee colours on cards and in the editor by [Auios](https://github.com/Auios) ([#54](https://github.com/LachyFS/kanban-markdown-vscode-extension/pull/54)).
+- Expanded contributor acknowledgements in the README.
+
+### Security
+
+- Validate workspace zoom settings and protect generated styles with a nonce.
+- Launch Cursor with literal process arguments on POSIX and Windows, including the official Windows installation's bundled Node runtime.
+- Update build and test dependencies to address critical and high-severity advisories. Runtime dependency audit remains clean; moderate development-only globbing advisories remain.
+- Check runtime dependency advisories and translation completeness in CI.
 
 ## [1.14.2] - 2026-11-02
 

@@ -174,11 +174,39 @@ Install from [Open VSX](https://open-vsx.org/extension/LachyFS/kanban-markdown) 
 2. In VS Code: Extensions > `...` > Install from VSIX
 3. Select the downloaded file
 
+## Contributors
+
+Thanks to the people who improve Kanban Markdown through code, translations, testing, bug reports and product feedback.
+
+<p>
+  <a href="https://github.com/luciopaiva"><img src="https://github.com/luciopaiva.png?size=96" width="48" height="48" alt="luciopaiva" /></a>
+  <a href="https://github.com/Auios"><img src="https://github.com/Auios.png?size=96" width="48" height="48" alt="Auios" /></a>
+  <a href="https://github.com/cloudyun888"><img src="https://github.com/cloudyun888.png?size=96" width="48" height="48" alt="cloudyun888" /></a>
+  <a href="https://github.com/collex100"><img src="https://github.com/collex100.png?size=96" width="48" height="48" alt="collex100" /></a>
+  <a href="https://github.com/brunoR500"><img src="https://github.com/brunoR500.png?size=96" width="48" height="48" alt="brunoR500" /></a>
+  <a href="https://github.com/Wenish"><img src="https://github.com/Wenish.png?size=96" width="48" height="48" alt="Wenish" /></a>
+  <a href="https://github.com/ungive"><img src="https://github.com/ungive.png?size=96" width="48" height="48" alt="ungive" /></a>
+  <a href="https://github.com/hodanli"><img src="https://github.com/hodanli.png?size=96" width="48" height="48" alt="hodanli" /></a>
+  <a href="https://github.com/SuperbDotHub"><img src="https://github.com/SuperbDotHub.png?size=96" width="48" height="48" alt="SuperbDotHub" /></a>
+</p>
+
+- [luciopaiva](https://github.com/luciopaiva) — code, testing, Copilot integration and board features
+- [Auios](https://github.com/Auios) — epics, assignee autocomplete and assignee colours
+- [cloudyun888](https://github.com/cloudyun888) — Codex CLI compatibility
+- [collex100](https://github.com/collex100) — Russian translation
+- [brunoR500](https://github.com/brunoR500) — configurable board zoom
+- [Wenish](https://github.com/Wenish) — Cursor CLI integration
+- [ungive](https://github.com/ungive) — bug reports and feedback on navigation and card organisation
+- [hodanli](https://github.com/hodanli) — bug reports and feedback on labels, files and editor behaviour
+- [SuperbDotHub](https://github.com/SuperbDotHub) — features-directory bug report
+
+[All code contributors](https://github.com/LachyFS/kanban-markdown-vscode-extension/graphs/contributors) · [How to contribute](CONTRIBUTING.md)
+
 ## Development
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20.19+ or 22.12+
 - pnpm
 
 ### Setup
@@ -231,13 +259,6 @@ The first run downloads a VS Code binary (~160 MB) into `.vscode-test/` which is
 **Extension**: TypeScript, VS Code API, esbuild | **Webview**: React 18, Vite, Tailwind CSS, Zustand, Tiptap
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
-
-## Contributors
-
-- [@luciopaiva](https://github.com/luciopaiva) — sidebar view and layout improvements
-- [@ungive](https://github.com/ungive) — file organization and status subfolders
-- [@hodanli](https://github.com/hodanli) — label management enhancements
-- [@SuperbDotHub](https://github.com/SuperbDotHub) — compact mode and card display options
 
 ## License
 
